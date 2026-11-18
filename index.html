@@ -8214,7 +8214,7 @@ function startRec(){
       const el = $("#live"); if(el) el.textContent = heardText || "請開始說…";
     };
     recog.onerror = e=>{ if(e.error==="not-allowed" || e.error==="service-not-allowed" || e.error==="audio-capture" || e.error==="network"){ micDenied = true; micErr = e.error; toast("麥克風沒有打開，請看下方說明"); } };
-    recog.onend = ()=>{ if(!U.rec) return; U.rec = false; U.shadow = micDenied ? null : {heard:heardText}; if(U.view==="lesson") render(); };
+    recog.onend = ()=>{ if(!U.rec) return; U.rec = false; U.shadow = micDenied ? null : {heard:heardText}; if(U.view==="lesson" || U.view==="catchup") render(); };
     U.rec = true; U.shadow = null;
     recog.start();
   }catch(e){ U.rec = false; micDenied = true; micErr = "start"; toast("麥克風沒有打開，請看下方說明"); }
@@ -8497,38 +8497,12 @@ function vLesson(){
     </div>
     <button class="btn ${U.bld && U.bld.picked!=null ? "" : "ghost"}" data-act="next-sent">${U.bld && U.bld.picked!=null ? (U.si+1<U.list.length ? "下一句 →" : "完成這個主題！") : "跳過這一步"}</button>`;
   } else {
-    const canMic = !!SR;
-    const micHelp = micDenied ? `<div class="mic-help">
-      <b>麥克風沒有打開</b>（${h(micErr)}）<br>
-      ${micErr==="network" ? "語音辨識需要連上網路，請確認網路後再按一次。" :
-        micErr==="audio-capture" ? "找不到麥克風，請確認電腦有接上麥克風或耳機麥克風。" :
-        IS_MOBILE ? "手機瀏覽器常常不允許網頁錄音，建議改用下面的「鍵盤麥克風」。" :
-        "① 點網址列最左邊的圖示 → 「網站設定」<br>② 把「麥克風」改成「允許」<br>③ 回到這頁按 F5 重新整理，再按一次「換我說」"}
-      ${!IS_MOBILE ? `<br>也可以改用 Windows 內建的語音輸入：按下面的按鈕後，在框框裡按 <b>Win + H</b> 說英文。` : ""}
-      </div>` : "";
-    let res = "";
-    if(U.rec) res = `<div class="live" id="live">請開始說…</div>`;
-    else if(U.shadow){
-      const c = compareText(s.en, U.shadow.heard);
-      const col = c.score>=75 ? "var(--good-2);color:var(--good)" : c.score>=45 ? "var(--warm-2);color:var(--warm)" : "var(--bad-2);color:var(--bad)";
-      const word = c.score>=100 ? "完美！" : c.score>=75 ? "很棒！" : c.score>=45 ? "很接近了" : "再試一次";
-      const tip = c.score>=100 ? "每個字都聽得出來，太厲害了！" :
-        (U.dict ? "紅色波浪線的字是鍵盤沒打出來的，不一定是你念錯；手機鍵盤常會猜錯字，大部分對就很棒了。" : "紅色波浪線的字沒被聽出來，可以再聽一次、多念幾遍。");
-      res = `<div class="result en">${c.html}</div><span class="score" style="background:${col}">${word} ${c.score}%</span>
-        <p class="muted" style="margin:8px 0 0">聽到的是：「${h(U.shadow.heard||"（沒有聽到聲音）")}」<br>${tip}</p>`;
-    }
-    const selfMsg = U.selfRated==="ok" ? buddyBox("cheer", bline("right")) : U.selfRated==="again" ? buddyBox("happy", "多念幾次就會越來越順喔！") : "";
     body = `
     <div class="card center">
       <p class="hint">先聽一次，再大聲跟著念。<br>模仿語調和速度，比念得「標準」更重要。</p>
       <div class="sub-en en" style="font-size:21px">${h(s.en)}</div>
       ${playBtns()}
-      ${canMic && !U.dict ? `<button class="btn ${U.rec?"warm":""}" data-act="mic">${li("mic",20)} ${U.rec?"我說完了":micDenied?"再試一次錄音比對":"換我說（錄音比對）"}</button>${micHelp}${res}` : ""}
-      ${U.dict ? dictBox(U.dict && U.shadow ? res : "") : ""}
-      ${(!canMic || micDenied) && !U.dict ? `<p class="muted" style="margin:0 0 10px">念完之後，覺得自己說得怎麼樣？</p>
-        <div class="row"><button class="opt ${U.selfRated==="ok"?"ok":""}" style="margin:0;text-align:center" data-act="self" data-r="ok">說得順</button>
-        <button class="opt ${U.selfRated==="again"?"sel":""}" style="margin:0;text-align:center" data-act="self" data-r="again">還要練</button></div>${selfMsg}` : ""}
-      ${!U.rec ? `<button class="btn ghost" style="margin-top:10px" data-act="dict-toggle">${li("mic",18)} ${U.dict ? (canMic ? "改回錄音比對" : "改回自己評分") : IS_MOBILE ? (canMic ? "錄音沒反應？改用手機鍵盤的麥克風" : "用手機鍵盤的麥克風說（也能比對）") : "改用語音輸入／打字比對"}</button>` : ""}
+      ${speakBox(s.en)}
     </div>
     <p class="muted center" style="margin:-4px 0 10px">不方便出聲？直接按下一句也可以，或從右上角切換成安靜模式。</p>
     <button class="btn" data-act="next-sent">${U.si+1<U.list.length ? "下一句 →" : "完成這個主題！"}</button>`;
@@ -9021,6 +8995,38 @@ function vModeSheet(){
     <button class="mopt" data-act="pl-open"><span class="mi">${li("headphones",26)}</span><span class="mt"><b>純聽模式</b><span>開車、做家事、不能看螢幕時用。自動連續播放：英文 → 中文意思 → 例句。</span></span></button>
   </div>`;
 }
+function speakBox(target){
+  const s = {en: target};
+    const canMic = !!SR;
+  const micHelp = micDenied ? `<div class="mic-help">
+    <b>麥克風沒有打開</b>（${h(micErr)}）<br>
+    ${micErr==="network" ? "語音辨識需要連上網路，請確認網路後再按一次。" :
+      micErr==="audio-capture" ? "找不到麥克風，請確認電腦有接上麥克風或耳機麥克風。" :
+      IS_MOBILE ? "手機瀏覽器常常不允許網頁錄音，建議改用下面的「鍵盤麥克風」。" :
+      "① 點網址列最左邊的圖示 → 「網站設定」<br>② 把「麥克風」改成「允許」<br>③ 回到這頁按 F5 重新整理，再按一次「換我說」"}
+    ${!IS_MOBILE ? `<br>也可以改用 Windows 內建的語音輸入：按下面的按鈕後，在框框裡按 <b>Win + H</b> 說英文。` : ""}
+    </div>` : "";
+  let res = "";
+  if(U.rec) res = `<div class="live" id="live">請開始說…</div>`;
+  else if(U.shadow){
+    const c = compareText(s.en, U.shadow.heard);
+    const col = c.score>=75 ? "var(--good-2);color:var(--good)" : c.score>=45 ? "var(--warm-2);color:var(--warm)" : "var(--bad-2);color:var(--bad)";
+    const word = c.score>=100 ? "完美！" : c.score>=75 ? "很棒！" : c.score>=45 ? "很接近了" : "再試一次";
+    const tip = c.score>=100 ? "每個字都聽得出來，太厲害了！" :
+      (U.dict ? "紅色波浪線的字是鍵盤沒打出來的，不一定是你念錯；手機鍵盤常會猜錯字，大部分對就很棒了。" : "紅色波浪線的字沒被聽出來，可以再聽一次、多念幾遍。");
+    res = `<div class="result en">${c.html}</div><span class="score" style="background:${col}">${word} ${c.score}%</span>
+      <p class="muted" style="margin:8px 0 0">聽到的是：「${h(U.shadow.heard||"（沒有聽到聲音）")}」<br>${tip}</p>`;
+  }
+  const selfMsg = U.selfRated==="ok" ? buddyBox("cheer", bline("right")) : U.selfRated==="again" ? buddyBox("happy", "多念幾次就會越來越順喔！") : "";
+  return `
+      ${canMic && !U.dict ? `<button class="btn ${U.rec?"warm":""}" data-act="mic">${li("mic",20)} ${U.rec?"我說完了":micDenied?"再試一次錄音比對":"換我說（錄音比對）"}</button>${micHelp}${res}` : ""}
+      ${U.dict ? dictBox(U.dict && U.shadow ? res : "") : ""}
+      ${(!canMic || micDenied) && !U.dict ? `<p class="muted" style="margin:0 0 10px">念完之後，覺得自己說得怎麼樣？</p>
+        <div class="row"><button class="opt ${U.selfRated==="ok"?"ok":""}" style="margin:0;text-align:center" data-act="self" data-r="ok">說得順</button>
+        <button class="opt ${U.selfRated==="again"?"sel":""}" style="margin:0;text-align:center" data-act="self" data-r="again">還要練</button></div>${selfMsg}` : ""}
+      ${!U.rec ? `<button class="btn ghost" style="margin-top:10px" data-act="dict-toggle">${li("mic",18)} ${U.dict ? (canMic ? "改回錄音比對" : "改回自己評分") : IS_MOBILE ? (canMic ? "錄音沒反應？改用手機鍵盤的麥克風" : "用手機鍵盤的麥克風說（也能比對）") : "改用語音輸入／打字比對"}</button>` : ""}
+`;
+}
 function vCatchup(){
   const C = U.cu, head = `<div class="lhead"><button class="x" data-act="exit" aria-label="離開">✕</button><b>補聽說</b><span class="muted">${Math.min(C.i+1,C.q.length)}/${C.q.length}</span></div>`;
   if(C.i >= C.q.length) return head + `<div class="card center">${buddy("cheer",120)}<h3 style="font-size:20px">都補完了！</h3><p class="muted">這些字和句子現在都好好聽過、念過了。</p></div><button class="btn" data-act="exit">回首頁</button>`;
@@ -9031,8 +9037,9 @@ function vCatchup(){
     <div class="${isW?"big-word":"sub-en"} en" ${isW?"":`style="font-size:21px"`}>${h(en)}</div>${isW?pron(id):""}
     <div class="sub-zh" style="margin-top:6px">${h(zh)}</div>
     <div class="row" style="margin-top:14px"><button class="btn sec small" data-act="cu-say">${li("speaker",18)} 再聽一次</button><button class="btn sec small" data-act="cu-slow">${li("slow",18)} 慢速</button></div>
+    ${speakBox(en)}
   </div>
-  <button class="btn" data-act="cu-next">我念完了 →</button>`;
+  <button class="btn" data-act="cu-next">${C.i+1<C.q.length ? "下一個 →" : "完成！"}</button>`;
 }
 function vPodcast(){
   const P = U.pl;
@@ -9086,12 +9093,14 @@ const MODE_ACT = {
   "b-clear"(){ const b = U.bld; if(b && b.picked==null){ b.built = []; render(); } },
   catchup(){
     leaveActivity();
+    U.shadow = null; U.selfRated = null; U.rec = false; U.dictVal = "";
     U.cu = {q: pendKeys().sort((a,b)=>S.pend[a]-S.pend[b]).slice(0,15), i:0}; U.view = "catchup"; render();
     const k = U.cu.q[0]; if(k) MODE_ACT["cu-say"]();
   },
   "cu-say"(){ const k = U.cu.q[U.cu.i]; if(!k) return; const id = k.slice(2); speakEn(k.startsWith("w:") ? WORDS[id].w : SENT[id].en); },
   "cu-slow"(){ const k = U.cu.q[U.cu.i]; if(!k) return; const id = k.slice(2); speakEn(k.startsWith("w:") ? WORDS[id].w : SENT[id].en, slowRate()); },
   "cu-next"(){
+    stopRec(); U.rec = false; U.shadow = null; U.selfRated = null; U.dictVal = "";
     const k = U.cu.q[U.cu.i]; if(k && S.pend) delete S.pend[k];
     U.cu.i++; if(U.cu.i >= U.cu.q.length){ reward(Math.ceil(U.cu.q.length/3)); bump(); }
     saveProg(); render();
