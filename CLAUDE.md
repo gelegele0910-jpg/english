@@ -4,11 +4,12 @@
 
 「英文聽力樂園」：給台灣國小～高中（學測）學生的英文聽力／口說練習網頁 App。介面全部是繁體中文（zh-Hant），以可愛角色、多種介面風格、星星與連續天數鼓勵學習。
 
-- **沒有建置流程、沒有套件、沒有測試框架**：純 HTML + CSS + 原生 JavaScript，直接用瀏覽器開啟 `index.html` 即可。
+- **沒有建置流程、沒有套件**：純 HTML + CSS + 原生 JavaScript，直接用瀏覽器開啟 `index.html` 即可。測試是 `tests/` 裡的獨立 Node 腳本（只需要 Playwright）。
 - 檔案：
   - `index.html`（約 9,600 行）：全部的樣式、課程內容、單字庫、SVG 角色與 App 邏輯（GitHub Pages 版）。
   - `config.js`：一行，設定 `window.ELP_API`（Google Apps Script Web App 的 `/exec` 網址）。
   - `apps-script/Code.gs`：Google Apps Script 後端（資料存在 Google 試算表）。
+  - `tests/`：測試腳本，`node tests/run-all.js` 全部執行（見「驗證與測試規範」）。
 
 ## 兩個版本的對應關係
 
@@ -34,11 +35,11 @@
 
 老師班級模式：網址加 `?k=<部署ID>&n=<班級名稱>`，會改連到老師自己的 Apps Script，且 localStorage key 會加上前綴 `NS`（`c` + 部署 ID 後 12 碼 + `:`），避免和家裡的資料混在一起。
 
-本機測試：`python3 -m http.server` 後開瀏覽器即可。沒有後端時會只存在 localStorage。
+本機預覽：`python3 -m http.server` 後開瀏覽器即可。沒有後端時會只存在 localStorage。
 
 ## 後端（`apps-script/Code.gs`）
 
-- 對外函式：`getProfiles`、`saveProfiles(json)`、`getProgress(id)`、`saveProgress(id, json)`、`deleteProgress(id)`。新增後端函式時，要同時加進 `API_FNS`，GitHub Pages 版才能呼叫。
+- 對外函式：`getProfiles`、`saveProfiles(json)`、`getProgress(id)`、`saveProgress(id, json)`、`deleteProgress(id)`。新增後端函式時，要同時加進 `API_FNS`，GitHub Pages 版才能呼叫。`doPost()` 只認 `API_FNS` 自己的屬性（`hasOwnProperty`），避免 `constructor` 等繼承來的名稱繞過白名單。
 - 資料都以 **JSON 字串**存取，後端不解析結構（只有總覽例外，見下）。
 - 試算表：由「擴充功能 → Apps Script」建立就用該試算表，否則用指令碼屬性 `SHEET_ID`，都沒有就自動建立「英文聽力樂園－學習資料」。可手動執行 `setup()`。
   - 「資料」工作表：每列一個鍵值（`profiles`、`prog_<id>`），欄位為 鍵值／說明／更新時間／段數／內容…；內容超過 45,000 字會切成多格（E 欄之後），讀取時再接回。內容欄設為純文字格式。
@@ -88,42 +89,55 @@
 
 ## 驗證與測試規範
 
-本專案沒有 lint、build 或測試框架，所以「驗證」＝語法檢查 ＋ 在真實瀏覽器裡把功能走一遍。目標是拿出**可執行的證據**，而不是「看起來沒問題」。
+本專案沒有 lint 或 build，「驗證」＝ `tests/` 的語法檢查、屬性測試、同步測試，加上在真實瀏覽器裡把功能走一遍。目標是拿出**可執行的證據**，而不是「看起來沒問題」。
 
 ### 1. 禁止未驗證提交
 
-任何變更在 git commit 或開 PR 前，都要先通過下面第 2、3 步。做不到的步驟（例如需要真的 Apps Script 環境）要在回報中明確寫「未驗證」，不可略過不提。
+任何變更在 git commit 或開 PR 前，都要先跑 `node tests/run-all.js` 並全部通過，再依第 3 步針對這次改到的功能實際操作。做不到的步驟（例如需要真的 Apps Script 環境）要在回報中明確寫「未驗證」，不可略過不提。
 
-### 2. 低成本檢查優先
+### 2. 測試腳本（`tests/`）
 
 ```bash
-# 前端：抽出 index.html 所有 <script> 區塊做語法檢查
-node -e 'const fs=require("fs");const h=fs.readFileSync("index.html","utf8");fs.writeFileSync("/tmp/elp-all.js",[...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join("\n;\n"))' && node --check /tmp/elp-all.js
+node tests/run-all.js
 ```
 
 ```bash
-# 後端：.gs 副檔名 node 不認得，先複製成 .js 再檢查
-cp apps-script/Code.gs /tmp/elp-code.js && node --check /tmp/elp-code.js
+node tests/run-all.js --quick
 ```
 
-### 3. 實際運行變更（端到端冒煙測試）
+第一行跑全部（約 30 秒），第二行把隨機點擊次數減少、比較快。也可以單獨執行：
 
-- `python3 -m http.server` 啟動，用 Playwright（環境已預裝，`require('playwright')` 即可）開啟 `index.html`。
-- **一定要擋掉 `script.google.com` 的請求**（`page.route(/script\.google\.com/, r => r.abort())`），否則測試資料會寫進正式的學員試算表。
-- 監聽 `pageerror` 與 console error；被擋掉的 Apps Script / 字型請求產生的 `ERR_FAILED` 屬預期，其他錯誤都要處理。
-- 依變更影響的功能路徑實際點擊走完：例如 新增學習者 → 首頁 → 句子練習 → 完成，確認畫面與 localStorage（`elp-profiles`、`elp-prog-<id>`）結果正確。
+| 腳本 | 內容 |
+|---|---|
+| `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查 |
+| `backend-props.js` | 用模擬試算表執行 `Code.gs`：分段存讀往返一致、存檔冪等、`doPost` 白名單、學員進度總覽計算、舊資料搬家 |
+| `front-props.js` | `highlight()` / `findWord()` 不變量、`migrate()` 冪等、課程內容完整性（R-04）、`h()` 跳脫與惡意名字 |
+| `sync.js` | 攔截 Apps Script 回傳模擬資料，驗證雲端／本機「較新的一方勝出」 |
+| `e2e.js` | 手機尺寸實際操作：建立學習者、三種情境各完成一個主題、重新整理保留、6 風格 × 3 情境繪製、隨機點擊（`--clicks=N --seed=N`，固定種子可重現）、無水平捲動 |
+
+- 需要 Node 與 Playwright。雲端環境已預裝；在自己電腦上先在 repo 根目錄執行 `npm i -D playwright`，再執行 `npx playwright install chromium`。
+- 截圖輸出到 `tests/output/`（已列入 `.gitignore`）。
+- 共用工具在 `tests/server.js`：內建靜態伺服器、`blockExternal(page)`、固定種子亂數。新測試請沿用。
+- 任何一項失敗時結束碼為 1。
+
+### 3. 實際運行變更（針對這次的改動）
+
+`run-all.js` 只涵蓋固定流程；改到其他功能時，要另外用 Playwright 把那條路徑走完（可以直接加進 `e2e.js`）：
+
+- **一定要擋掉 `script.google.com` 的請求**（`blockExternal(page)`），否則測試資料會寫進正式的學員試算表。
+- 監聽 `pageerror` 與 console error；被擋掉的 Apps Script／字型請求產生的 `ERR_FAILED` 屬預期，其他錯誤都要處理。
+- 確認畫面與 localStorage（`elp-profiles`、`elp-prog-<id>`）結果正確。
 - 介面相關變更：以手機尺寸檢查，並至少切換一種可愛風、一種深色風格（`night` 或 `minimaldark`），以及三種練習情境（`full` / `quiet` / `silent`）。
-- 等待要用條件（`waitForSelector` 等），不要用固定的 `waitForTimeout` 掩蓋時序問題。
+- 等待要用條件（`waitForSelector`、`waitForFunction`），不要用固定的 `waitForTimeout` 掩蓋時序問題。
+- 有些畫面（`record`、`vdaily`、`vsort`、`avatar`）需要先由按鈕初始化狀態，不能直接設 `U.view` 繪製；要從按鈕點進去。
+- 語音播放與麥克風在無頭瀏覽器中無法真正驗證，只能驗證流程，回報時要註明。
 
 ### 4. 測試投資優先序
 
-沒有測試框架，需要時用不依賴 npm 套件的獨立 Node 腳本（自建隨機產生器即可）：
+不引入測試框架，新測試寫成 `tests/` 裡的獨立 Node 腳本，並加進 `run-all.js`：
 
-- **端到端測試**：使用者流程、`data-act` 事件、畫面切換的變更，用第 3 步的 Playwright 驗證。
-- **屬性測試**：解析／序列化／狀態轉換邏輯，用 100～1000 組隨機與極端輸入（空字串、超長字串、特殊字元、`=`/`+` 開頭、中文、emoji）驗證：
-  - 往返一致性：`writeKey_` 切段 → `readKey_` 接回後要和原字串完全相同（剛好 45,000、45,001 字等邊界）。
-  - 不變量：`highlight()` 去掉標籤後必須等於原句；`findWord()` 不可匹配到單字中間。
-  - 冪等性：`migrate()` 跑兩次與跑一次結果相同；同一份進度重複 `saveProgress` 結果不變。
+- **端到端測試**：使用者流程、`data-act` 事件、畫面切換的變更。
+- **屬性測試**：解析／序列化／狀態轉換邏輯，用 100～1000 組固定種子的隨機與極端輸入（空字串、超長字串、特殊字元、`=`/`+` 開頭、中文、emoji），驗證往返一致性、不變量、冪等性。
 - **差分測試**：重構或效能優化時，保留舊版邏輯當標準答案，用相同輸入比對新舊輸出（例如各畫面 `vXxx()` 產生的 HTML、`refreshSummary_()` 算出的列）。
 
 ### 5. 禁止欺騙驗證
@@ -151,10 +165,10 @@ cp apps-script/Code.gs /tmp/elp-code.js && node --check /tmp/elp-code.js
 | 編號 | 觸發條件 | 必查項目 |
 |---|---|---|
 | R-01 | 改了 `P` / `S` 的資料結構或 localStorage key | 載入缺少新欄位的舊資料不會壞掉（`Object.assign(newProg(), …)`、`migrate()`）；後端 `refreshSummary_()` 讀的欄位仍正確 |
-| R-02 | 改了 `gas()`、同步或 `updated` 比較邏輯 | 網路失敗或重送兩次不會讓較新的資料被較舊的覆蓋；兩台裝置同時使用時行為正確；離線時仍可使用 |
+| R-02 | 改了 `gas()`、同步或 `updated` 比較邏輯 | 網路失敗或重送兩次不會讓較新的資料被較舊的覆蓋；兩台裝置同時使用時行為正確；離線時仍可使用；`sync.js` 通過 |
 | R-03 | 改了畫面、`data-act`、按鈕事件 | 在真實瀏覽器點擊驗證；三種練習情境、深淺風格都正常；`stopSeq()` 等離開時的清理有執行 |
 | R-04 | 改了 `TOPICS` / `ARTICLES` / `VOCAB` 內容 | 只在陣列尾端新增，未改動既有順序（句子 ID 是進度 key）；單字有出現在句子中（`findWord` 找得到） |
-| R-05 | 改了 `apps-script/Code.gs` | 新函式已加進 `API_FNS`；寫入有包在 `withLock_()` 中；提醒使用者要部署新版本 |
+| R-05 | 改了 `apps-script/Code.gs` | 新函式已加進 `API_FNS`；寫入有包在 `withLock_()` 中；`backend-props.js` 通過；提醒使用者要部署新版本 |
 | R-06 | 把內容輸出成 HTML | 使用者輸入（學習者名字等）與內容文字都經過 `h()` 跳脫 |
 | R-07 | 新增 log、錯誤回報或外部請求 | 不可把學習者名字、進度等個人資料送到 Apps Script 以外的地方或印進記錄 |
 
@@ -163,6 +177,6 @@ cp apps-script/Code.gs /tmp/elp-code.js && node --check /tmp/elp-code.js
 發現先前漏掉的 bug 時：
 
 1. 分析為什麼當時沒抓到，以及能不能從 diff 的觸發條件辨識出來（先想想會不會誤報太多）。
-2. 每次都該擋下的確定性問題 → 補進第 2、3 步的檢查；常犯的慣性錯誤 → 在「開發慣例」加一行禁令；特定模組的陷阱 → 在上表加一列。
+2. 每次都該擋下的確定性問題 → 在 `tests/` 加一個會失敗的測試；常犯的慣性錯誤 → 在「開發慣例」加一行禁令；特定模組的陷阱 → 在上表加一列。
 3. 順便刪掉重複或過時的規則，保持本檔精簡。
 - `config.js` 的 `ELP_API` 是正式後端網址，除非使用者要求，不要更動。

@@ -36,7 +36,8 @@ function doPost(e) {
   var out;
   try {
     var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    var fn = API_FNS[req.fn];
+    // 只認 API_FNS 自己的屬性，避免 "constructor"、"toString" 等繼承來的名稱繞過白名單
+    var fn = Object.prototype.hasOwnProperty.call(API_FNS, req.fn) ? API_FNS[req.fn] : null;
     if (!fn) throw new Error('unknown function: ' + req.fn);
     out = { ok: true, result: fn.apply(null, req.args || []) };
   } catch (err) {
