@@ -374,6 +374,34 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .dict-in:focus{outline:none;border-color:var(--accent,#f5a)}
 .mic-help{margin:10px 0 4px;padding:10px 12px;border-radius:14px;background:var(--warm-2,#fff3d6);color:var(--ink,#333);font-size:14px;line-height:1.6;text-align:left}
 .cl-link{margin:10px 0 8px;padding:10px 12px;border-radius:12px;background:var(--good-2,#e6f6ec);font-size:13px;word-break:break-all;text-align:left}
+.bcard{cursor:pointer}
+.brow{display:flex;align-items:center;gap:12px}
+.binfo{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.binfo b{font-size:17px}
+.tag2{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--bad-2,#fde2e2);color:var(--bad,#c44);white-space:nowrap}
+.tag2.ok{background:var(--good-2,#e3f6ea);color:var(--good,#2a8a55)}
+.bstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0 8px;text-align:center}
+.bstats b{display:block;font-size:20px}.bstats span{font-size:11px;color:var(--muted,#888)}
+.bweek{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+.hdots{display:flex;gap:5px}
+.hd{display:inline-block;width:14px;height:14px;border-radius:4px;background:#eee8ec}
+.hd.h1,.cd.h1{background:#d9f2e0}.hd.h2,.cd.h2{background:#a9e2bb}.hd.h3,.cd.h3{background:#6fcf8e}.hd.h4,.cd.h4{background:#36b062;color:#fff}
+.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calh b{font-size:17px}.calh .x[disabled]{opacity:.3}
+.calw,.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.calw span{font-size:12px;color:var(--muted,#888);padding:2px 0}
+.cd{aspect-ratio:1;border:0;border-radius:10px;background:#f3eef1;font:inherit;font-size:14px;color:inherit;cursor:pointer;padding:0}
+.cd.empty{background:none;cursor:default}.cd[disabled]{opacity:.35;cursor:default}
+.cd.today{outline:2px dashed var(--accent,#f58bb0);outline-offset:1px}
+.cd.sel{box-shadow:0 0 0 3px var(--ink,#4a3540) inset}
+.calf{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;flex-wrap:wrap;gap:6px}
+.legend{display:flex;align-items:center;gap:3px;color:var(--muted,#888)}.legend .hd{width:11px;height:11px}
+.dlist div{display:flex;justify-content:space-between;padding:8px 2px;border-bottom:1px dashed rgba(0,0,0,.1)}
+.dlist div:last-child{border-bottom:0}
+.spchart{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:6px}
+.spb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.spb i{display:block;width:70%;max-width:26px;border-radius:6px 6px 2px 2px;background:var(--accent,#f58bb0)}
+.spv{font-size:11px;margin-bottom:2px}.spd{font-size:10px;color:var(--muted,#888);margin-top:3px}
 </style>
 </head>
 <body data-skin="sticker">
@@ -7986,7 +8014,7 @@ const VOCAB_ACT = {
     if(!S.vk) S.vk = {};
     if(el.dataset.m==="1"){ S.vk[k] = 1; U.vs.known++; }
     else { delete S.vk[k]; learn([k]); addPend("w:"+k); U.vs.unknown++; }
-    U.vs.i++; U.vs.show = false;
+    U.vs.i++; U.vs.show = false; logAdd("v");
     if(U.vs.i >= U.vs.q.length){ reward(Math.ceil(U.vs.q.length/5)); bump(); }
     saveProg(); render();
     if(U.vs.i < U.vs.q.length) speakEn(VINFO[U.vs.q[U.vs.i]].w);
@@ -8001,7 +8029,7 @@ const VOCAB_ACT = {
     const k = S.vday.keys[U.vd.i];
     if(S.vk && S.vk[k]) delete S.vk[k];
     learn([k]); addPend("w:"+k); U.bld = null;
-    U.vd.i++; U.vd.step = 0;
+    U.vd.i++; U.vd.step = 0; logAdd("v");
     if(U.vd.i > S.vday.done) S.vday.done = U.vd.i;
     if(U.vd.i >= S.vday.keys.length){ reward(Math.ceil(S.vday.keys.length/3)); bump(); }
     saveProg(); render();
@@ -8073,6 +8101,7 @@ function enterProfile(id){
   cur = P.list.find(p=>p.id===id); if(!cur) return;
   lsSet("elp-last", id);
   S = Object.assign(newProg(), parse(lsGet("elp-prog-"+id)) || {});
+  logPrune(S);
   applySkin(); U.view = "home"; U.greet = bline("greet");
   render();
   if(GAS){
@@ -8139,7 +8168,9 @@ function todayN(){ return S.todays.date===today() ? S.todays.n : 0; }
 function reward(n){ if(n>0){ S.stars += n; pop(n); } }
 function learn(keys){
   let ch = false;
-  keys.forEach(k=>{ k = k.toLowerCase(); if(WORDS[k] && !S.words[k]){ S.words[k] = [0, Date.now(), Date.now()]; ch = true; } });
+  let nw = 0;
+  keys.forEach(k=>{ k = k.toLowerCase(); if(WORDS[k] && !S.words[k]){ S.words[k] = [0, Date.now(), Date.now()]; ch = true; nw++; } });
+  if(nw) logAdd("w", nw);
   if(ch) saveProg();
 }
 function dueKeys(){ const n = Date.now(); return Object.keys(S.words).filter(k=>WORDS[k] && S.words[k][1] <= n); }
@@ -8316,7 +8347,8 @@ function vProfiles(){
   <div class="pgrid">
     ${P.list.map(p=>`<div class="pcard" data-act="enter" data-id="${h(p.id)}">${avCircle(p.avatar,74)}<span class="mini">${monster(p.partner||"bobo","normal",40)}</span><b>${h(p.name)}</b><small>${LEVELS[(p.level||1)-1].name}</small></div>`).join("")}
     <div class="pcard add" data-act="new-profile">${li("users",36)}<b>新增學習者</b><small>每個人有自己的進度</small></div>
-  </div>`;
+  </div>
+  ${P.list.length ? `<button class="btn ghost" style="margin-top:14px" data-act="board-open">${li("users",18)} 家長看板：看大家的練習狀況</button>` : ""}`;
 }
 function partnerGrid(sel, act){
   return `<div class="kgrid">${PARTNERS.map(id=>`<button type="button" class="pk ${id===sel?"on":""}" data-act="${act}" data-p="${id}">${id===sel?'<span class="tag">夥伴</span>':""}${monster(id, id===sel?"cheer":"normal", 86)}<b style="color:${MON[id].line}">${MON[id].name}</b><span>${PROFILE[id].trait}</span></button>`).join("")}</div>`;
@@ -8400,7 +8432,8 @@ function pendBanner(){
 }
 function vHome(){
   const items = homeItems();
-  const stats = `<div class="card"><div class="minis"><div><b>${todayN()}</b><span>今天練習</span></div><div><b>${Object.keys(S.words).length}</b><span>累積單字</span></div><div><b>${Object.keys(S.done).length}</b><span>完成句／篇</span></div></div></div>`;
+  const stats = `<div class="card"><div class="minis"><div><b>${todayN()}</b><span>今天練習</span></div><div><b>${Object.keys(S.words).length}</b><span>累積單字</span></div><div><b>${Object.keys(S.done).length}</b><span>完成句／篇</span></div></div>
+    <button class="btn ghost small" style="margin-top:10px" data-act="rec-open" data-id="${h(cur.id)}">${li("words",18)} 看我的學習紀錄 ›</button></div>`;
   if(!isCute()){
     const d = new Date(), wk = "日一二三四五六"[d.getDay()];
     const goal = 10, n = Math.min(todayN(), goal);
@@ -8734,7 +8767,7 @@ function finishGame(){
   let stars = g.score;
   if(g.id==="memory") stars = g.moves <= 9 ? 6 : g.moves <= 13 ? 4 : 2;
   if(g.id==="speed") stars = Math.ceil(g.score/2);
-  g.stars = stars; reward(stars); bump(); saveProg();
+  g.stars = stars; reward(stars); logAdd("g"); bump(); saveProg();
 }
 function answer(ok, keys){
   const g = U.g;
@@ -9010,6 +9043,7 @@ function speakBox(target){
   if(U.rec) res = `<div class="live" id="live">請開始說…</div>`;
   else if(U.shadow){
     const c = compareText(s.en, U.shadow.heard);
+    if(!U.shadow.logged){ U.shadow.logged = true; logSpeak(c.score); }
     const col = c.score>=75 ? "var(--good-2);color:var(--good)" : c.score>=45 ? "var(--warm-2);color:var(--warm)" : "var(--bad-2);color:var(--bad)";
     const word = c.score>=100 ? "完美！" : c.score>=75 ? "很棒！" : c.score>=45 ? "很接近了" : "再試一次";
     const tip = c.score>=100 ? "每個字都聽得出來，太厲害了！" :
@@ -9101,7 +9135,7 @@ const MODE_ACT = {
   "cu-slow"(){ const k = U.cu.q[U.cu.i]; if(!k) return; const id = k.slice(2); speakEn(k.startsWith("w:") ? WORDS[id].w : SENT[id].en, slowRate()); },
   "cu-next"(){
     stopRec(); U.rec = false; U.shadow = null; U.selfRated = null; U.dictVal = "";
-    const k = U.cu.q[U.cu.i]; if(k && S.pend) delete S.pend[k];
+    const k = U.cu.q[U.cu.i]; if(k && S.pend) delete S.pend[k]; if(k) logAdd("c");
     U.cu.i++; if(U.cu.i >= U.cu.q.length){ reward(Math.ceil(U.cu.q.length/3)); bump(); }
     saveProg(); render();
     if(U.cu.i < U.cu.q.length) MODE_ACT["cu-say"]();
@@ -9223,6 +9257,8 @@ function vSettings(){
   </div>` : ""}
   ${BK.k && !GAS_RUN ? `<div class="card"><div class="label">目前連到的班級</div><p class="muted" style="margin:0">這個連結的資料存在「${h(BK.n||"班級")}」老師的試算表。</p></div>` : ""}
   <div class="stack">
+    <button class="btn sec" data-act="rec-open" data-id="${h(cur.id)}">${li("words",18)} 我的學習紀錄</button>
+    <button class="btn sec" data-act="board-open">${li("users",18)} 家長看板（看大家的練習狀況）</button>
     <button class="btn sec" data-act="go" data-v="profiles">${li("users",18)} 切換學習者</button>
     <button class="btn ${U.arm==="reset"?"warm":"ghost"}" data-act="reset">${U.arm==="reset"?"再按一次：清除 "+h(cur.name)+" 的所有進度":"清除這位學習者的進度"}</button>
     <button class="btn ${U.arm==="del"?"warm":"ghost"}" data-act="del-profile">${U.arm==="del"?"再按一次：刪除 "+h(cur.name):"刪除這位學習者"}</button>
@@ -9234,10 +9270,10 @@ let lastView = "";
 function render(){
   const v = U.view;
   const map = {catchup:vCatchup, plisten:vPodcast, profiles:vProfiles, edit:vEdit, partner:vPartner, avatar:vAvatar, games:vGames, vsort:vSort, vdaily:vDaily, vlist:vList, home:vHome, topics:vTopics, articles:vArticles, lesson:vLesson, tdone:vTopicDone,
-               listen:vListen, article:vArticle, game:vGame, review:vReview, words:vWords, settings:vSettings};
+               listen:vListen, article:vArticle, game:vGame, review:vReview, words:vWords, settings:vSettings, board:vBoard, record:vRecord};
   if(!map[v]) return;
   $("#main").innerHTML = map[v]();
-  const focus = ["lesson","listen","article","game","review","edit","profiles","tdone","partner","avatar","games","vsort","vdaily","vlist","catchup","plisten"].includes(v);
+  const focus = ["lesson","listen","article","game","review","edit","profiles","tdone","partner","avatar","games","vsort","vdaily","vlist","catchup","plisten","board","record"].includes(v);
   const tabs = $("#tabs");
   if(cur && !focus){
     tabs.style.display = "flex";
@@ -9252,6 +9288,155 @@ function render(){
   $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : "";
   if(lastView !== v){ window.scrollTo(0,0); lastView = v; }
 }
+
+/* ================= 學習紀錄（每日紀錄、日曆、家長看板） =================
+   S.log = { "2026-11-18": { s:句子, a:文章, w:新單字, v:單字卡, r:複習, g:遊戲, c:補聽說, sp:跟讀次數, ss:跟讀分數加總, t:秒數 } } */
+function logAdd(f, n){
+  if(!S) return; n = (n==null) ? 1 : n; if(!n) return;
+  if(!S.log) S.log = {};
+  const t = today(), d = S.log[t] || (S.log[t] = {});
+  d[f] = (d[f]||0) + n;
+}
+function logPrune(p){
+  if(!p || !p.log) return;
+  const cut = Date.now() - 400*DAY;
+  Object.keys(p.log).forEach(k=>{ const d = dparse(k); if(d && d.getTime() < cut) delete p.log[k]; });
+}
+function dparse(k){ const m = /^(\d+)-(\d+)-(\d+)$/.exec(k||""); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; }
+function dayScore(d){ return d ? (d.s||0)+(d.a||0)*3+(d.w||0)+(d.v||0)+(d.r||0)+(d.g||0)*3+(d.c||0)+(d.sp||0)+Math.floor((d.t||0)/60) : 0; }
+function dayActive(d){ return !!d && (dayScore(d) > 0 || (d.t||0) >= 60); }
+function mins(sec){ return Math.round((sec||0)/60); }
+function weekStats(p){
+  const L = (p && p.log) || {}; let days = 0, t = 0, items = 0, sp = 0, ss = 0;
+  for(let i=0;i<7;i++){ const d = L[dstr(new Date(Date.now()-i*DAY))]; if(dayActive(d)){ days++; } if(d){ t += d.t||0; items += dayScore(d); sp += d.sp||0; ss += d.ss||0; } }
+  return {days, min: mins(t), items, avg: sp ? Math.round(ss/sp) : null};
+}
+function lastActive(p){
+  const L = (p && p.log) || {};
+  const ks = Object.keys(L).filter(k=>dayActive(L[k])).sort((a,b)=>dparse(b)-dparse(a));
+  if(ks.length) return ks[0];
+  return p && p.streak && p.streak.last || "";
+}
+function agoText(k){
+  const d = dparse(k); if(!d) return "還沒有紀錄";
+  const t0 = dparse(today()), n = Math.round((t0 - d)/DAY);
+  return n<=0 ? "今天" : n===1 ? "昨天" : n + " 天前";
+}
+
+/* 練習時間：畫面開著、最近 90 秒內有操作或正在播放，就每 15 秒記一次 */
+let lastTouch = Date.now();
+["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev, ()=>{ lastTouch = Date.now(); }, {passive:true}));
+setInterval(()=>{
+  if(!cur || !S || document.visibilityState !== "visible") return;
+  const busy = (Date.now() - lastTouch < 90000) || (window.speechSynthesis && speechSynthesis.speaking) || (U.pl && U.pl.playing);
+  if(!busy || ["profiles","edit","board","record"].includes(U.view)) return;
+  logAdd("t", 15); saveProg();
+}, 15000);
+
+/* 跟讀分數：每次結果只記一次 */
+function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); saveProg(); }
+
+/* 讀取任何一位學習者的進度（家長看板用） */
+function loadProgOf(id){
+  const local = parse(lsGet("elp-prog-"+id));
+  if(!GAS) return Promise.resolve(local);
+  return gas("getProgress", id).then(j=>{
+    const r = parse(j);
+    if(r && (!local || (r.updated||0) >= (local.updated||0))){ lsSet("elp-prog-"+id, JSON.stringify(r)); return r; }
+    return local;
+  }).catch(()=>local);
+}
+
+/* ---- 家長看板 ---- */
+function openBoard(){
+  U.board = {data:{}, loading:true}; U.view = "board"; render();
+  Promise.all(P.list.map(p=> (cur && cur.id===p.id && S ? Promise.resolve(S) : loadProgOf(p.id)).then(g=>{ U.board.data[p.id] = g || newProg(); })))
+    .then(()=>{ U.board.loading = false; if(U.view==="board") render(); });
+}
+function vBoard(){
+  const B = U.board || {data:{}};
+  const head = `<div class="lhead"><button class="x" data-act="board-exit" aria-label="返回">✕</button><b>家長看板</b><span style="width:40px"></span></div>`;
+  const cards = P.list.map(p=>{
+    const g = B.data[p.id];
+    if(!g) return `<div class="card bcard"><div class="brow">${avCircle(p.avatar,54)}<div class="binfo"><b>${h(p.name)}</b><span class="muted">讀取中…</span></div></div></div>`;
+    const w = weekStats(g), la = lastActive(g), td = dayActive((g.log||{})[today()]);
+    const dots = Array.from({length:7},(_,i)=>{ const k = dstr(new Date(Date.now()-(6-i)*DAY)), d = (g.log||{})[k]; const lv = heatLv(d); return `<i class="hd h${lv}" title="${k}"></i>`; }).join("");
+    return `<div class="card bcard" data-act="rec-open" data-id="${h(p.id)}">
+      <div class="brow">${avCircle(p.avatar,54)}<div class="binfo"><b>${h(p.name)}</b><span class="muted">${LEVELS[(p.level||1)-1].name} · 最後練習：${agoText(la)}</span></div>
+      <span class="tag2 ${td?"ok":""}">${td?"今天有練":"今天還沒練"}</span></div>
+      <div class="bstats"><div><b>${w.days}</b><span>近7天練習天數</span></div><div><b>${w.min}</b><span>近7天分鐘</span></div><div><b>${w.avg==null?"—":w.avg}</b><span>跟讀平均分</span></div><div><b>${g.stars||0}</b><span>星星</span></div></div>
+      <div class="bweek"><span class="muted">近 7 天</span><span class="hdots">${dots}</span><span class="muted">看詳細 ›</span></div>
+    </div>`;
+  }).join("");
+  return head + `<p class="muted center" style="margin:0 0 10px">點一個人可以看他的練習日曆和每天的紀錄。<br>每日紀錄是從這次更新開始累積的。</p>` + (P.list.length ? cards : `<div class="card center muted">還沒有學習者</div>`);
+}
+
+/* ---- 學習紀錄（個人） ---- */
+function heatLv(d){ const s = dayScore(d); return !d || (!s && (d.t||0)<60) ? 0 : s < 6 ? 1 : s < 15 ? 2 : s < 30 ? 3 : 4; }
+function openRecord(id, from){
+  const p = P.list.find(x=>x.id===id); if(!p) return;
+  const now = new Date();
+  U.rcd = {id, from: from || U.view, y: now.getFullYear(), m: now.getMonth(), sel: today(), prog: (cur && cur.id===id && S) ? S : (U.board && U.board.data[id]) || null};
+  U.view = "record"; render();
+  if(!U.rcd.prog) loadProgOf(id).then(g=>{ if(U.rcd && U.rcd.id===id){ U.rcd.prog = g || newProg(); if(U.view==="record") render(); } });
+}
+function dayDetail(d){
+  if(!d || !dayActive(d)) return `<p class="muted center" style="margin:6px 0">這天沒有練習紀錄。</p>`;
+  const rows = [["t","練習時間", mins(d.t)+" 分鐘"],["s","練習句子", (d.s||0)+" 句"],["a","聽完文章", (d.a||0)+" 篇"],["w","新學單字", (d.w||0)+" 個"],
+    ["v","單字卡", (d.v||0)+" 張"],["r","複習單字", (d.r||0)+" 個"],["g","玩遊戲", (d.g||0)+" 次"],["c","補聽說", (d.c||0)+" 個"],
+    ["sp","開口跟讀", (d.sp||0)+" 次" + (d.sp ? "（平均 "+Math.round((d.ss||0)/d.sp)+" 分）" : "")]].filter(r=>d[r[0]]);
+  return `<div class="dlist">${rows.map(r=>`<div><span>${r[1]}</span><b>${r[2]}</b></div>`).join("")}</div>`;
+}
+function vRecord(){
+  const R = U.rcd, p = P.list.find(x=>x.id===R.id), g = R.prog;
+  const head = `<div class="lhead"><button class="x" data-act="rec-exit" aria-label="返回">✕</button><b>${h(p?p.name:"")}的學習紀錄</b><span style="width:40px"></span></div>`;
+  if(!g) return head + `<div class="card center muted">讀取中…</div>`;
+  const L = g.log || {}, w = weekStats(g);
+  // 月曆
+  const first = new Date(R.y, R.m, 1), days = new Date(R.y, R.m+1, 0).getDate(), pad = first.getDay();
+  let mDays = 0, mMin = 0;
+  const cells = [];
+  for(let i=0;i<pad;i++) cells.push(`<span class="cd empty"></span>`);
+  for(let dd=1; dd<=days; dd++){
+    const k = R.y+"-"+(R.m+1)+"-"+dd, d = L[k], lv = heatLv(d);
+    if(dayActive(d)){ mDays++; mMin += d.t||0; }
+    const isT = k===today(), fut = new Date(R.y,R.m,dd) > new Date();
+    cells.push(`<button class="cd h${lv} ${k===R.sel?"sel":""} ${isT?"today":""}" ${fut?"disabled":""} data-act="rec-day" data-k="${k}">${dd}</button>`);
+  }
+  const now = new Date(), isCurMonth = R.y===now.getFullYear() && R.m===now.getMonth();
+  // 跟讀分數：最近 10 個有跟讀的日子
+  const spDays = Object.keys(L).filter(k=>L[k].sp).sort((a,b)=>dparse(a)-dparse(b)).slice(-10);
+  const chart = spDays.length ? `<div class="spchart">${spDays.map(k=>{ const v = Math.round(L[k].ss/L[k].sp), dd = dparse(k); return `<div class="spb"><span class="spv">${v}</span><i style="height:${Math.max(6,v)}%"></i><span class="spd">${dd.getMonth()+1}/${dd.getDate()}</span></div>`; }).join("")}</div>`
+    : `<p class="muted center" style="margin:6px 0">還沒有跟讀分數。在「跟著說」或「補聽說」開口說，就會記錄下來。</p>`;
+  const selD = dparse(R.sel);
+  return head + `
+  <div class="card"><div class="minis">
+    <div><b>${w.days}</b><span>近7天練習天數</span></div><div><b>${w.min}</b><span>近7天分鐘</span></div><div><b>${(g.streak && streakOf(g)) || 0}</b><span>連續天數</span></div>
+  </div></div>
+  <div class="card">
+    <div class="calh"><button class="x" data-act="rec-mon" data-d="-1" aria-label="上個月">‹</button><b>${R.y} 年 ${R.m+1} 月</b><button class="x" data-act="rec-mon" data-d="1" ${isCurMonth?"disabled":""} aria-label="下個月">›</button></div>
+    <div class="calw">${"日一二三四五六".split("").map(x=>`<span>${x}</span>`).join("")}</div>
+    <div class="cal">${cells.join("")}</div>
+    <div class="calf"><span class="muted">這個月練習 ${mDays} 天 · ${mins(mMin)} 分鐘</span><span class="legend">少<i class="hd h1"></i><i class="hd h2"></i><i class="hd h3"></i><i class="hd h4"></i>多</span></div>
+  </div>
+  <div class="card"><div class="label">${selD ? (selD.getMonth()+1)+" 月 "+selD.getDate()+" 日"+(R.sel===today()?"（今天）":"") : ""}做了什麼</div>${dayDetail(L[R.sel])}</div>
+  <div class="card"><div class="label">跟讀分數變化</div>${chart}</div>
+  <div class="card"><div class="label">累計</div><div class="dlist">
+    <div><span>練過的句子／文章</span><b>${Object.keys(g.done||{}).length}</b></div>
+    <div><span>生字本</span><b>${Object.keys(g.words||{}).length} 個字</b></div>
+    <div><span>已認識的單字</span><b>${Object.keys(g.vk||{}).filter(k=>g.vk[k]===1).length} 個</b></div>
+    <div><span>星星</span><b>${g.stars||0} 顆</b></div>
+  </div></div>`;
+}
+function streakOf(g){ const t=today(), y=dstr(new Date(Date.now()-DAY)); return (g.streak.last===t||g.streak.last===y) ? g.streak.count : 0; }
+const REC_ACT = {
+  "board-open"(){ openBoard(); },
+  "board-exit"(){ U.board = null; U.view = cur ? "home" : "profiles"; render(); },
+  "rec-open"(el){ openRecord(el.dataset.id || (cur && cur.id), U.view); },
+  "rec-exit"(){ const f = U.rcd && U.rcd.from; U.rcd = null; U.view = (f==="board") ? "board" : (cur ? (f && f!=="record" ? f : "home") : "profiles"); render(); },
+  "rec-day"(el){ U.rcd.sel = el.dataset.k; render(); },
+  "rec-mon"(el){ const d = +el.dataset.d; let m = U.rcd.m + d, y = U.rcd.y; if(m<0){ m=11; y--; } if(m>11){ m=0; y++; } U.rcd.m = m; U.rcd.y = y; render(); }
+};
 
 /* ================= 動作 ================= */
 function leaveActivity(){ stopSeq(); stopGameTimer(); if(typeof stopPodcast==="function" && U.pl && U.pl.playing) stopPodcast(); if(U.rec){ U.rec = false; stopRec(); } }
@@ -9349,7 +9534,7 @@ const ACT = {
     const s = curSent(); learn(s.w.map(x=>x[0]));
     addPend("s:"+s.id); U.bld = null;
     if(!S.done[s.id]){ S.done[s.id] = 1; reward(1); }
-    bump(); saveProg();
+    logAdd("s"); bump(); saveProg();
     if(U.si+1 < U.list.length){ U.si++; resetStep(); }
     else U.view = "tdone";
     render();
@@ -9381,7 +9566,7 @@ const ACT = {
     stopSeq();
     const k = "art:"+U.art.id;
     if(!S.done[k]){ const right = U.ans.filter((x,i)=>x===U.art.q[i][2]).length; S.done[k] = 1; reward(3 + right); }
-    bump(); saveProg(); U.view = "articles"; render();
+    logAdd("a"); bump(); saveProg(); U.view = "articles"; render();
   },
 
   review(){
@@ -9398,7 +9583,7 @@ const ACT = {
     if(r===0){ st[0] = 1; st[1] = n; U.rstats.a++; if(U.rq.slice(U.rc+1).indexOf(k) < 0) U.rq.push(k); }
     else if(r===1){ st[0] = Math.max(1, st[0]); st[1] = n + DAY; U.rstats.b++; }
     else { st[0] = Math.min(6, st[0]+1); st[1] = n + INTERVAL[st[0]]*DAY; U.rstats.c++; }
-    U.rc++; U.rphase = "listen";
+    U.rc++; U.rphase = "listen"; logAdd("r");
     if(U.rc >= U.rq.length){ reward(U.rstats.c); bump(); }
     saveProg(); render();
     if(U.rc < U.rq.length) speakEn(WORDS[U.rq[U.rc]].w);
@@ -9424,7 +9609,7 @@ const ACT = {
   }
 };
 
-Object.assign(ACT, GAME_ACT, VOCAB_ACT, MODE_ACT);
+Object.assign(ACT, GAME_ACT, VOCAB_ACT, MODE_ACT, REC_ACT);
 ACT.game = GAME_ACT.games;
 
 document.addEventListener("click", e=>{
