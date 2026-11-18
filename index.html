@@ -373,6 +373,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .dict-in{width:100%;box-sizing:border-box;font-size:18px;padding:12px 14px;border-radius:14px;border:2px solid var(--line,#ddd);background:var(--card,#fff);color:inherit}
 .dict-in:focus{outline:none;border-color:var(--accent,#f5a)}
 .mic-help{margin:10px 0 4px;padding:10px 12px;border-radius:14px;background:var(--warm-2,#fff3d6);color:var(--ink,#333);font-size:14px;line-height:1.6;text-align:left}
+.cl-link{margin:10px 0 8px;padding:10px 12px;border-radius:12px;background:var(--good-2,#e6f6ec);font-size:13px;word-break:break-all;text-align:left}
 </style>
 </head>
 <body data-skin="sticker">
@@ -7733,6 +7734,17 @@ const BUDDY_LINES = {
 
 
 <script>
+/* ================= 資料要存到哪一個試算表 =================
+   預設：config.js 裡的網址（自己家的）。
+   老師的班級：網址加上 ?k=部署ID&n=班級名稱，就會連到老師自己的試算表，
+   而且這台裝置上的暫存資料也會分開放，不會跟家裡的混在一起。 */
+const BK = (function(){
+  let k = "", n = "";
+  try{ const q = new URLSearchParams(location.search); k = (q.get("k")||"").trim(); n = (q.get("n")||"").trim(); }catch(e){}
+  if(!/^[A-Za-z0-9_-]{20,}$/.test(k)) k = "";
+  return {k, n: n.slice(0,30)};
+})();
+const NS = BK.k ? "c" + BK.k.slice(-12) + ":" : "";
 /* ================= 基本設定 ================= */
 const DAY = 864e5;
 const INTERVAL = [0,1,2,4,7,15,30];
@@ -7754,9 +7766,9 @@ function reEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 const sleep = ms => new Promise(r=>setTimeout(r, ms));
-function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
-function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function lsGet(k){ try{ return localStorage.getItem(NS+k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(NS+k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(NS+k); }catch(e){} }
 function parse(s){ try{ return s ? JSON.parse(s) : null; }catch(e){ return null; } }
 let toastT;
 function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),2200); }
@@ -8004,7 +8016,7 @@ const VOCAB_ACT = {
    1) 直接放在 Apps Script 上 → 用 google.script.run
    2) 放在 GitHub Pages 等網頁空間 → config.js 裡的 ELP_API（Apps Script 網址），用 fetch 呼叫 */
 const GAS_RUN = (typeof google !== "undefined" && google.script && google.script.run) ? true : false;
-const API_URL = (typeof window.ELP_API === "string" && /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(window.ELP_API.trim())) ? window.ELP_API.trim() : "";
+const API_URL = BK.k ? "https://script.google.com/macros/s/" + BK.k + "/exec" : (typeof window.ELP_API === "string" && /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(window.ELP_API.trim())) ? window.ELP_API.trim() : "";
 const GAS = GAS_RUN || !!API_URL;
 function gas(fn, ...args){
   return new Promise((res, rej)=>{
@@ -8300,7 +8312,7 @@ function react(ok){ U.react = ok ? {e:"cheer", t:bline("right")} : {e:"oops", t:
 /* ================= 畫面：學習者 ================= */
 function vProfiles(){
   return `
-  <div class="hero"><span class="mon">${monster("bobo","happy",104)}</span><div class="bubble">嗨！今天是誰要來練習英文呢？</div></div>
+  <div class="hero"><span class="mon">${monster("bobo","happy",104)}</span><div class="bubble">${BK.k && !GAS_RUN ? "歡迎來到「"+h(BK.n||"班級")+"」！<br>" : ""}嗨！今天是誰要來練習英文呢？</div></div>
   <div class="pgrid">
     ${P.list.map(p=>`<div class="pcard" data-act="enter" data-id="${h(p.id)}">${avCircle(p.avatar,74)}<span class="mini">${monster(p.partner||"bobo","normal",40)}</span><b>${h(p.name)}</b><small>${LEVELS[(p.level||1)-1].name}</small></div>`).join("")}
     <div class="pcard add" data-act="new-profile">${li("users",36)}<b>新增學習者</b><small>每個人有自己的進度</small></div>
@@ -8318,7 +8330,7 @@ function avatarGrid(sel, act){
 function vEdit(){
   const e = U.edit;
   return `
-  <div class="lhead">${P.list.length?`<button class="x" data-act="go" data-v="profiles" aria-label="返回">✕</button>`:"<span></span>"}<b>新增學習者</b><span style="width:40px"></span></div>
+  <div class="lhead">${P.list.length?`<button class="x" data-act="go" data-v="profiles" aria-label="返回">✕</button>`:"<span></span>"}<b>新增學習者${BK.k && !GAS_RUN ? "・"+h(BK.n||"班級") : ""}</b><span style="width:40px"></span></div>
   <div class="card">
     <div class="label">名字</div>
     <input class="field" id="pname" maxlength="12" placeholder="例如：媽媽、小安" value="${h(e.name)}">
@@ -9188,10 +9200,19 @@ function vSettings(){
   </div>
   <div class="card">
     <div class="label">狀態</div>
-    <div class="setrow"><span>進度保存</span><span class="muted">${GAS ? "存在 Google 試算表" : "只存在這台裝置（預覽版）"}</span></div>
+    <div class="setrow"><span>進度保存</span><span class="muted">${!GAS ? "只存在這台裝置（預覽版）" : BK.k && !GAS_RUN ? "存在「"+h(BK.n||"班級")+"」的試算表" : "存在 Google 試算表"}</span></div>
     <div class="setrow"><span>跟讀錄音比對</span><span class="muted">${!SR ? "這個瀏覽器不支援，可改用語音輸入" : micDenied ? "麥克風被擋住了（"+h(micErr)+"）" : "可以使用"}</span></div>
     <div class="setrow"><span>累積星星</span><span class="muted">${S.stars} 顆</span></div>
   </div>
+  ${!GAS_RUN && !BK.k ? `<div class="card">
+    <div class="label">建立班級連結（給老師用）</div>
+    <p class="muted" style="margin:0 0 8px">老師用自己的 Apps Script 部署後，把網址貼在這裡，就會產生一個專屬連結。學生用這個連結練習，資料會存在老師自己的試算表，跟你家的資料完全分開。</p>
+    <input id="clUrl" class="dict-in" style="font-size:15px" placeholder="貼上老師的 Apps Script 網址（/exec 結尾）" value="${h(U.clUrl||"")}">
+    <input id="clName" class="dict-in" style="font-size:15px;margin-top:8px" placeholder="班級名稱，例如：五年甲班" value="${h(U.clName||"")}">
+    <button class="btn" style="margin-top:8px" data-act="cl-make">產生班級連結</button>
+    ${U.clLink ? `<div class="cl-link">${h(U.clLink)}</div><div class="row"><button class="btn sec small" data-act="cl-copy">複製連結</button><a class="btn ghost small" href="${h(U.clLink)}" target="_blank" rel="noopener">打開看看</a></div>` : ""}
+  </div>` : ""}
+  ${BK.k && !GAS_RUN ? `<div class="card"><div class="label">目前連到的班級</div><p class="muted" style="margin:0">這個連結的資料存在「${h(BK.n||"班級")}」老師的試算表。</p></div>` : ""}
   <div class="stack">
     <button class="btn sec" data-act="go" data-v="profiles">${li("users",18)} 切換學習者</button>
     <button class="btn ${U.arm==="reset"?"warm":"ghost"}" data-act="reset">${U.arm==="reset"?"再按一次：清除 "+h(cur.name)+" 的所有進度":"清除這位學習者的進度"}</button>
@@ -9298,6 +9319,19 @@ const ACT = {
   sayw(el){ const w = WORDS[el.dataset.k]; if(!w) return; speakEn(w.w); toast(w.w + " ＝ " + w.zh); },
   say(el){ speakEn(el.dataset.t); },
   self(el){ U.selfRated = el.dataset.r; render(); },
+  "cl-make"(){
+    const u = ($("#clUrl")||{}).value||"", n = (($("#clName")||{}).value||"").trim();
+    U.clUrl = u; U.clName = n;
+    const m = u.match(/script\.google\.com\/macros\/s\/([A-Za-z0-9_-]{20,})\/exec/);
+    if(!m){ U.clLink = ""; toast("網址看起來不對，要是 script.google.com/macros/s/…/exec"); render(); return; }
+    const base = location.origin + location.pathname;
+    U.clLink = base + "?k=" + m[1] + (n ? "&n=" + encodeURIComponent(n) : "");
+    render();
+  },
+  "cl-copy"(){
+    const t = U.clLink; if(!t) return;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(()=>toast("已複製班級連結")).catch(()=>{ window.prompt("請複製這個連結：", t); });
+  },
   "dict-toggle"(){ stopRec(); U.dict = !U.dict; try{ localStorage.setItem("elp_dict", U.dict?"1":"0"); }catch(e){} U.shadow = null; U.dictVal = ""; render(); if(U.dict){ setTimeout(()=>{ const i=$("#dictIn"); if(i) i.focus(); },50); } },
   "dict-check"(){ const i=$("#dictIn"); const v=(i&&i.value||"").trim(); if(!v){ toast("還沒有聽到內容，先按鍵盤的麥克風說說看"); return; } U.dictVal=v; U.shadow={heard:v}; render(); },
   mic(){ if(U.rec){ stopRec(); return; } stopAudio(); startRec(); render(); },
