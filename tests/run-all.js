@@ -11,6 +11,7 @@ const suites = [
   ['拼字複習', 'spelling.js', []],
   ['獎勵', 'rewards.js', []],
   ['隱藏版小怪獸', 'hidden.js', []],
+  ['套裝與節慶', 'sets.js', []],
   ['端到端', 'e2e.js', quick ? ['--clicks=60'] : []]
 ];
 const summary = [];
