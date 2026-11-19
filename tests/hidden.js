@@ -1,4 +1,4 @@
-// 隱藏版小怪獸測試：繪製、夥伴上鎖、神秘蛋、8 個成就、收藏冊與設成夥伴
+// 隱藏版小怪獸測試：繪製、夥伴上鎖、神秘蛋、每個成就、收藏冊與設成夥伴
 // 用法：node tests/hidden.js
 const { chromium, devices } = require('playwright');
 const fs = require('fs'), path = require('path');
@@ -26,7 +26,7 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     let day = 0, hour = 10;
     const nowMs = () => base.getTime() + day * DAY + (hour - 10) * 36e5;
     window.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(nowMs()); } static now() { return nowMs(); } };
-    const reset = () => { S.rw = newRw(); S.log = {}; S.sp = {}; S.done = {}; S.todays = { date: '', n: 0 }; S.streak = { last: '', count: 0 }; U.rwq = []; U.sheet = null; };
+    const reset = () => { S.rw = newRw(); S.log = {}; S.sp = {}; S.done = {}; S.vk = {}; S.stars = 0; S.todays = { date: '', n: 0 }; S.streak = { last: '', count: 0 }; U.rwq = []; U.sheet = null; };
     const IDS = Object.keys(HIDDEN);
 
     // H1 8 隻 × 6 種表情都畫得出來
@@ -78,7 +78,15 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
       scoop: [() => { S.rw.taskDays = 4; }, () => { S.rw.taskDays = 5; }],
       ember: [() => { rwGame({ id: 'speed', score: 19, stars: 10 }); }, () => { rwGame({ id: 'speed', score: 20, stars: 10 }); }],
       cacti: [() => { for (let i = 0; i < 9; i++) logSpeak(95); logSpeak(89); }, () => { logSpeak(90); }],
-      hoot:  [() => { hour = 21; for (let i = 0; i < 6; i++) { day++; bump(); } hour = 19; day++; bump(); }, () => { hour = 21; day++; bump(); hour = 10; }]
+      hoot:  [() => { hour = 21; for (let i = 0; i < 6; i++) { day++; bump(); } hour = 19; day++; bump(); }, () => { hour = 21; day++; bump(); hour = 10; }],
+      sunny: [() => { hour = 7; for (let i = 0; i < 4; i++) { day++; bump(); } hour = 8; day++; bump(); }, () => { hour = 7; day++; bump(); hour = 10; }],
+      tito:  [() => { for (let i = 0; i < 49; i++) S.log['2020-1-' + i] = { s: 1 }; S.log['2020-3-1'] = { t: 30 }; }, () => { S.log['2020-2-1'] = { w: 2 }; }],
+      kiko:  [() => { for (let i = 0; i < 99; i++) S.vk['w' + i] = 1; }, () => { S.vk.w99 = 1; }],
+      pixel: [() => { S.log['2020-1-1'] = { g: 30 }; S.log['2020-1-2'] = { g: 19 }; }, () => { S.log['2020-1-3'] = { g: 1 }; }],
+      jelly: [() => { S.stars = 499; }, () => { S.stars = 500; }],
+      nova:  [() => { ['a', 'b', 'c', 'd'].forEach(k => { S.rw.sky[k] = 1; }); S.rw.sky.all = 1; }, () => { S.rw.sky.e = 1; }],
+      peaco: [() => { S.rw.sets.a = 1; S.rw.sets.b = 1; }, () => { S.rw.sets.c = 1; }],
+      hammy: [() => { for (let i = 0; i < 39; i++) S.rw.own['t:x' + i] = 1; for (let i = 0; i < 5; i++) S.rw.own['h:y' + i] = 1; }, () => { S.rw.own['t:x39'] = 1; }]
     };
     for (const [id, [almost, reach]] of Object.entries(cases)) {
       reset(); day += 100; hour = 10;
@@ -89,7 +97,8 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
       const others = IDS.filter(k => k !== id && S.rw.own['h:' + k]);
       if (others.length) bad.push(id + ' 的條件順便解鎖了 ' + others);
     }
-    out.push(['H4 8 個成就各自在剛好達到時解鎖，不會提早、不會連帶解鎖別隻', bad]);
+    out.push([`H4 ${Object.keys(cases).length} 個成就各自在剛好達到時解鎖，不會提早、不會連帶解鎖別隻`, bad]);
+    if (Object.keys(cases).length !== IDS.length) bad.push('有隱藏版沒有成就測試');
 
     window.Date = RealDate; reset(); S.done = {}; saveProg();
     return out;
@@ -105,13 +114,14 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     await p.evaluate(() => { U.view = 'home'; render(); });
     await p.evaluate(() => { U.ppick = null; U.view = 'partner'; render(); });
     const n = await p.evaluate(() => document.querySelectorAll('.pk.locked').length);
-    if (n !== 8) bad.push('選擇夥伴畫面應該有 8 個上鎖的隱藏版，實際 ' + n);
+    const nH = await p.evaluate(() => Object.keys(HIDDEN).length);
+    if (n !== nH) bad.push(`選擇夥伴畫面應該有 ${nH} 個上鎖的隱藏版，實際 ` + n);
     await p.click('.pk.locked[data-p=ember]');
     if ((await p.evaluate(() => U.ppick)) === 'ember') bad.push('點上鎖的隱藏版還是選到了');
     await p.evaluate(() => ACT['p-pick']({ dataset: { p: 'ember' } }));
     if ((await p.evaluate(() => U.ppick)) === 'ember') bad.push('繞過按鈕也選到了');
     if (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) > 1) bad.push('選擇夥伴畫面超出寬度');
-    result('E1 新增學習者看不到隱藏版；選擇夥伴畫面顯示 8 個上鎖黑影，不能選', bad);
+    result('E1 新增學習者看不到隱藏版；選擇夥伴畫面顯示所有上鎖黑影，不能選', bad);
   }
 
   // E2 神秘蛋在首頁孵化 → 彈出隱藏版 → 設成學習夥伴 → 首頁與答題都換成牠
@@ -154,7 +164,8 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     if (await p.$('[data-act=shop-cat][data-c=h]')) bad.push('商店分頁出現了隱藏版分類');
     await p.click('[data-act=shop-tab][data-t=book]'); await p.click('[data-act=shop-cat][data-c=h]');
     const info = await p.evaluate(() => ({ cards: document.querySelectorAll('.shopit').length, unknown: [...document.querySelectorAll('.shopit b')].filter(b => b.textContent === '？？？').length, prog: /\d+ \/ \d+/.test(document.querySelector('#main').textContent) }));
-    if (info.cards !== 8 || info.unknown !== 7) bad.push('收藏冊應有 8 張、7 張未收集，實際 ' + JSON.stringify(info));
+    const nH2 = await p.evaluate(() => Object.keys(HIDDEN).length);
+    if (info.cards !== nH2 || info.unknown !== nH2 - 1) bad.push(`收藏冊應有 ${nH2} 張、${nH2 - 1} 張未收集，實際 ` + JSON.stringify(info));
     if (!info.prog) bad.push('沒收集的沒有顯示進度');
     if (!(await p.$('.shopit.own'))) bad.push('收集到的沒有顯示');
     await p.screenshot({ path: path.join(OUT, 'hidden-book.png') });

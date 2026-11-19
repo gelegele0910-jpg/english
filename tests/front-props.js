@@ -66,6 +66,11 @@ const { start, blockExternal } = require('./server');
       (ar.q || []).forEach((q, i) => { if (!(q[2] >= 0 && q[2] < q[1].length)) bad.push(`題目答案超出選項範圍 ${ar.id} 第 ${i + 1} 題`); });
       ar.w.forEach(([w]) => { if (!ar.s.some(s => findWord(s[0], w))) bad.push(`文章生字不在文中 ${ar.id}: "${w}"`); });
     });
+    // 靜音模式要顯示 KK 音標：每個生字都要有 PRON
+    const noKK = new Set();
+    TOPICS.forEach(t => Object.values(t.lv).forEach(a => a.forEach(x => x[2].forEach(([w]) => { if (!PRON[w.toLowerCase()]) noKK.add(w); }))));
+    ARTICLES.forEach(ar => ar.w.forEach(([w]) => { if (!PRON[w.toLowerCase()]) noKK.add(w); }));
+    if (noKK.size) bad.push(`${noKK.size} 個生字沒有 KK 音標（PRON）：` + [...noKK].slice(0, 10).join('、'));
     const tids = TOPICS.map(t => t.id); if (new Set(tids).size !== tids.length) bad.push('主題 id 重複');
     let vn = 0; Object.keys(VOCAB).forEach(k => VOCAB[k].forEach(v => { vn++; if (!(Array.isArray(v) && v.length === 6)) bad.push('單字格式錯誤 ' + k + ':' + v[0]); }));
     out.push([`F4 內容完整性（${TOPICS.length} 主題、${Object.keys(SENT).length} 句、${ARTICLES.length} 篇文章、${vn} 個分級單字）`, bad]);
