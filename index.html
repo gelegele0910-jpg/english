@@ -307,7 +307,21 @@ button.pill{border:0;font:inherit;color:inherit;cursor:pointer}
 .skybig{width:min(100%,320px);height:auto;border-radius:16px}
 .skyinfo{display:flex;flex-direction:column;gap:2px}.skyinfo b{font-size:18px}.skyinfo span{color:var(--muted);font-size:14px}
 .skygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:4px}
-.skyit{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12px;color:var(--muted)}
+.skyit{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12px;color:var(--muted);background:none;border:0;padding:0;font-family:inherit;cursor:pointer}
+.skyit:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:12px}
+.skysheet{display:flex;flex-direction:column;align-items:center}
+.skysheet .skybig{width:min(100%,360px)}
+.skyen{font-size:18px;font-weight:700;margin:10px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.skyfact{margin:0 0 6px;max-width:34em;line-height:1.6}
+.skybadge{display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap}
+/* 閃閃發亮 */
+.tw{animation:twinkle 3s ease-in-out infinite}
+.sg{animation:glowPulse 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.sd{animation:dotPulse 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.95}}
+@keyframes glowPulse{0%,100%{opacity:.18;transform:scale(.85)}50%{opacity:.5;transform:scale(1.25)}}
+@keyframes dotPulse{0%,100%{opacity:.85}50%{opacity:1;transform:scale(1.15)}}
+@media (prefers-reduced-motion: reduce){ .tw,.sg,.sd{animation:none!important} .tw{opacity:.6} }
 .skyit svg{width:100%;height:auto;border-radius:12px}
 .skyit b{font-size:13px;color:var(--ink)}
 .skyit.off svg{opacity:.55}
@@ -8061,20 +8075,20 @@ Object.assign(MA_SCENE, {
 });
 /* ---------- 星空圖：星座資料（座標 0～100）、星座徽章、滿天星座場景 ---------- */
 const SKY = [
-  {id:"dipper",  n:"北斗七星", p:[[10,30],[25,32],[38,38],[50,45],[52,62],[72,66],[76,48]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]},
-  {id:"orion",   n:"獵戶座",   p:[[30,15],[70,18],[42,48],[50,50],[58,52],[28,85],[74,82]], l:[[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]]},
-  {id:"aries",   n:"牡羊座",   p:[[15,65],[45,45],[65,40],[80,48]], l:[[0,1],[1,2],[2,3]]},
-  {id:"taurus",  n:"金牛座",   p:[[15,25],[40,50],[50,58],[58,48],[62,66],[85,20]], l:[[0,1],[1,2],[2,4],[1,3],[3,5]]},
-  {id:"gemini",  n:"雙子座",   p:[[28,15],[30,42],[26,78],[62,18],[64,45],[70,80]], l:[[0,1],[1,2],[3,4],[4,5],[0,3]]},
-  {id:"cancer",  n:"巨蟹座",   p:[[50,48],[32,22],[70,25],[45,82],[60,62]], l:[[0,1],[0,2],[0,4],[4,3]]},
-  {id:"leo",     n:"獅子座",   p:[[78,28],[66,18],[52,24],[50,38],[60,48],[30,52],[18,68],[42,66]], l:[[0,1],[1,2],[2,3],[3,4],[4,7],[7,6],[6,5],[5,3]]},
-  {id:"virgo",   n:"處女座",   p:[[15,30],[35,40],[50,35],[55,55],[75,60],[40,70],[88,45]], l:[[0,1],[1,2],[2,3],[3,4],[3,5],[4,6]]},
-  {id:"libra",   n:"天秤座",   p:[[50,15],[25,40],[75,42],[30,75],[70,72]], l:[[0,1],[0,2],[1,2],[1,3],[2,4]]},
-  {id:"scorpio", n:"天蠍座",   p:[[80,15],[70,28],[62,38],[55,50],[50,65],[42,78],[30,82],[22,72],[26,62]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]},
-  {id:"sagitt",  n:"射手座",   p:[[25,50],[40,40],[55,45],[70,35],[75,60],[55,65],[35,70]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,5]]},
-  {id:"capri",   n:"摩羯座",   p:[[15,25],[35,35],[55,40],[80,30],[70,60],[45,75],[25,55]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0]]},
-  {id:"aquar",   n:"水瓶座",   p:[[15,30],[35,25],[50,35],[60,55],[48,72],[70,80],[82,62]], l:[[0,1],[1,2],[2,3],[3,4],[3,6],[4,5]]},
-  {id:"pisces",  n:"雙魚座",   p:[[12,20],[25,30],[40,50],[55,70],[70,62],[85,55],[78,40],[90,35]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]}
+  {id:"dipper",  n:"北斗七星", p:[[10,30],[25,32],[38,38],[50,45],[52,62],[72,66],[76,48]], en:"Big Dipper", fact:"北斗七星是大熊座的一部分。順著勺口的兩顆星往前看，就能找到北極星。", l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]},
+  {id:"orion",   n:"獵戶座",   p:[[30,15],[70,18],[42,48],[50,50],[58,52],[28,85],[74,82]], en:"Orion", fact:"冬天夜空最好認的星座。中間三顆星排成一直線，叫做「獵戶的腰帶」。", l:[[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]]},
+  {id:"aries",   n:"牡羊座",   p:[[15,65],[45,45],[65,40],[80,48]], en:"Aries · The Ram", fact:"生日在 3/21～4/19 的人是牡羊座。牡羊座是黃道十二星座的第一個。", l:[[0,1],[1,2],[2,3]]},
+  {id:"taurus",  n:"金牛座",   p:[[15,25],[40,50],[50,58],[58,48],[62,66],[85,20]], en:"Taurus · The Bull", fact:"生日在 4/20～5/20 的人是金牛座。附近有一團小星星叫「昴宿星團」。", l:[[0,1],[1,2],[2,4],[1,3],[3,5]]},
+  {id:"gemini",  n:"雙子座",   p:[[28,15],[30,42],[26,78],[62,18],[64,45],[70,80]], en:"Gemini · The Twins", fact:"生日在 5/21～6/21 的人是雙子座。兩顆最亮的星像一對雙胞胎。", l:[[0,1],[1,2],[3,4],[4,5],[0,3]]},
+  {id:"cancer",  n:"巨蟹座",   p:[[50,48],[32,22],[70,25],[45,82],[60,62]], en:"Cancer · The Crab", fact:"生日在 6/22～7/22 的人是巨蟹座。中間有一團朦朧的「蜂巢星團」。", l:[[0,1],[0,2],[0,4],[4,3]]},
+  {id:"leo",     n:"獅子座",   p:[[78,28],[66,18],[52,24],[50,38],[60,48],[30,52],[18,68],[42,66]], en:"Leo · The Lion", fact:"生日在 7/23～8/22 的人是獅子座。最亮的那顆星叫「軒轅十四」。", l:[[0,1],[1,2],[2,3],[3,4],[4,7],[7,6],[6,5],[5,3]]},
+  {id:"virgo",   n:"處女座",   p:[[15,30],[35,40],[50,35],[55,55],[75,60],[40,70],[88,45]], en:"Virgo · The Maiden", fact:"生日在 8/23～9/22 的人是處女座。最亮的那顆星叫「角宿一」。", l:[[0,1],[1,2],[2,3],[3,4],[3,5],[4,6]]},
+  {id:"libra",   n:"天秤座",   p:[[50,15],[25,40],[75,42],[30,75],[70,72]], en:"Libra · The Scales", fact:"生日在 9/23～10/23 的人是天秤座。它是黃道十二星座裡唯一不是動物或人的。", l:[[0,1],[0,2],[1,2],[1,3],[2,4]]},
+  {id:"scorpio", n:"天蠍座",   p:[[80,15],[70,28],[62,38],[55,50],[50,65],[42,78],[30,82],[22,72],[26,62]], en:"Scorpio · The Scorpion", fact:"生日在 10/24～11/22 的人是天蠍座。蠍子的心臟是一顆紅色的亮星「心宿二」。", l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]},
+  {id:"sagitt",  n:"射手座",   p:[[25,50],[40,40],[55,45],[70,35],[75,60],[55,65],[35,70]], en:"Sagittarius · The Archer", fact:"生日在 11/23～12/21 的人是射手座。它的幾顆亮星連起來像一個茶壺。", l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,5]]},
+  {id:"capri",   n:"摩羯座",   p:[[15,25],[35,35],[55,40],[80,30],[70,60],[45,75],[25,55]], en:"Capricorn · The Sea-Goat", fact:"生日在 12/22～1/19 的人是摩羯座。傳說中它是一隻有魚尾巴的山羊。", l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0]]},
+  {id:"aquar",   n:"水瓶座",   p:[[15,30],[35,25],[50,35],[60,55],[48,72],[70,80],[82,62]], en:"Aquarius · The Water Bearer", fact:"生日在 1/20～2/18 的人是水瓶座。圖案像一個人拿著水瓶倒水。", l:[[0,1],[1,2],[2,3],[3,4],[3,6],[4,5]]},
+  {id:"pisces",  n:"雙魚座",   p:[[12,20],[25,30],[40,50],[55,70],[70,62],[85,55],[78,40],[90,35]], en:"Pisces · The Fishes", fact:"生日在 2/19～3/20 的人是雙魚座。兩條魚用一條長長的線綁在一起。", l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]}
 ];
 /** 星座圖案（給徽章與縮圖用）：box＝[左, 上, 寬]，lit＝點亮幾顆（null＝全部） */
 function skyShape(c, box, lit, opt){
@@ -8082,7 +8096,7 @@ function skyShape(c, box, lit, opt){
   const [x0, y0, w] = box, P = c.p.map(([x, y])=>[x0 + x / 100 * w, y0 + y / 100 * w]), n = lit == null ? P.length : lit;
   const line = c.l.filter(([a, b])=>a < n && b < n).map(([a, b])=>`<path d="M${P[a][0].toFixed(1)} ${P[a][1].toFixed(1)} L${P[b][0].toFixed(1)} ${P[b][1].toFixed(1)}" stroke="${opt.line || "#ffd66b"}" stroke-width="${opt.lw || w / 60}" stroke-linecap="round" opacity=".85"/>`).join("");
   const dots = P.map(([x, y], i)=>i < n
-    ? `${opt.glow ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(w / 18).toFixed(1)}" fill="#ffd66b" opacity=".25"/>` : ""}<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(opt.r || w / 45).toFixed(2)}" fill="${opt.dot || "#fff6c8"}"/>`
+    ? `${opt.glow ? `<circle class="sg" style="animation-delay:${(i * .37 % 2.4).toFixed(2)}s" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(w / 18).toFixed(1)}" fill="#ffd66b" opacity=".25"/>` : ""}<circle class="${opt.glow ? "sd" : ""}" style="${opt.glow ? `animation-delay:${(i * .37 % 2.4).toFixed(2)}s` : ""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(opt.r || w / 45).toFixed(2)}" fill="${opt.dot || "#fff6c8"}"/>`
     : opt.dim ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(w / 60).toFixed(2)}" fill="#8c86b8" opacity=".6"/>` : "").join("");
   return line + dots;
 }
@@ -9336,7 +9350,7 @@ function skyState(stars){
 }
 function rwSky(){
   const r = RW(), st = skyState(), fresh = [];
-  SKY.forEach((c, i)=>{ if(st.lit[i] >= c.p.length && !r.sky[c.id]){ r.sky[c.id] = 1; fresh.push("n:zod_" + c.id); } });
+  SKY.forEach((c, i)=>{ if(st.lit[i] >= c.p.length && !r.sky[c.id]){ r.sky[c.id] = today(); fresh.push("n:zod_" + c.id); } });   // 記下點亮的日期
   if(st.all && !r.sky.all){ r.sky.all = 1; fresh.push("s:allsky"); r.title = SKY_TITLE; }
   if(!fresh.length) return;
   if(fresh.length === 1) grant(fresh[0]);
@@ -9456,16 +9470,38 @@ function moveHtml(inner, x, loop){
 function meDance(size, play){ return moveHtml(avCircle(cur.avatar, size), moveOf(), false).replace("mv-once", play ? "mv-once" : "mv-still"); }
 
 /* 星空圖 */
+/** 背景的小星星（位置固定，每顆用不同節奏閃爍） */
+function skyField(n, seed){
+  let s = seed || 7; const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  return Array.from({length:n}, (_, i)=>{ const x = (rnd() * 96 + 2).toFixed(1), y = (rnd() * 96 + 2).toFixed(1), r = (.35 + rnd() * .55).toFixed(2);
+    return `<circle class="tw" style="animation-delay:${(rnd() * 3).toFixed(2)}s;animation-duration:${(2 + rnd() * 2.5).toFixed(2)}s" cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`; }).join("");
+}
+/** 一張星座大圖（主畫面與欣賞視窗共用） */
+function skyBig(c, lit, label){
+  return `<svg class="skybig" viewBox="0 0 100 100" role="img" aria-label="${h(label)}"><rect x="0" y="0" width="100" height="100" rx="8" fill="#262056"/>${skyField(34, c.id.length * 13 + c.p.length)}${skyShape(c, [8, 8, 84], lit, {glow:true, dim:true, lw:1, r:2})}</svg>`;
+}
+function vSkySheet(){
+  const c = SKY.find(x=>x.id === U.skyC); if(!c) return "";
+  const r = RW(), i = SKY.indexOf(c), st = skyState(), done = st.lit[i] >= c.p.length, id = "n:zod_" + c.id;
+  const date = typeof r.sky[c.id] === "string" ? r.sky[c.id].split("-").slice(1).join("/") : "";
+  const badge = r.own[id] ? (wearing(RW_BY[id]) ? `<span class="muted">徽章戴在身上了</span>` : `<button class="btn sec" data-act="rw-wear" data-id="${id}">戴上「${h(c.n)}徽章」</button>`) : "";
+  return `<div class="sheet-bg" data-act="sky-shut"></div><div class="sheet center skysheet">
+    <div class="sheet-h"><b>${h(c.n)}</b><button class="x" data-act="sky-shut" aria-label="關閉">✕</button></div>
+    ${skyBig(c, done ? null : st.lit[i], c.n)}
+    <p class="en skyen">${h(c.en)} <button class="btn ghost small" data-act="sky-say" aria-label="聽英文名字">${li("speaker",18)} 聽英文</button></p>
+    <p class="skyfact">${h(c.fact)}</p>
+    <p class="muted" style="margin:0 0 10px">${done ? (date ? `${date} 點亮` : "已點亮") : `正在點亮：${st.lit[i]} / ${c.p.length} 顆`}</p>
+    ${done ? `<div class="skybadge">${avCircle(Object.assign(previewAv(), {n:"zod_" + c.id}), 72)}${badge}</div>` : ""}
+  </div>`;
+}
 function vSky(){
   const st = skyState(), r = RW(), cur_ = st.all ? SKY.length - 1 : st.ci, c = SKY[cur_];
-  const big = `<svg class="skybig" viewBox="0 0 100 100" role="img" aria-label="${h(c.n)}，已點亮 ${st.lit[cur_]} 顆"><rect x="0" y="0" width="100" height="100" rx="8" fill="#262056"/>
-    ${[[8,10],[90,8],[14,88],[86,92],[50,6],[94,50],[6,52]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".5" fill="#fff" opacity=".6"/>`).join("")}
-    ${skyShape(c, [8, 8, 84], st.lit[cur_], {glow:true, dim:true, lw:1, r:2})}</svg>`;
+  const big = skyBig(c, st.all ? null : st.lit[cur_], `${c.n}，已點亮 ${st.lit[cur_]} 顆`);
   const info = st.all ? `<b>14 個星座全部點亮了！</b><span>你是「${SKY_TITLE}」</span>`
     : `<b>${h(c.n)}</b><span>已點亮 ${st.lit[cur_]} / ${c.p.length} 顆・再 ${st.left} 顆星星點亮下一顆</span>`;
   const grid = SKY.map((k, i)=>{
     const done = st.lit[i] >= k.p.length, now = i === st.ci;
-    return `<div class="skyit ${done ? "done" : now ? "now" : "off"}"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="12" fill="#262056"/>${skyShape(k, [10, 10, 80], done ? null : st.lit[i], {dim:true, lw:1.4, r:2.6})}</svg><b>${h(k.n)}</b><span>${done ? "已點亮" : now ? `${st.lit[i]} / ${k.p.length}` : "還沒開始"}</span></div>`;
+    return `<button type="button" class="skyit ${done ? "done" : now ? "now" : "off"}" data-act="sky-view" data-c="${k.id}" aria-label="${h(k.n)}${done ? "，點開欣賞" : ""}"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="12" fill="#262056"/>${skyShape(k, [10, 10, 80], done ? null : st.lit[i], {dim:true, lw:1.4, r:2.6})}</svg><b>${h(k.n)}</b><span>${done ? "已點亮・點開欣賞" : now ? `${st.lit[i]} / ${k.p.length}` : "還沒開始"}</span></button>`;
   }).join("");
   return `<div class="lhead"><button class="x" data-act="sky-close" aria-label="返回">✕</button><b>我的星空圖</b><span class="pill static">${ic("star",22)}${S.stars}</span></div>
     <div class="card center skycard">${big}<div class="skyinfo">${info}</div>
@@ -9624,6 +9660,14 @@ const RW_ACT = {
   },
   "set-title"(el){ const st = SETS.find(x=>x.id === el.dataset.s), r = RW(); if(st && r.sets[st.id]){ r.title = st.title; saveProg(); toast(`稱號換成「${st.title}」`); render(); } },
   "sky-open"(){ leaveActivity(); U.skyFrom = U.view; U.view = "sky"; render(); },
+  "sky-view"(el){
+    const c = SKY.find(x=>x.id === el.dataset.c), i = SKY.indexOf(c), st = skyState();
+    if(!c) return;
+    if(st.lit[i] === 0){ toast(`「${c.n}」還沒點亮，繼續練習累積星星吧！`); return; }
+    U.skyC = c.id; U.sheet = "sky"; render();
+  },
+  "sky-shut"(){ U.sheet = null; render(); },
+  "sky-say"(){ const c = SKY.find(x=>x.id === U.skyC); if(c) speakEn(c.en.split("·")[0].trim()); },
   "sky-close"(){ U.view = U.skyFrom && U.skyFrom !== "sky" ? U.skyFrom : "home"; render(); },
   "rw-close"(){ if(U.rwq) U.rwq.shift(); if(!U.rwq || !U.rwq.length) U.sheet = null; render(); },
   "ab-locked"(el){ const it = RW_BY[el.dataset.id]; if(it) toast(`「${rwName(it)}」還沒收集到：${rwHow(it)}`); }
@@ -10334,7 +10378,7 @@ function render(){
       <button class="who" data-act="go" data-v="profiles"><span class="av">${av(cur.avatar,48)}</span><span><b>${h(cur.name)}</b><small>${LEVELS[lvl()-1].name} · ${S && S.rw && S.rw.title ? h(S.rw.title) : "點這裡換人"}</small></span></button>
       <div class="pills"><button class="pill mpill" data-act="mode-open" aria-label="切換練習情境：${MODES[mode()].n}">${li(MODES[mode()].ic,20)}<span>${MODES[mode()].s}</span></button><button class="pill" data-act="sky-open" aria-label="星星 ${S.stars} 顆，打開星空圖">${ic("star",22)}${S.stars}</button><span class="pill">${ic("fire",22)}${streakNow()}</span></div>
     </div>` : "";
-  $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : (U.sheet==="reward" && cur && U.rwq && U.rwq.length) ? vRewardSheet() : "";
+  $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : (U.sheet==="reward" && cur && U.rwq && U.rwq.length) ? vRewardSheet() : (U.sheet==="sky" && cur) ? vSkySheet() : "";
   if(lastView !== v){ window.scrollTo(0,0); lastView = v; }
   const spIn = v==="game" ? $("#spIn") : null;
   if(spIn && !IS_MOBILE){ spIn.focus(); spIn.setSelectionRange(spIn.value.length, spIn.value.length); }

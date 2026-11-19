@@ -121,6 +121,47 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     result('E2 收藏冊有 14 個星座徽章；舊版進度（沒有星空欄位）正常', bad);
   }
 
+  // E4 閃閃發亮與欣賞：背景星星和亮的星點有動畫；已點亮的星座可以點開大圖（英文名、小知識、點亮日期、戴上徽章）；沒點亮的點了不會開
+  {
+    const bad = [];
+    await p.evaluate(() => { S.stars = SKY_NEED[2][1] + 1;   /* 北斗七星、獵戶座全亮，牡羊座亮 2 顆（主畫面才有發光的星點可以檢查） */ S.rw.sky = {}; U.rwq = []; U.sheet = null; saveProg(); U.rwq = []; U.sheet = null; U.view = 'sky'; render(); });
+    const anim = await p.evaluate(() => ({
+      tw: document.querySelectorAll('.skybig .tw').length, twName: getComputedStyle(document.querySelector('.skybig .tw')).animationName,
+      glow: getComputedStyle(document.querySelector('.skybig .sg')).animationName
+    }));
+    if (anim.tw < 20 || anim.twName !== 'twinkle') bad.push('背景星星沒有閃爍 ' + JSON.stringify(anim));
+    if (anim.glow !== 'glowPulse') bad.push('點亮的星點沒有發光動畫');
+    // 已點亮的北斗七星
+    await p.click('[data-act=sky-view][data-c=dipper]');
+    if ((await p.evaluate(() => U.sheet)) !== 'sky') bad.push('點已點亮的星座沒有打開欣賞視窗');
+    const t = await p.textContent('.skysheet');
+    if (!t.includes('Big Dipper') || !t.includes('北極星')) bad.push('欣賞視窗沒有英文名字或小知識');
+    const md = await p.evaluate(() => { const d = new Date(); return `${d.getMonth() + 1}/${d.getDate()}`; });
+    if (!t.includes(md + ' 點亮')) bad.push('沒有顯示點亮日期 ' + md);
+    const lit = await p.evaluate(() => document.querySelectorAll('.skysheet .skybig circle[fill="#fff6c8"]').length);
+    if (lit !== 7) bad.push('北斗七星大圖應該 7 顆全亮，實際 ' + lit);
+    await p.screenshot({ path: path.join(OUT, 'sky-view.png') });
+    await p.click('.skysheet [data-act=rw-wear]');
+    if ((await p.evaluate(() => maFix(cur.avatar).n)) !== 'zod_dipper') bad.push('戴上徽章沒有作用');
+    if ((await p.evaluate(() => U.sheet)) !== 'sky') bad.push('戴上徽章後視窗被關掉了');
+    await p.click('.skysheet [data-act=sky-shut]');
+    if (await p.evaluate(() => U.sheet)) bad.push('關不掉欣賞視窗');
+    // 還沒開始的星座
+    await p.click('[data-act=sky-view][data-c=pisces]');
+    if (await p.evaluate(() => U.sheet)) bad.push('還沒點亮的星座也打開了視窗');
+    // 正在點的星座可以看進度
+    await p.click('[data-act=sky-view][data-c=aries]');
+    if (!(await p.textContent('.skysheet')).includes('正在點亮')) bad.push('正在點的星座沒有顯示進度');
+    await p.click('.skysheet [data-act=sky-shut]');
+    // 減少動態效果
+    await p.emulateMedia({ reducedMotion: 'reduce' }); await p.evaluate(() => render());
+    if ((await p.evaluate(() => getComputedStyle(document.querySelector('.skybig .tw')).animationName)) !== 'none') bad.push('減少動態效果時還在閃');
+    await p.emulateMedia({ reducedMotion: 'no-preference' });
+    if (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth) > 1) bad.push('星空圖超出寬度');
+    await p.evaluate(() => { U.view = 'home'; render(); });
+    result('E4 閃閃發亮（背景閃爍、星點發光、減少動態時停止）；點開已點亮的星座欣賞（英文名、小知識、點亮日期、戴上徽章）；沒點亮的不會開', bad);
+  }
+
   result('E3 全程沒有頁面錯誤', errs);
   await b.close(); srv.close();
   process.exit(fail ? 1 : 0);
