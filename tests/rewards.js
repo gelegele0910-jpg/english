@@ -198,11 +198,12 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
       else await p.click('[data-act=next-sent]');
     }
     let s = await state();
-    if (s.coins !== 15 + 4 * 2) bad.push('4 個新句子各 +2、完成主題 +15，應為 23，實際 ' + s.coins);
+    const nS = await p.evaluate(() => TOPICS[0].sents[lvl()].length), want = 15 + nS * 2;   // 主題有幾句就是幾句（句子會增加）
+    if (s.coins !== want) bad.push(`${nS} 個新句子各 +2、完成主題 +15，應為 ${want}，實際 ` + s.coins);
     await p.evaluate(() => { U.view = 'home'; render(); });
     await p.click('[data-act=rw-ci]');
     s = await state();
-    if (s.coins !== 33) bad.push('簽到後應為 33，實際 ' + s.coins);
+    if (s.coins !== want + 10) bad.push(`簽到後應為 ${want + 10}，實際 ` + s.coins);
     if (await p.$('[data-act=rw-ci]')) bad.push('簽到後按鈕還在');
     await p.screenshot({ path: path.join(OUT, 'rewards-home.png') });
     // 再練一次同一句：只有 +1

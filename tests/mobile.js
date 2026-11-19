@@ -1,4 +1,4 @@
-// 手機版面檢查：每個畫面在多種手機尺寸下，不可有東西超出螢幕、被截斷、或被底部選單蓋住
+// 手機版面檢查：每個畫面在多種手機、平板、電腦尺寸下，不可有東西超出螢幕、被截斷、或被底部選單蓋住
 // 用法：node tests/mobile.js            （檢查並列出問題）
 //       node tests/mobile.js --shots    （另外存每個畫面在 320 寬的截圖到 tests/output/mobile/）
 const { chromium } = require('playwright');
@@ -7,8 +7,8 @@ const { start, blockExternal } = require('./server');
 const SHOTS = process.argv.includes('--shots');
 const OUT = path.join(__dirname, 'output', 'mobile'); if (SHOTS) fs.mkdirSync(OUT, { recursive: true });
 
-// 寬 × 高：最小的 iPhone SE、常見 Android、iPhone 13 mini、iPhone 13、大螢幕
-const SIZES = [[320, 568], [360, 640], [375, 667], [390, 844], [414, 896]];
+// 寬 × 高：最小的 iPhone SE、常見 Android、iPhone 13 mini、iPhone 13、大螢幕；平板直放（字放大）、平板橫放與電腦（頁籤在左邊）
+const SIZES = [[320, 568], [360, 640], [375, 667], [390, 844], [414, 896], [820, 1180], [1024, 768], [1180, 820], [1440, 900]];
 
 // 每個畫面：名稱 → 在網頁裡把畫面準備好的程式（字串，在頁面裡執行）
 const SCENES = {
@@ -100,7 +100,11 @@ const AUDIT = () => {
   }
   // 4. 最下面的內容被底部選單蓋住：捲到底後，main 的最後一個元素要在選單上方
   const tabs = document.querySelector('#tabs');
-  if (tabs && getComputedStyle(tabs).display !== 'none') {
+  const tr = tabs && tabs.getBoundingClientRect(), side = tr && tr.height > innerHeight / 2;   // 寬螢幕時頁籤在左邊
+  if (tabs && side && getComputedStyle(tabs).display !== 'none') {
+    // 4b. 頁籤在左邊：內容與頂端列不可被它蓋住
+    for (const el of [document.querySelector('#main'), document.querySelector('#top')]) if (el && el.getBoundingClientRect().left < tr.right - 1) out.push(`內容被左邊的頁籤蓋住：${name(el)}`);
+  } else if (tabs && getComputedStyle(tabs).display !== 'none') {
     window.scrollTo(0, document.documentElement.scrollHeight);
     const tTop = tabs.getBoundingClientRect().top;
     const last = [...document.querySelectorAll('#main > *')].filter(visible).pop();
@@ -121,7 +125,7 @@ const AUDIT = () => {
   const srv = await start(), b = await chromium.launch();
   const report = {};
   for (const [w, hgt] of SIZES) {
-    const ctx = await b.newContext({ viewport: { width: w, height: hgt }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+    const ctx = await b.newContext({ viewport: { width: w, height: hgt }, deviceScaleFactor: 1, isMobile: w < 1000, hasTouch: w < 1000 });
     const p = await ctx.newPage(), errs = [];
     p.on('pageerror', e => errs.push(e.message));
     await blockExternal(p);

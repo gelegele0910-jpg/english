@@ -47,6 +47,8 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     // K3 點亮一個星座送徽章（彈出視窗）、不會重複送；一次點亮好幾個時直接收下、不連跳視窗；全部點亮送場景與稱號
     bad = [];
     S.rw = newRw(); U.rwq = []; U.sheet = null;
+    // 星星與星座數也是隱藏版的成就條件（星星水母、星座小鯨，在 hidden.js 測），這裡先當作已收集，只看星空本身的提示
+    S.rw.own['h:jelly'] = 1; S.rw.own['h:nova'] = 1;
     S.stars = SKY_NEED[0].slice(-1)[0] - 1; saveProg();
     if (S.rw.own['n:zod_dipper']) bad.push('還差 1 顆就送了徽章');
     S.stars += 1; saveProg();

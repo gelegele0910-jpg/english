@@ -6,7 +6,7 @@
 
 - **沒有建置流程、沒有套件**：純 HTML + CSS + 原生 JavaScript，直接用瀏覽器開啟 `index.html` 即可。測試是 `tests/` 裡的獨立 Node 腳本（只需要 Playwright）。
 - 檔案：
-  - `index.html`（約 9,600 行）：全部的樣式、課程內容、單字庫、SVG 角色與 App 邏輯（GitHub Pages 版）。
+  - `index.html`（約 12,500 行）：全部的樣式、課程內容、單字庫、SVG 角色與 App 邏輯（GitHub Pages 版）。
   - `config.js`：一行，設定 `window.ELP_API`（Google Apps Script Web App 的 `/exec` 網址）。
   - `apps-script/Code.gs`：Google Apps Script 後端（資料存在 Google 試算表）。
   - `tests/`：測試腳本，`node tests/run-all.js` 全部執行（見「驗證與測試規範」）。
@@ -52,12 +52,12 @@
 
 | 行數（約） | 內容 |
 |---|---|
-| 1–405 | `<style>`：介面風格（skin）CSS 變數、元件樣式 |
-| 406–417 | HTML 骨架：`#deco`、`#top`、`#main`、`#tabs`、`#toast`、`#pop`、`#sheet` |
-| 419–1264 | **課程內容**：`LEVELS`（5 級）、`TOPICS`（主題句子）、`ARTICLES`（文章） |
-| 1266–7271 | **分級單字庫** `VOCAB`（來源：大考中心《高中英文參考詞彙表》，1–6 級） |
-| 7273–7761 | SVG 角色、頭像、圖示：`AVATAR_LIST`、`MON`（學習夥伴）、`BUDDY_LINES`、小怪獸頭像工作室 `MA_SHAPES` |
-| 7764–結尾 | **App 主程式** |
+| 10–534 | `<style>`：介面風格（skin）CSS 變數、元件樣式 |
+| 537–545 | HTML 骨架：`#deco`、`#top`、`#main`、`#tabs`、`#toast`、`#pop`、`#sheet` |
+| 548–2009 | **課程內容**：`LEVELS`（5 級）、`TOPICS`（24 主題 × 5 級 × 8 句）、`ARTICLES`（每級 16 篇） |
+| 2011–8016 | **分級單字庫** `VOCAB`（來源：大考中心《高中英文參考詞彙表》，1–6 級）與 KK 音標 `PRON` |
+| 8018–9905 | SVG 角色、頭像、圖示：`AVATAR_LIST`、`MON`（學習夥伴）、`BUDDY_LINES`、小怪獸頭像工作室 `MA_SHAPES` |
+| 9908–結尾 | **App 主程式** |
 
 主程式內以 `/* ================= 區段名稱 ================= */` 分段，搜尋這些標題最快定位：基本設定、建立內容索引、分級單字庫、資料儲存、進度工具、語音、介面狀態、各「畫面：…」、遊戲中心、練習情境、學習紀錄、繪製、動作。
 
@@ -67,7 +67,7 @@
 - 文章：`{id, lv, ic, t, zh, s:[[英,中],...], w:[[單字,中文],...], q:[[題目,[選項...],正確索引],...]}`
 - 單字庫：`VOCAB[級別] = [[單字, 詞性, 中文, 例句, 例句中文, 適合小朋友(0/1)], ...]`
 - 拼字紀錄：`S.sp[單字] = {l, d, last, m, ok, ng, pc, pw}`（見「拼字複習」）。
-- 獎勵紀錄：`S.rw = {coins, own, ci, day, taskDays, perfect, topics, egg, night, hi90, speedBest, sets, title, fgift, sky}`（見「獎勵」）。
+- 獎勵紀錄：`S.rw = {coins, own, ci, day, taskDays, perfect, topics, egg, night, morning, hi90, speedBest, sets, title, fgift, sky}`（見「獎勵」）。
 - 小怪獸頭像：`{b 身體, c 顏色, e 眼睛, m 嘴巴, t 頭頂, a 臉上, n 脖子, o 衣服, w 手上, f 身旁, k 身後, p 花紋, g 背景色, s 場景, x 動作}`，一律經過 `maFix()`（補預設值、舊版放在 `a` 的領結／圍巾／鈴鐺／項鍊會搬到 `n`）。
 - 句子 ID：主題 `"<topicId>-<lv>-<i>"`、文章 `"a-<articleId>-<i>"`。**這些 ID 是學習進度的 key，不要改動既有項目的順序或 id，新增請加在陣列尾端**，否則使用者進度會錯位。
 
@@ -116,8 +116,8 @@
 - `grant(id)` 送寶物並排進 `U.rwq`，以 `U.sheet="reward"` 彈出視窗；商店購買要點兩次確認（`U.arm`）。
 - **動作**（`MA_MOVES`，頭像的 `x`，預設 `bounce` 跳跳免費）：`moveHtml(內容, 動作, loop)` 包上 `.mv .mv-代號` 播 CSS 動畫（`loop` 一直動，用在商店與頭像工作室預覽；否則播兩次）。`meDance(size, play)` 是自己的小怪獸，`play` 為假時加 `.mv-still` 不動。會動的時機：首頁「今天的任務」點小怪獸（`me-dance`）、領取簽到或任務、答對（`pop()`）、完成主題與遊戲畫面（`.duo`）。動畫在 `prefers-reduced-motion: reduce` 時全部停止。
 - `RW()` 會**原地**補齊舊資料缺的欄位，不可換成新物件（否則持有舊參照的函式會遺失修改）。
-- **隱藏版小怪獸**（`HIDDEN`，Art 區塊）：8 隻獨立造型，`hiddenMon(id, size, bare, 表情)` 繪製（表情 normal／cheer／oops／think，`HM_EXPR` 把夥伴的 6 種表情對應過去）。啟動時加進 `MON`、`PROFILE`、`BUDDY_LINES`（標 `hidden:true`），所以 `monster()`、`buddy()`、`bline()` 都直接支援。**收集到（`S.rw.own["h:代號"]`）才能當夥伴**：`partnerOk()`／`partnerId()` 會退回 `bobo`；選擇夥伴畫面（`partnerGrid(sel, act, true)`）才顯示上鎖的黑影，新增學習者畫面不顯示。
-- **成就**（`ACH`）：達成就解鎖對應隱藏版，`rwAch()` 在每次 `saveProg()` 時檢查（有 `achBusy` 防止遞迴）。條件：連續練習 30 天、拼字熟練 30 字、聽完 20 篇文章、完成一個難度全部主題、每日任務 5 天、快問快答 20 題、跟讀 90 分以上 10 次（`logSpeak`）、晚上 8 點後練習 7 天（`rwPractice`）。
+- **隱藏版小怪獸**（`HIDDEN`，Art 區塊）：16 隻獨立造型，`hiddenMon(id, size, bare, 表情)` 繪製（表情 normal／cheer／oops／think，`HM_EXPR` 把夥伴的 6 種表情對應過去）。啟動時加進 `MON`、`PROFILE`、`BUDDY_LINES`（標 `hidden:true`），所以 `monster()`、`buddy()`、`bline()` 都直接支援。**收集到（`S.rw.own["h:代號"]`）才能當夥伴**：`partnerOk()`／`partnerId()` 會退回 `bobo`；選擇夥伴畫面（`partnerGrid(sel, act, true)`）才顯示上鎖的黑影，新增學習者畫面不顯示。
+- **成就**（`ACH`）：達成就解鎖對應隱藏版，`rwAch()` 在每次 `saveProg()` 時檢查（有 `achBusy` 防止遞迴）。條件：連續練習 30 天、拼字熟練 30 字、聽完 20 篇文章、完成一個難度全部主題、每日任務 5 天、快問快答 20 題、跟讀 90 分以上 10 次（`logSpeak`）、晚上 8 點後練習 7 天（`rwPractice`）；第二批：早上 8 點前練習 5 天（`S.rw.morning`）、累計練習 50 天（`logTotal()` > 0 的日子）、複習生字認得 100 字（`S.vk`）、累計玩 50 次遊戲（`log.g`）、累積 500 顆星星、點亮 5 個星座（`S.rw.sky` 不算 `all`）、集滿 3 組套裝、收集 40 件寶物（不算 `h:`）。新增隱藏版要同時加 `HIDDEN`、`HM_INFO`、`BUDDY_LINES`、`ACH`、`RW_SRC`，並在 `tests/hidden.js` 的 H4 補一組「差一點／剛好達到」。
 - **神秘蛋**（`S.rw.egg = {d, last, n}`）：`bump()` 呼叫 `rwPractice()`，每天第一次練習長大一天（不用連續），滿 `EGG_DAYS`（5）天可在首頁孵化，`hatchEgg()` 孵出沒有的隱藏版，全部收集完給 100 金幣；孵化當天的練習不算進下一顆蛋。
 - 隱藏版在收藏冊的「隱藏版」分類（商店分頁不顯示），未收集顯示 `silhouette()` 黑影、條件與進度（`achProgress()`）。
 - **衣服／手上／身旁**：`MA_OUTFIT`（`f(s,L,c)`，`maSvg` 用以身體形狀 `s.d` 做的 `clipPath` 裁切，再補畫一次身體外框；`MA_UID` 讓每張頭像的 clipPath id 不重複）、`MA_HAND`（右下方，`maPaw()` 畫小圓手握著）、`MA_FLOAT`（左上方的小東西）。身後的東西若跟手上衝突，放左邊。
@@ -133,6 +133,7 @@
 - 程式碼註解與介面文字使用繁體中文；使用者訊息用 `toast()`。
 - 目標使用者是小朋友，介面以手機為主（`viewport` 響應式），文字親切、按鈕要大。
 - **手機版面**：最小要支援 320 寬（iPhone SE）。格子用 `repeat(auto-fill, minmax(...))` 依寬度自動排，不要寫死欄數；flex 裡放文字的子元素要 `min-width:0`；分類標籤要能換行（不要藏在橫向捲動裡）；英文大字用 `clamp()` 跟著螢幕縮小。高度用 `dvh`（寫在 `vh` 後面當備援），iPhone Safari 的工具列出現時，彈出視窗才不會被推出螢幕。新增畫面後把它加進 `tests/mobile.js` 的 `SCENES`。
+- **平板與電腦**：`font-size` 一律寫成 `calc(Npx*var(--fz))`（含 JS 裡的 inline style），`--fz` 在 700 寬以上是 1.2，平板的字才不會太小；`.app` 最寬 720px。1000 寬以上下方頁籤改成左側直排（`body.side`，內容留出 180px）。
 - `index.html` 很大，請用搜尋（區段標題、函式名、`data-act` 名稱）定位，不要整檔讀取。
 - `config.js` 的 `ELP_API` 是正式後端網址，除非使用者要求，不要更動。
 - 修改後一律依下方「驗證與測試規範」實際驗證。
@@ -159,15 +160,15 @@ node tests/run-all.js --quick
 
 | 腳本 | 內容 |
 |---|---|
-| `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查 |
+| `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查；`font-size` 不可寫死成 px |
 | `backend-props.js` | 用模擬試算表執行 `Code.gs`：分段存讀往返一致、存檔冪等、`doPost` 白名單、學員進度總覽計算、舊資料搬家 |
 | `front-props.js` | `highlight()` / `findWord()` 不變量、`migrate()` 冪等、課程內容完整性（R-04）、`h()` 跳脫與惡意名字 |
 | `spelling.js` | 拼字間隔規則（含 2000 步隨機不變量）、逐字對照、三種拼字遊戲的訂正與重出題、隔天首頁複習、舊資料相容 |
 | `rewards.js` | 金幣帳目（1500 步隨機買賣）、簽到、連續天數里程碑、每日任務、遊戲金幣上限、寶箱不重複、上鎖部件、商店兩段確認與穿脫、動作播放與減少動態設定、舊資料相容 |
-| `hidden.js` | 隱藏版 8 隻 × 6 表情繪製與台詞、夥伴上鎖、神秘蛋（一天一次、不用連續、不重複）、8 個成就剛好達到才解鎖、收藏冊與設成夥伴、舊資料相容 |
+| `hidden.js` | 隱藏版 16 隻 × 6 表情繪製與台詞、夥伴上鎖、神秘蛋（一天一次、不用連續、不重複）、每個成就剛好達到才解鎖（每隻都要有測試）、收藏冊與設成夥伴、舊資料相容 |
 | `sets.js` | 套裝 4 件不同欄位、集滿才送且只送一次、稱號與整套穿上；五個節慶 2026～2030 期間邊界、期間外買不到、買了永久能用、節慶禮物每年一次 |
 | `sky.js` | 星點門檻遞增與總數、0～全部逐一檢查點亮數、星座徽章不重複、一次點亮多個只提示一次、全部點亮送場景與稱號、星空圖畫面與舊資料 |
-| `mobile.js` | 42 個畫面（含遊戲、商店、星空、頭像工作室、彈出視窗）× 5 種手機尺寸（320～414 寬）：不可超出螢幕或卡片、文字被截斷或擠成直排、按鈕內容擠出、大字單字被拆行、被底部選單蓋住、彈出視窗跑出螢幕。`--shots` 另存 320 寬截圖 |
+| `mobile.js` | 44 個畫面（含遊戲、商店、星空、頭像工作室、彈出視窗）× 9 種尺寸（手機 320～414、平板 820／1024／1180、電腦 1440）：不可超出螢幕或卡片、文字被截斷或擠成直排、按鈕內容擠出、大字單字被拆行、被底部選單（或左側頁籤）蓋住、彈出視窗跑出螢幕。`--shots` 另存 320 寬截圖 |
 | `sync.js` | 攔截 Apps Script 回傳模擬資料，驗證雲端／本機「較新的一方勝出」 |
 | `e2e.js` | 手機尺寸實際操作：建立學習者、三種情境各完成一個主題、重新整理保留、6 風格 × 3 情境繪製、隨機點擊（`--clicks=N --seed=N`，固定種子可重現）、無水平捲動 |
 
@@ -224,7 +225,7 @@ node tests/run-all.js --quick
 | R-01 | 改了 `P` / `S` 的資料結構或 localStorage key | 載入缺少新欄位的舊資料不會壞掉（`Object.assign(newProg(), …)`、`migrate()`）；後端 `refreshSummary_()` 讀的欄位仍正確 |
 | R-02 | 改了 `gas()`、同步或 `updated` 比較邏輯 | 網路失敗或重送兩次不會讓較新的資料被較舊的覆蓋；兩台裝置同時使用時行為正確；離線時仍可使用；`sync.js` 通過 |
 | R-03 | 改了畫面、`data-act`、按鈕事件 | 在真實瀏覽器點擊驗證；三種練習情境、深淺風格都正常；`stopSeq()` 等離開時的清理有執行 |
-| R-04 | 改了 `TOPICS` / `ARTICLES` / `VOCAB` 內容 | 只在陣列尾端新增，未改動既有順序（句子 ID 是進度 key）；單字有出現在句子中（`findWord` 找得到） |
+| R-04 | 改了 `TOPICS` / `ARTICLES` / `VOCAB` 內容 | 只在陣列尾端新增，未改動既有順序（句子 ID 是進度 key；既有文章要加句子也只能接在 `s` 尾端）；單字有出現在句子中（`findWord` 找得到）；每個生字在 `PRON` 都有 KK 音標（`front-props.js` 會檢查） |
 | R-05 | 改了 `apps-script/Code.gs` | 新函式已加進 `API_FNS`；寫入有包在 `withLock_()` 中；`backend-props.js` 通過；提醒使用者要部署新版本 |
 | R-06 | 把內容輸出成 HTML | 使用者輸入（學習者名字等）與內容文字都經過 `h()` 跳脫 |
 | R-07 | 新增 log、錯誤回報或外部請求 | 不可把學習者名字、進度等個人資料送到 Apps Script 以外的地方或印進記錄 |
