@@ -10195,11 +10195,36 @@ function gas(fn, ...args){
   return new Promise((res, rej)=>{
     if(GAS_RUN){ google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args); return; }
     if(!API_URL){ rej("no-gas"); return; }
-    fetch(API_URL, {method:"POST", redirect:"follow", keepalive: JSON.stringify(args).length < 60000,
-      headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({fn, args})})
+    // keepalive 只在頁面要關掉時用：瀏覽器限制同時進行的 keepalive 請求合計 64KB，平常用會讓第二個存檔直接失敗
+    const body = JSON.stringify({fn, args}), ka = gasLeaving && new Blob([body]).size < 60000;   // 算的是位元組（中文一字 3 位元組）
+    fetch(API_URL, {method:"POST", redirect:"follow", keepalive: ka,
+      headers:{"Content-Type":"text/plain;charset=utf-8"}, body})
       .then(r=>r.json()).then(j=> j && j.ok ? res(j.result) : rej(j && j.error || "api-error")).catch(rej);
   });
 }
+/* 存到雲端：同一種存檔同時只送一個；失敗隔幾秒再試，每次都送「當下最新」的資料（舊的不會蓋掉新的），都失敗才提示 */
+let gasLeaving = false;                 // 頁面正要隱藏或關掉
+const GAS_RETRY = [3000, 8000];         // 第 2、3 次嘗試前要等多久
+let gasWarned = 0;
+function cloudFail(){ if(Date.now() - gasWarned > 60000){ gasWarned = Date.now(); toast("雲端儲存失敗，已先存在這台裝置"); } }
+function cloudSaver(fn, ready, args){
+  let busy = false, again = false, tries = 0, timer = null;
+  const run = async ()=>{
+    if(!GAS || !ready()) return;
+    if(busy){ again = true; return; }
+    clearTimeout(timer); timer = null;
+    busy = true; let ok = false;
+    try{ await gas(fn, ...args()); ok = true; }catch(e){}
+    busy = false;
+    if(again){ again = false; tries = 0; run(); return; }   // 送的期間又有新資料：馬上送最新的
+    if(ok){ tries = 0; return; }
+    if(tries < GAS_RETRY.length) timer = setTimeout(run, GAS_RETRY[tries++]);
+    else { tries = 0; cloudFail(); }
+  };
+  return run;
+}
+const pushProfiles = cloudSaver("saveProfiles", ()=>true, ()=>[JSON.stringify(P)]);
+const pushProg = cloudSaver("saveProgress", ()=>!!(cur && S), ()=>[cur.id, JSON.stringify(S)]);
 let P = {updated:0, list:[]};
 let cur = null;
 let S = null;
@@ -10221,9 +10246,9 @@ function migrate(){
 function saveProfiles(){
   P.updated = Date.now();
   lsSet("elp-profiles", JSON.stringify(P));
-  if(GAS) gas("saveProfiles", JSON.stringify(P)).catch(()=>toast("雲端儲存失敗，已先存在這台裝置"));
+  pushProfiles();
 }
-let progT = null, progBusy = false, progAgain = false;
+let progT = null;
 function saveProg(){
   if(!cur || !S) return;
   S.updated = Date.now();
@@ -10231,15 +10256,7 @@ function saveProg(){
   lsSet("elp-prog-"+cur.id, JSON.stringify(S));
   clearTimeout(progT); progT = setTimeout(pushProg, 1500);
 }
-async function pushProg(){
-  if(!GAS || !cur || !S) return;
-  if(progBusy){ progAgain = true; return; }
-  progBusy = true;
-  try{ await gas("saveProgress", cur.id, JSON.stringify(S)); }catch(e){}
-  progBusy = false;
-  if(progAgain){ progAgain = false; pushProg(); }
-}
-document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden" && progT){ clearTimeout(progT); progT=null; pushProg(); } });
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden" && progT){ clearTimeout(progT); progT=null; gasLeaving = true; try{ pushProg(); } finally { gasLeaving = false; } } });
 
 function safeView(){ return ["home","topics","articles","words","settings","profiles"].includes(U.view); }
 
@@ -10293,8 +10310,8 @@ function boot(){
           if(cur){ const c = P.list.find(p=>p.id===cur.id); if(c){ cur = c; applySkin(); } else { cur = null; S = null; U.view = "profiles"; } }
           if(!cur && U.view==="edit" && !U.edit.touched && P.list.length) U.view = "profiles";
           if(safeView() || U.view==="edit") render();
-        } else if((P.updated||0) > (r.updated||0)) gas("saveProfiles", JSON.stringify(P)).catch(()=>{});
-      } else if(P.list.length) gas("saveProfiles", JSON.stringify(P)).catch(()=>{});
+        } else if((P.updated||0) > (r.updated||0)) pushProfiles();
+      } else if(P.list.length) pushProfiles();
     }).catch(()=>{});
   }
 }

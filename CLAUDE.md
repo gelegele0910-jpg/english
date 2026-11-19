@@ -77,7 +77,7 @@
 - **繪製**：`render()` 依 `U.view` 從 `map` 取出 `vXxx()` 函式，回傳 HTML 字串整個塞進 `#main`。新增畫面要：寫 `vXxx()`、加進 `render()` 的 `map`，若是全螢幕練習畫面也加進 `focus` 陣列。
 - **事件**：用事件委派。元素加 `data-act="名稱"`（其他參數放 `data-*`），處理函式放在 `ACT` / `GAME_ACT` / `VOCAB_ACT` / `MODE_ACT` / `REC_ACT` 物件裡（最後 `Object.assign` 合併）。
 - **輸出 HTML 時一律用 `h()` 跳脫**使用者或內容文字。
-- **儲存**：先寫 localStorage（`lsGet/lsSet/lsDel`，會自動加 `NS` 前綴），再同步到雲端（進度存檔有 1.5 秒防抖，頁面隱藏時立即送出）；以 `updated` 時間戳決定雲端或本機哪邊較新。修改資料結構時要寫 `migrate()` 相容舊資料，並檢查後端 `refreshSummary_()`。
+- **儲存**：先寫 localStorage（`lsGet/lsSet/lsDel`，會自動加 `NS` 前綴），再同步到雲端（進度存檔有 1.5 秒防抖，頁面隱藏時立即送出）；以 `updated` 時間戳決定雲端或本機哪邊較新。上傳一律經過 `cloudSaver()`（`pushProfiles`、`pushProg`）：同一種同時只送一個、失敗依 `GAS_RETRY` 再試 2 次，每次都送當下最新的資料，3 次都失敗才 `cloudFail()` 提示（一分鐘最多一次）。**`keepalive` 只在頁面隱藏時用（`gasLeaving`），且以位元組計算要小於 60KB**：瀏覽器限制同時上傳中的 keepalive 請求合計 64KB，平常也用的話第二個存檔會被直接拒絕。修改資料結構時要寫 `migrate()` 相容舊資料，並檢查後端 `refreshSummary_()`。
 - **語音**：播放用 Web Speech `speechSynthesis`（`speakEn()`，優先挑美式英文聲音）；口說辨識用 `SpeechRecognition`。
 - **練習情境**（`MODES`）：`full` 聽說、`quiet` 安靜（不能說，改拼字/排句子）、`silent` 靜音（不發聲，附 KK 音標）。新功能需考慮三種情境下的行為。
 - **介面風格**（`SKINS`）：`sticker`、`notebook`、`jelly`、`night`、`minimal`、`minimaldark`，以 `body[data-skin=...]` 切換 CSS 變數。可愛風（`kind:"cute"`）用彩色圖示，簡約風用線條圖示（`ic()` / `li()`）。新樣式請使用 CSS 變數（`--ink`、`--card`、`--accent`、`--r` 等），確保六種風格都正常，尤其深色的 `night`、`minimaldark`。
@@ -169,7 +169,7 @@ node tests/run-all.js --quick
 | `sets.js` | 套裝 4 件不同欄位、集滿才送且只送一次、稱號與整套穿上；五個節慶 2026～2030 期間邊界、期間外買不到、買了永久能用、節慶禮物每年一次 |
 | `sky.js` | 星點門檻遞增與總數、0～全部逐一檢查點亮數、星座徽章不重複、一次點亮多個只提示一次、全部點亮送場景與稱號、星空圖畫面與舊資料 |
 | `mobile.js` | 44 個畫面（含遊戲、商店、星空、頭像工作室、彈出視窗）× 9 種尺寸（手機 320～414、平板 820／1024／1180、電腦 1440）：不可超出螢幕或卡片、文字被截斷或擠成直排、按鈕內容擠出、大字單字被拆行、被底部選單（或左側頁籤）蓋住、彈出視窗跑出螢幕。`--shots` 另存 320 寬截圖 |
-| `sync.js` | 攔截 Apps Script 回傳模擬資料，驗證雲端／本機「較新的一方勝出」 |
+| `sync.js` | 攔截 Apps Script 回傳模擬資料，驗證雲端／本機「較新的一方勝出」；大進度上傳中又存名單不會失敗（S6 走本機模擬後端，才有真正的 keepalive 上限）、失敗自動重試且送最新資料、一直失敗才提示一次、只有頁面隱藏時用 keepalive |
 | `e2e.js` | 手機尺寸實際操作：建立學習者、三種情境各完成一個主題、重新整理保留、6 風格 × 3 情境繪製、隨機點擊（`--clicks=N --seed=N`，固定種子可重現）、無水平捲動 |
 
 - 需要 Node 與 Playwright。雲端環境已預裝；在自己電腦上先在 repo 根目錄執行 `npm i -D playwright`，再執行 `npx playwright install chromium`。
