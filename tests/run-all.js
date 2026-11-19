@@ -8,6 +8,7 @@ const suites = [
   ['後端屬性測試', 'backend-props.js', []],
   ['前端屬性測試', 'front-props.js', []],
   ['雲端同步', 'sync.js', []],
+  ['密碼', 'pin.js', []],
   ['拼字複習', 'spelling.js', []],
   ['獎勵', 'rewards.js', []],
   ['隱藏版小怪獸', 'hidden.js', []],

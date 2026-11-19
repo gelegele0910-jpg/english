@@ -20,6 +20,8 @@ const SCENES = {
   '設定': `U.view='settings'`,
   '選人': `U.view='profiles'`,
   '新增學習者': `openEdit()`,
+  '密碼鍵盤': `askPin({t:'測試小朋友的名字 的密碼', av:avCircle(cur.avatar,64), sub:'輸入 4 位數字密碼', check:async()=>false, ok:()=>{}, links:[['忘記密碼？請家長輸入家長密碼','pin-parent-enter']]}); U.pin.val='12'`,
+  '家長提示問題': `U.pq={mode:'setq', err:'問題和答案都要填'}; U.sheet='pq'`,
   '選擇夥伴': `U.ppick=null; U.view='partner'`,
   '遊戲中心': `U.view='games'`,
   '家長看板': `U.board={data:{[cur.id]:S}}; U.view='board'`,
