@@ -10,6 +10,7 @@ const suites = [
   ['雲端同步', 'sync.js', []],
   ['拼字複習', 'spelling.js', []],
   ['獎勵', 'rewards.js', []],
+  ['隱藏版小怪獸', 'hidden.js', []],
   ['端到端', 'e2e.js', quick ? ['--clicks=60'] : []]
 ];
 const summary = [];
