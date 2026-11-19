@@ -33,7 +33,7 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     let earned = 0, spent = 0;
     const shopItems = REWARDS.filter(it => it.price != null);
     for (let i = 0; i < 1500; i++) {
-      if (rnd() < 0.45) { const n = 1 + Math.floor(rnd() * 40); earn(n, '測試'); earned += n; }
+      if (rnd() < 0.45) { const n = 1 + Math.floor(rnd() * 40); earn(n, '測試', true); earned += n; }   // 這一項測買東西的帳，用不打折的金幣
       else {
         const it = shopItems[Math.floor(rnd() * shopItems.length)], before = { c: S.rw.coins, own: !!S.rw.own[it.id] };
         const sets0 = Object.keys(S.rw.sets).length;
@@ -91,19 +91,58 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     if (!S.rw.own['s:board']) bad.push('滿 10 天沒有拿到教室黑板');
     out.push(['P4 每日任務：達標才能領、不重複、任務寶物依序送、滿 10 天送黑板', bad]);
 
-    // P5 遊戲金幣每天只算前 3 次；拼字複習完成 +20 一天一次；全對 5 次送金牌
+    // P5 遊戲：8 種各自每天第一次 +5，同一種再玩不給金幣但照樣給星星；拼字複習不算遊戲金幣；完成 +20 一天一次；全對 5 次送金牌
     bad = []; reset(); day = 0; S.sp = {};
-    for (let i = 0; i < 5; i++) rwGame({ stars: 9 });
-    if (S.rw.coins !== 24) bad.push('一天玩 5 次拿到 ' + S.rw.coins + '（應為 3 × 8）');
-    day = 1; rwGame({ stars: 0 }); if (S.rw.coins !== 29) bad.push('隔天沒有重置次數');
-    const rv = { review: true, stars: 5, score: 4, qs: ['a', 'b', 'c', 'd'], rt: [0, 0, 0, 0] };
+    for (const G of GAMES) for (let i = 0; i < 3; i++) rwGame({ id: G.id, stars: 9 });
+    if (S.rw.coins !== GAMES.length * GAME_COIN) bad.push(`${GAMES.length} 種遊戲各玩 3 次拿到 ${S.rw.coins}（應為 ${GAMES.length} × ${GAME_COIN}）`);
+    const st0 = S.stars; U.g = null; startGame('meaning'); U.g.score = 4; finishGame();
+    if (S.stars <= st0) bad.push('同一種遊戲再玩，沒有給星星');
+    if (S.rw.coins !== GAMES.length * GAME_COIN) bad.push('同一種遊戲再玩又給了金幣');
+    leaveActivity();
+    day = 1; rwGame({ id: 'meaning', stars: 0 }); if (S.rw.coins !== GAMES.length * GAME_COIN + GAME_COIN) bad.push('隔天沒有重置');
+    const rv = { id: 'tiles', review: true, stars: 5, score: 4, qs: ['a', 'b', 'c', 'd'], rt: [0, 0, 0, 0] };
     const c1 = S.rw.coins; rwGame(rv); rwGame(rv);
-    const per = Math.min(10, 5 + Math.floor(5 / 3));   // 星星 5 顆的遊戲金幣
-    if (S.rw.coins - c1 !== per + per + 20) bad.push(`拼字複習完成獎勵不對：+${S.rw.coins - c1}（應為 ${per} + ${per} + 20）`);
+    if (S.rw.coins - c1 !== 20) bad.push(`拼字複習應該只拿完成獎勵 +20，實際 +${S.rw.coins - c1}`);
+    if (rwDay().games.tiles) bad.push('拼字複習佔掉了「拼字積木」當天的遊戲金幣');
     for (let i = 0; i < 3; i++) rwGame(rv);
     if (!S.rw.own['n:medal']) bad.push('全對 5 次沒有金牌');
-    rwGame({ review: true, stars: 5, score: 3, qs: ['a', 'b', 'c', 'd', 'a'], rt: [0, 0, 0, 0, 1] });
-    out.push(['P5 遊戲每天前 3 次給金幣、拼字複習完成一天一次、全對 5 次送金牌', bad]);
+    out.push(['P5 8 種遊戲各自每天第一次 +5、再玩只給星星；拼字複習不佔遊戲金幣、完成 +20 一天一次；全對 5 次送金牌', bad]);
+
+    // P9 越做越多：前 150 全額、150～300 減半、300 以上四分之一；成就獎勵不打折；隔天恢復
+    bad = []; reset(); day = 0;
+    const expect = B => B <= 150 ? B : B <= 450 ? 150 + (B - 150) / 2 : 300 + (B - 450) / 4;   // 做了 B 單位的練習應該拿到幾枚
+    let units = 0, prevC = 0;
+    for (let i = 0; i < 900; i++) { earn(1, '測試'); units++; if (S.rw.coins < prevC) bad.push('金幣變少了'); prevC = S.rw.coins;
+      if ([150, 300, 450, 600, 900].includes(units) && S.rw.coins !== Math.floor(expect(units))) bad.push(`做了 ${units} 單位應拿 ${Math.floor(expect(units))}，實際 ${S.rw.coins}`); }
+    const cFix = S.rw.coins; earn(100, '集滿套裝', true);
+    if (S.rw.coins !== cFix + 100) bad.push('成就獎勵被打折了');
+    day = 1; const cNext = S.rw.coins; earn(10, '測試');
+    if (S.rw.coins !== cNext + 10) bad.push('隔天沒有恢復全額');
+    // 一次給比較多（例如 +5、+20）時：總數不會超過全額，也不會比「先打折」少太多
+    reset(); day = 2; let b2 = 0;
+    for (let i = 0; i < 400; i++) { const n = 1 + Math.floor(rnd() * 20); earn(n, '測試'); b2 += n; }
+    if (S.rw.coins > b2 || S.rw.coins < expect(b2) - 20) bad.push(`隨機大小的金幣：做了 ${b2} 單位拿到 ${S.rw.coins}，預期約 ${Math.floor(expect(b2))}`);
+    out.push(['P9 做越多拿越多：前 150 全額、150～300 減半、300 以上四分之一、零頭會累積、成就獎勵不打折、隔天恢復', bad]);
+
+    // P10 每種練習都給金幣：複習單字 +1、拼字複習拼對 +1（拼錯不給）、跟讀 80 分以上 +1、文章第一次 +5 重聽 +2
+    bad = []; reset(); day = 10; S.done = {};
+    const gain = f => { const c = S.rw.coins; f(); return S.rw.coins - c; };
+    let k = Object.keys(WORDS).find(w => /^[a-z]{4,8}$/.test(w));
+    S.words[k] = [1, 0, 0];
+    let gv = gain(() => { U.rq = [k, k]; U.rc = 0; U.rstats = { a: 0, b: 0, c: 0 }; ACT.rate({ dataset: { r: '2' } }); });
+    if (gv !== 1) bad.push('複習一個字應 +1，實際 +' + gv);
+    startGame('tiles', [k, k]); U.g.rt = [0, 0];
+    gv = gain(() => spellAnswer(true, k)); if (gv !== 1) bad.push('拼字複習拼對應 +1，實際 +' + gv);
+    U.g.i = 1; U.g.picked = null;
+    gv = gain(() => spellAnswer(false, 'zzzz')); if (gv !== 0) bad.push('拼字複習拼錯不該給金幣');
+    leaveActivity();
+    if ((gv = gain(() => logSpeak(85))) !== 1) bad.push('跟讀 85 分應 +1，實際 +' + gv);
+    if ((gv = gain(() => logSpeak(70))) !== 0) bad.push('跟讀 70 分不該給金幣');
+    const ar = ARTICLES[0];
+    const readArt = () => { U.art = ar; U.ans = ar.q.map(q => q[2]); ACT['a-done'](); };
+    if ((gv = gain(readArt)) !== 5) bad.push('第一次聽完文章應 +5，實際 +' + gv);
+    if ((gv = gain(readArt)) !== 2) bad.push('重聽文章應 +2，實際 +' + gv);
+    out.push(['P10 每種練習都給金幣：複習單字、拼字複習拼對、跟讀 80 分以上、文章（第一次 +5、重聽 +2）', bad]);
 
     // P6 寶箱一定開出沒有的；全部有了改給 50 金幣
     bad = []; reset();
@@ -159,14 +198,20 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
       else await p.click('[data-act=next-sent]');
     }
     let s = await state();
-    if (s.coins !== 15) bad.push('完成主題應該 +15，實際 ' + s.coins);
+    if (s.coins !== 15 + 4 * 2) bad.push('4 個新句子各 +2、完成主題 +15，應為 23，實際 ' + s.coins);
     await p.evaluate(() => { U.view = 'home'; render(); });
     await p.click('[data-act=rw-ci]');
     s = await state();
-    if (s.coins !== 25) bad.push('簽到後應為 25，實際 ' + s.coins);
+    if (s.coins !== 33) bad.push('簽到後應為 33，實際 ' + s.coins);
     if (await p.$('[data-act=rw-ci]')) bad.push('簽到後按鈕還在');
     await p.screenshot({ path: path.join(OUT, 'rewards-home.png') });
-    result('E1 練完一個主題 +15、首頁簽到 +10，簽到按鈕只能按一次', bad);
+    // 再練一次同一句：只有 +1
+    const c0 = (await state()).coins;
+    await p.evaluate(() => { startTopic(TOPICS[0].id); U.si = 0; ACT['next-sent'](); });
+    if ((await state()).coins !== c0 + 1) bad.push('重練一句應該 +1');
+    await p.evaluate(() => { leaveActivity(); U.view = 'home'; render(); });
+    if (!(await p.textContent('.rwcard')).includes('今天賺到的金幣')) bad.push('首頁沒有顯示今天賺到的金幣');
+    result('E1 新句子 +2、重練 +1、完成主題 +15、首頁簽到 +10（只能按一次）、首頁顯示今天賺到多少', bad);
   }
 
   // E2 商店：錢不夠不能買、兩段確認購買、穿上與脫下

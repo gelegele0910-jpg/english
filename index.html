@@ -301,6 +301,18 @@ body[data-skin=minimal] .opt,body[data-skin=minimaldark] .opt{border-color:var(-
 @keyframes mvHeart{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-220%) scale(1.1)}}
 .rwme{background:none;border:0;padding:0;cursor:pointer;display:flex}
 .hmon{display:inline-flex;flex:none}
+button.pill{border:0;font:inherit;color:inherit;cursor:pointer}
+.pill.static{cursor:default}
+.skycard{display:flex;flex-direction:column;align-items:center;gap:8px}
+.skybig{width:min(100%,320px);height:auto;border-radius:16px}
+.skyinfo{display:flex;flex-direction:column;gap:2px}.skyinfo b{font-size:18px}.skyinfo span{color:var(--muted);font-size:14px}
+.skygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:4px}
+.skyit{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12px;color:var(--muted)}
+.skyit svg{width:100%;height:auto;border-radius:12px}
+.skyit b{font-size:13px;color:var(--ink)}
+.skyit.off svg{opacity:.55}
+.skyit.now svg{box-shadow:0 0 0 3px var(--warm)}
+.skyit.done b{color:var(--warm)}
 .setbox{display:flex;flex-direction:column;gap:10px}
 .sethead{display:flex;gap:12px;align-items:center}
 .setinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
@@ -8047,6 +8059,37 @@ Object.assign(MA_SCENE, {
   snow:{lock:true, n:"雪地聖誕", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#dcecf8"/>${[[10,10],[30,26],[94,14],[110,40],[20,56],[104,70],[60,6]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2" fill="#fff"/>`).join("")}<path d="M104 96 L114 74 L108 76 L116 58 L110 60 L116 44 L100 60 L106 58 L96 76 L102 74 L92 96 Z" fill="#6fa85e"/><path transform="translate(108 42) scale(.4)" d="${STAR5}" fill="#ffd66b"/><path d="M-10 98 Q60 90 130 98 V130 H-10 Z" fill="#fff"/>`},
   castle:{lock:true, n:"魔法城堡", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#3d3570"/>${[[12,10],[30,28],[52,6],[78,14],[110,40],[18,52]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#fff"/>`).join("")}<path d="M96 14 a10 10 0 1 0 8 16 a8 8 0 1 1 -8 -16 Z" fill="#fff3b8"/><path d="M-10 114 V88 H2 V72 L9 58 L16 72 V88 H26 V80 H32 V88 H88 V80 H94 V88 H104 V72 L111 58 L118 72 V88 H130 V114 Z" fill="#2a2450"/>${[[7,78],[109,78]].map(([x,y])=>`<rect x="${x}" y="${y}" width="4" height="5" rx="2" fill="#ffd66b"/>`).join("")}`}
 });
+/* ---------- 星空圖：星座資料（座標 0～100）、星座徽章、滿天星座場景 ---------- */
+const SKY = [
+  {id:"dipper",  n:"北斗七星", p:[[10,30],[25,32],[38,38],[50,45],[52,62],[72,66],[76,48]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]},
+  {id:"orion",   n:"獵戶座",   p:[[30,15],[70,18],[42,48],[50,50],[58,52],[28,85],[74,82]], l:[[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]]},
+  {id:"aries",   n:"牡羊座",   p:[[15,65],[45,45],[65,40],[80,48]], l:[[0,1],[1,2],[2,3]]},
+  {id:"taurus",  n:"金牛座",   p:[[15,25],[40,50],[50,58],[58,48],[62,66],[85,20]], l:[[0,1],[1,2],[2,4],[1,3],[3,5]]},
+  {id:"gemini",  n:"雙子座",   p:[[28,15],[30,42],[26,78],[62,18],[64,45],[70,80]], l:[[0,1],[1,2],[3,4],[4,5],[0,3]]},
+  {id:"cancer",  n:"巨蟹座",   p:[[50,48],[32,22],[70,25],[45,82],[60,62]], l:[[0,1],[0,2],[0,4],[4,3]]},
+  {id:"leo",     n:"獅子座",   p:[[78,28],[66,18],[52,24],[50,38],[60,48],[30,52],[18,68],[42,66]], l:[[0,1],[1,2],[2,3],[3,4],[4,7],[7,6],[6,5],[5,3]]},
+  {id:"virgo",   n:"處女座",   p:[[15,30],[35,40],[50,35],[55,55],[75,60],[40,70],[88,45]], l:[[0,1],[1,2],[2,3],[3,4],[3,5],[4,6]]},
+  {id:"libra",   n:"天秤座",   p:[[50,15],[25,40],[75,42],[30,75],[70,72]], l:[[0,1],[0,2],[1,2],[1,3],[2,4]]},
+  {id:"scorpio", n:"天蠍座",   p:[[80,15],[70,28],[62,38],[55,50],[50,65],[42,78],[30,82],[22,72],[26,62]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]},
+  {id:"sagitt",  n:"射手座",   p:[[25,50],[40,40],[55,45],[70,35],[75,60],[55,65],[35,70]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,5]]},
+  {id:"capri",   n:"摩羯座",   p:[[15,25],[35,35],[55,40],[80,30],[70,60],[45,75],[25,55]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0]]},
+  {id:"aquar",   n:"水瓶座",   p:[[15,30],[35,25],[50,35],[60,55],[48,72],[70,80],[82,62]], l:[[0,1],[1,2],[2,3],[3,4],[3,6],[4,5]]},
+  {id:"pisces",  n:"雙魚座",   p:[[12,20],[25,30],[40,50],[55,70],[70,62],[85,55],[78,40],[90,35]], l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]}
+];
+/** 星座圖案（給徽章與縮圖用）：box＝[左, 上, 寬]，lit＝點亮幾顆（null＝全部） */
+function skyShape(c, box, lit, opt){
+  opt = opt || {};
+  const [x0, y0, w] = box, P = c.p.map(([x, y])=>[x0 + x / 100 * w, y0 + y / 100 * w]), n = lit == null ? P.length : lit;
+  const line = c.l.filter(([a, b])=>a < n && b < n).map(([a, b])=>`<path d="M${P[a][0].toFixed(1)} ${P[a][1].toFixed(1)} L${P[b][0].toFixed(1)} ${P[b][1].toFixed(1)}" stroke="${opt.line || "#ffd66b"}" stroke-width="${opt.lw || w / 60}" stroke-linecap="round" opacity=".85"/>`).join("");
+  const dots = P.map(([x, y], i)=>i < n
+    ? `${opt.glow ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(w / 18).toFixed(1)}" fill="#ffd66b" opacity=".25"/>` : ""}<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(opt.r || w / 45).toFixed(2)}" fill="${opt.dot || "#fff6c8"}"/>`
+    : opt.dim ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(w / 60).toFixed(2)}" fill="#8c86b8" opacity=".6"/>` : "").join("");
+  return line + dots;
+}
+SKY.forEach(c=>{
+  MA_NECK["zod_" + c.id] = {lock:true, n:c.n + "徽章", f:(s,L)=>`<path d="M54 ${s.my+6} L57 ${s.my+12} M66 ${s.my+6} L63 ${s.my+12}" stroke="#7a62c9" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="${s.my+19}" r="8.5" fill="#2f2a5a" stroke="${L}" stroke-width="1.8"/>${skyShape(c, [53.5, s.my+12.5, 13], null, {lw:.7, r:.9})}`};
+});
+MA_SCENE.allsky = {lock:true, n:"滿天星座", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#262056"/>${[["dipper",-4,-4,40],["orion",84,-2,34],["leo",-6,72,36],["scorpio",88,62,32],["gemini",34,-8,26],["pisces",30,94,30]].map(([id,x,y,w])=>skyShape(SKY.find(c=>c.id===id), [x, y, w], null, {lw:.8, r:1.1})).join("")}`};
 /* 動作（不是畫在身上的部件，播放時套用 CSS 動畫 .mv-代號） */
 const MA_MOVES = {
   bounce: {n:"跳跳"},
@@ -9141,7 +9184,10 @@ function spBanner(){
    - 金幣只用來買東西；星星（S.stars）照舊只增不減。
    - 簽到：當天有完成任何練習（todayN()>0）才能領。
    - 每日任務 3 個，各 +10；三個都領完再送一個任務寶物（送完改 +20 金幣）。
-   - 遊戲每天前 3 次給金幣；完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
+   - 做越多得越多：每句 +2（重練 +1）、每篇文章 +5（重聽 +2）、複習每個字 +1、拼字複習拼對每個字 +1、跟讀 80 分以上 +1。
+   - 遊戲：8 種遊戲每種每天第一次玩完 +5，同一種再玩只給星星。
+   - 當天賺的金幣：前 150 全額、150～300 減半、300 以上剩四分之一（earn 的 fixed＝成就獎勵不打折）。
+   - 完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
    - 寶箱只當獎勵送（連續練習每 7 天），開出沒有的寶箱寶物，全部都有就給 50 金幣。 */
 const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE], x:["動作",MA_MOVES], h:["隱藏版",HIDDEN]};
 const RW_SRC = {streak30:"連續練習 30 天", spm30:"拼字熟練 30 個字", art20:"聽完 20 篇文章", lvall:"完成一個難度的全部主題", task5:"完成 5 天的每日任務", speed20:"60 秒快問快答答對 20 題", shadow90:"跟讀 90 分以上 10 次", night7:"晚上 8 點後練習 7 天", egg:"神秘蛋",
@@ -9156,6 +9202,9 @@ const REWARDS = [
   ["s","stars",120,2],["s","meadow","streak7",2],["s","sea","chest",2],["s","board","task10",1],["s","party","chest",3],["s","garden",100,1],
   ["x","wiggle",50,1],["x","spin",80,2],["x","squish",60,1],["x","sleep",40,1],["x","shake","task",1],["x","hearts","streak7",2],["x","float","streak14",3],
   ...Object.keys(HIDDEN).map(k=>["h", k, HIDDEN[k].get, HIDDEN[k].rare]),
+  /* 星空圖：點亮一個星座送徽章，全部點亮送場景 */
+  ...SKY.map((c, i)=>["n", "zod_" + c.id, "sky:" + c.id, i < 4 ? 1 : i < 10 ? 2 : 3]),
+  ["s","allsky","sky:all",3],
   /* 主題套裝（各件也可以單買）與兩件單品 */
   ["a","roundglass",80,1],["n","stripescarf",120,1],["k","broom",200,2],["s","castle",120,2],
   ["t","deerstalker",120,1],["n","redbow",80,1],["a","bigglass",80,1],["k","magnifier",100,1],
@@ -9179,6 +9228,7 @@ const SETS = [
   {id:"ninja",  n:"忍者",     title:"影子忍者",   items:["t:ninjaband","a:ninjamask","k:shuriken","s:bamboo"]}
 ];
 const SET_BONUS = 100;
+const GAME_COIN = 5;   // 每種遊戲每天第一次玩完
 /* 節慶：農曆節日每年國曆日期不同，先內建 2026～2030 年（之後要補上新的年份） */
 const FEST = {
   cny:       {n:"春節",   dates:{2026:"2-17",2027:"2-6",2028:"1-26",2029:"2-13",2030:"2-3"}, pre:7, post:14},
@@ -9188,25 +9238,45 @@ const FEST = {
   xmas:      {n:"聖誕節", fixed:"12-25", pre:15, post:6}
 };
 Object.keys(FEST).forEach(f=>{ RW_SRC["fest:" + f] = FEST[f].n + "限定"; });
+SKY.forEach(c=>{ RW_SRC["sky:" + c.id] = `星空圖點亮「${c.n}」`; });
+RW_SRC["sky:all"] = "星空圖 14 個星座全部點亮";
 const RW_RARE = {1:["普通","r1"],2:["稀有","r2"],3:["傳說","r3"]};
 const TASKS = [
   {id:"s", n:"完成 5 個句子", goal:5, v:d=>(d.s||0) + (d.a||0)*5},
   {id:"g", n:"玩 1 次遊戲", goal:1, v:d=>d.g||0},
   {id:"r", n:"複習 5 個字", goal:5, v:d=>d.r||0}
 ];
-function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}, egg:{d:0, last:"", n:0}, night:{n:0, last:""}, hi90:0, speedBest:0, sets:{}, title:"", fgift:{}}; }
+function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}, egg:{d:0, last:"", n:0}, night:{n:0, last:""}, hi90:0, speedBest:0, sets:{}, title:"", fgift:{}, sky:{}}; }
 function RW(){
   if(!S.rw || typeof S.rw !== "object") S.rw = newRw();
   const d = newRw(); for(const k in d) if(S.rw[k] == null) S.rw[k] = d[k];   // 補齊舊資料缺的欄位（原地修改，不換物件）
   return S.rw;
 }
-function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0}; if(!r.day.claim) r.day.claim = {}; return r.day; }
+function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0, games:{}, got:0, frac:0}; if(!r.day.claim) r.day.claim = {}; if(!r.day.games) r.day.games = {}; return r.day; }
 function rwName(it){ return RW_CAT[it.c][1][it.k].n; }
 function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : it.fest ? `${FEST[it.fest].n}期間商店 ${it.fp} 金幣（${festWhen(it.fest)}）` : it.c === "h" ? `${RW_SRC[it.get]}，或用神秘蛋孵出來` : RW_SRC[it.get]; }
 function rwOwned(){ return (S && cur) ? RW().own : {}; }
 function canUsePart(own){ return (k, v, o) => !o[v].lock || !!own[k + ":" + v]; }
 function coinSvg(size){ return `<svg class="coin" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><circle cx="24" cy="25.5" r="17" fill="#e9a93a"/><circle cx="24" cy="23" r="17" fill="#ffd66b" stroke="#a8741c" stroke-width="2.4"/><circle cx="24" cy="23" r="12" fill="none" stroke="#e9a93a" stroke-width="2"/><path transform="translate(24 23) scale(.68)" d="${STAR5}" fill="#fff3b8" stroke="#a8741c" stroke-width="2.4" stroke-linejoin="round"/></svg>`; }
-function earn(n, why){ if(!n) return; RW().coins += n; toast(`+${n} 金幣・${why}`); saveProg(); }
+const COIN_TIERS = [[150, 1], [300, 0.5], [Infinity, 0.25]];   // 當天已賺到多少之前，用幾成
+function coinRate(got){ return COIN_TIERS.find(([lim])=>got < lim)[1]; }
+/** 給金幣。fixed＝成就類獎勵（套裝、寶箱、神秘蛋、節慶禮物），不受每天打折影響 */
+function earn(n, why, fixed){
+  if(!n) return 0;
+  const r = RW();
+  let give = n, msg = null;
+  if(!fixed){
+    const d = rwDay(), rate = coinRate(d.got || 0);
+    d.frac = (d.frac || 0) + n * rate;          // 打折後的零頭累積起來，湊滿 1 枚才給
+    give = Math.floor(d.frac + 1e-9); d.frac -= give;
+    d.got = (d.got || 0) + give;
+    if(rate < 1 && !d.told){ d.told = 1; msg = "今天賺好多金幣了！接下來的金幣會變少，明天又會恢復喔"; }
+  }
+  r.coins += give;
+  if(give || msg) toast(msg || `+${give} 金幣・${why}`);
+  saveProg();
+  return give;
+}
 function grant(id){
   const r = RW(); if(!RW_BY[id] || r.own[id]) return false;
   r.own[id] = 1; (U.rwq = U.rwq || []).push(id); U.sheet = "reward"; saveProg();
@@ -9214,7 +9284,7 @@ function grant(id){
 }
 function openChest(){
   const pool = REWARDS.filter(it=>it.get==="chest" && !RW().own[it.id]);
-  if(!pool.length){ earn(50, "寶箱"); return null; }
+  if(!pool.length){ earn(50, "寶箱", true); return null; }
   const it = pick(pool); grant(it.id); return it.id;
 }
 /* ---- 節慶：期間判斷 ---- */
@@ -9247,16 +9317,39 @@ function festGift(){
     const key = f + "-" + y; if(r.fgift[key]) return;
     r.fgift[key] = 1;
     const pool = REWARDS.filter(it=>it.fest === f && !r.own[it.id]);
-    if(pool.length) grant(pick(pool).id); else earn(30, FEST[f].n + "禮物");
+    if(pool.length) grant(pick(pool).id); else earn(30, FEST[f].n + "禮物", true);
   });
 }
+/* ---- 星空圖：用「累積的星星」點亮星座（星星不會被花掉） ----
+   第 i 個星座每顆星點要 SKY_BASE + SKY_STEP × i 顆星星；點亮一整個星座送徽章，全部點亮送「滿天星座」與稱號。 */
+const SKY_BASE = 10, SKY_STEP = 5, SKY_TITLE = "星空守護者";
+/** 每顆星點需要的累積星星數（由前到後遞增） */
+const SKY_NEED = (()=>{ const out = []; let sum = 0; SKY.forEach((c, i)=>{ out.push(c.p.map(()=>(sum += SKY_BASE + SKY_STEP * i))); }); return out; })();
+const SKY_TOTAL = SKY_NEED[SKY_NEED.length - 1].slice(-1)[0];
+/** 目前的狀態：每個星座點亮幾顆、正在點的是哪一個、下一顆還差多少 */
+function skyState(stars){
+  stars = stars == null ? (S ? S.stars : 0) : stars;
+  const lit = SKY_NEED.map(arr=>arr.filter(n=>stars >= n).length);
+  const ci = lit.findIndex((n, i)=>n < SKY[i].p.length);
+  const next = ci < 0 ? null : SKY_NEED[ci][lit[ci]];
+  return {lit, ci, next, left: next == null ? 0 : next - stars, all: ci < 0};
+}
+function rwSky(){
+  const r = RW(), st = skyState(), fresh = [];
+  SKY.forEach((c, i)=>{ if(st.lit[i] >= c.p.length && !r.sky[c.id]){ r.sky[c.id] = 1; fresh.push("n:zod_" + c.id); } });
+  if(st.all && !r.sky.all){ r.sky.all = 1; fresh.push("s:allsky"); r.title = SKY_TITLE; }
+  if(!fresh.length) return;
+  if(fresh.length === 1) grant(fresh[0]);
+  else { fresh.forEach(id=>{ r.own[id] = 1; }); toast(`你的星星點亮了 ${fresh.filter(x=>x.startsWith("n:")).length} 個星座！到星空圖看看`); }
+}
+
 /* ---- 主題套裝：集滿送稱號與金幣 ---- */
 function setOwned(st){ const own = RW().own; return st.items.filter(id=>own[id]).length; }
 function rwSets(){
   const r = RW();
   SETS.forEach(st=>{
     if(r.sets[st.id] || setOwned(st) < st.items.length) return;
-    r.sets[st.id] = 1; r.title = st.title; earn(SET_BONUS, "集滿" + st.n);
+    r.sets[st.id] = 1; r.title = st.title; earn(SET_BONUS, "集滿" + st.n, true);
     (U.rwq = U.rwq || []).push("set:" + st.id); U.sheet = "reward";
   });
 }
@@ -9279,7 +9372,7 @@ let achBusy = false;
 function rwAch(){
   if(achBusy || !S || !cur) return;
   achBusy = true;
-  try{ Object.keys(ACH).forEach(k=>{ const [v, g] = achProgress(k); if(v >= g) grant("h:" + k); }); rwSets(); } finally { achBusy = false; }
+  try{ Object.keys(ACH).forEach(k=>{ const [v, g] = achProgress(k); if(v >= g) grant("h:" + k); }); rwSets(); rwSky(); } finally { achBusy = false; }
 }
 /* ---- 神秘蛋：每天第一次練習長大一天（不用連續），滿 5 天可以孵化 ---- */
 const EGG_DAYS = 5;
@@ -9294,7 +9387,7 @@ function hatchEgg(){
   const r = RW(); if(r.egg.d < EGG_DAYS) return null;
   r.egg = {d:0, last:today(), n:(r.egg.n||0) + 1};       // 今天的練習不再算進下一顆蛋
   const pool = Object.keys(HIDDEN).filter(k=>!r.own["h:" + k]);
-  if(!pool.length){ earn(100, "神秘蛋"); saveProg(); return null; }
+  if(!pool.length){ earn(100, "神秘蛋", true); saveProg(); return null; }
   const k = pick(pool); grant("h:" + k); saveProg(); return k;
 }
 function eggRow(){
@@ -9335,7 +9428,7 @@ function claimTask(id){
 function rwGame(g){
   if(!S) return;
   const d = rwDay(), r = RW();
-  if(d.gc < 3){ d.gc++; earn(Math.min(10, 5 + Math.floor((g.stars||0)/3)), "玩遊戲"); }
+  if(!g.review && !d.games[g.id]){ d.games[g.id] = 1; earn(GAME_COIN, "今天第一次玩" + (GAMES.find(x=>x.id===g.id) || {name:"遊戲"}).name); }
   if(g.id === "speed") r.speedBest = Math.max(r.speedBest || 0, g.score || 0);
   if(g.review){
     const total = g.rt ? g.rt.filter(x=>!x).length : g.qs.length;
@@ -9362,6 +9455,32 @@ function moveHtml(inner, x, loop){
 /** 自己的小怪獸，size 大小；play＝這次繪製要播一次動作 */
 function meDance(size, play){ return moveHtml(avCircle(cur.avatar, size), moveOf(), false).replace("mv-once", play ? "mv-once" : "mv-still"); }
 
+/* 星空圖 */
+function vSky(){
+  const st = skyState(), r = RW(), cur_ = st.all ? SKY.length - 1 : st.ci, c = SKY[cur_];
+  const big = `<svg class="skybig" viewBox="0 0 100 100" role="img" aria-label="${h(c.n)}，已點亮 ${st.lit[cur_]} 顆"><rect x="0" y="0" width="100" height="100" rx="8" fill="#262056"/>
+    ${[[8,10],[90,8],[14,88],[86,92],[50,6],[94,50],[6,52]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".5" fill="#fff" opacity=".6"/>`).join("")}
+    ${skyShape(c, [8, 8, 84], st.lit[cur_], {glow:true, dim:true, lw:1, r:2})}</svg>`;
+  const info = st.all ? `<b>14 個星座全部點亮了！</b><span>你是「${SKY_TITLE}」</span>`
+    : `<b>${h(c.n)}</b><span>已點亮 ${st.lit[cur_]} / ${c.p.length} 顆・再 ${st.left} 顆星星點亮下一顆</span>`;
+  const grid = SKY.map((k, i)=>{
+    const done = st.lit[i] >= k.p.length, now = i === st.ci;
+    return `<div class="skyit ${done ? "done" : now ? "now" : "off"}"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="12" fill="#262056"/>${skyShape(k, [10, 10, 80], done ? null : st.lit[i], {dim:true, lw:1.4, r:2.6})}</svg><b>${h(k.n)}</b><span>${done ? "已點亮" : now ? `${st.lit[i]} / ${k.p.length}` : "還沒開始"}</span></div>`;
+  }).join("");
+  return `<div class="lhead"><button class="x" data-act="sky-close" aria-label="返回">✕</button><b>我的星空圖</b><span class="pill static">${ic("star",22)}${S.stars}</span></div>
+    <div class="card center skycard">${big}<div class="skyinfo">${info}</div>
+      <p class="muted" style="margin:6px 0 0;font-size:13px">每次練習拿到的星星都會累積在這裡，星星不會被用掉。點亮一整個星座，就送一個星座徽章！</p></div>
+    <div class="skygrid">${grid}</div>`;
+}
+
+/** 今天賺了多少、之後一次給幾成 */
+function coinNote(){
+  const d = rwDay(), got = d.got || 0, rate = coinRate(got), played = Object.keys(d.games).length;
+  const next = COIN_TIERS.find(([lim])=>got < lim)[0];
+  const tip = rate === 1 ? `再賺 ${next - got} 枚以後，金幣會減半` : rate === .5 ? `現在金幣減半，超過 ${next} 枚剩四分之一` : "現在金幣是平常的四分之一，明天會恢復";
+  return `<div class="rwrow"><span class="rwi rwnum">${got}</span><span class="rwt"><b>今天賺到的金幣</b><span>${tip}・遊戲今天已領 ${played} / ${GAMES.length} 種</span></span></div>`;
+}
+
 /* 首頁：今天的任務 */
 function dailyCard(){
   const r = RW(), ci = ciState();
@@ -9376,6 +9495,7 @@ function dailyCard(){
     <div class="rwhead"><button class="rwme" data-act="me-dance" aria-label="讓我的小怪獸動一動">${meDance(52, U.dance)}</button><b style="flex:1">今天的任務</b><button class="coinpill" data-act="shop-open" aria-label="金幣 ${r.coins}，打開寶物商店">${coinSvg(22)}<span>${r.coins}</span><span class="muted">商店 ›</span></button></div>
     ${rows}
     ${eggRow()}
+    ${coinNote()}
     <p class="muted rwnote">三個任務都完成，再送一個寶物！</p></div>`;
 }
 
@@ -9503,6 +9623,8 @@ const RW_ACT = {
     toast(`穿上「${st.n}」${n} 件了！`); U.dance = 1; render(); U.dance = 0;
   },
   "set-title"(el){ const st = SETS.find(x=>x.id === el.dataset.s), r = RW(); if(st && r.sets[st.id]){ r.title = st.title; saveProg(); toast(`稱號換成「${st.title}」`); render(); } },
+  "sky-open"(){ leaveActivity(); U.skyFrom = U.view; U.view = "sky"; render(); },
+  "sky-close"(){ U.view = U.skyFrom && U.skyFrom !== "sky" ? U.skyFrom : "home"; render(); },
   "rw-close"(){ if(U.rwq) U.rwq.shift(); if(!U.rwq || !U.rwq.length) U.sheet = null; render(); },
   "ab-locked"(el){ const it = RW_BY[el.dataset.id]; if(it) toast(`「${rwName(it)}」還沒收集到：${rwHow(it)}`); }
 };
@@ -9655,7 +9777,7 @@ function answer(ok, keys){
 function spellAnswer(ok, attempt){
   const g = U.g, q = g.qs[g.i];
   g.attempt = attempt; g.picked = ok ? 1 : 0;
-  if(!isRetry(g)){ if(g.id==="spell") spPick(q, ok); else spRecall(q, ok); if(g.review) logAdd("r"); }
+  if(!isRetry(g)){ if(g.id==="spell") spPick(q, ok); else spRecall(q, ok); if(g.review){ logAdd("r"); if(ok) earn(1, "拼對了"); } }
   if(!ok) spRequeue(g, q);
   answer(ok, [q]); speakEn(WORDS[q].w);
 }
@@ -10197,10 +10319,10 @@ let lastView = "";
 function render(){
   const v = U.view;
   const map = {catchup:vCatchup, plisten:vPodcast, profiles:vProfiles, edit:vEdit, partner:vPartner, avatar:vAvatar, games:vGames, vsort:vSort, vdaily:vDaily, vlist:vList, home:vHome, topics:vTopics, articles:vArticles, lesson:vLesson, tdone:vTopicDone,
-               listen:vListen, article:vArticle, game:vGame, review:vReview, words:vWords, settings:vSettings, board:vBoard, record:vRecord, shop:vShop};
+               listen:vListen, article:vArticle, game:vGame, review:vReview, words:vWords, settings:vSettings, board:vBoard, record:vRecord, shop:vShop, sky:vSky};
   if(!map[v]) return;
   $("#main").innerHTML = map[v]();
-  const focus = ["lesson","listen","article","game","review","edit","profiles","tdone","partner","avatar","games","vsort","vdaily","vlist","catchup","plisten","board","record","shop"].includes(v);
+  const focus = ["lesson","listen","article","game","review","edit","profiles","tdone","partner","avatar","games","vsort","vdaily","vlist","catchup","plisten","board","record","shop","sky"].includes(v);
   const tabs = $("#tabs");
   if(cur && !focus){
     tabs.style.display = "flex";
@@ -10210,7 +10332,7 @@ function render(){
   $("#top").innerHTML = (cur && !focus) ? `
     <div class="top">
       <button class="who" data-act="go" data-v="profiles"><span class="av">${av(cur.avatar,48)}</span><span><b>${h(cur.name)}</b><small>${LEVELS[lvl()-1].name} · ${S && S.rw && S.rw.title ? h(S.rw.title) : "點這裡換人"}</small></span></button>
-      <div class="pills"><button class="pill mpill" data-act="mode-open" aria-label="切換練習情境：${MODES[mode()].n}">${li(MODES[mode()].ic,20)}<span>${MODES[mode()].s}</span></button><span class="pill">${ic("star",22)}${S.stars}</span><span class="pill">${ic("fire",22)}${streakNow()}</span></div>
+      <div class="pills"><button class="pill mpill" data-act="mode-open" aria-label="切換練習情境：${MODES[mode()].n}">${li(MODES[mode()].ic,20)}<span>${MODES[mode()].s}</span></button><button class="pill" data-act="sky-open" aria-label="星星 ${S.stars} 顆，打開星空圖">${ic("star",22)}${S.stars}</button><span class="pill">${ic("fire",22)}${streakNow()}</span></div>
     </div>` : "";
   $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : (U.sheet==="reward" && cur && U.rwq && U.rwq.length) ? vRewardSheet() : "";
   if(lastView !== v){ window.scrollTo(0,0); lastView = v; }
@@ -10263,7 +10385,7 @@ setInterval(()=>{
 }, 15000);
 
 /* 跟讀分數：每次結果只記一次 */
-function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); if(score >= 90) RW().hi90++; saveProg(); }
+function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); if(score >= 90) RW().hi90++; if(score >= 80) earn(1, "跟讀很棒"); saveProg(); }
 
 /* 讀取任何一位學習者的進度（家長看板用） */
 function loadProgOf(id){
@@ -10464,8 +10586,9 @@ const ACT = {
     leaveActivity();
     const s = curSent(); learn(s.w.map(x=>x[0]));
     addPend("s:"+s.id); U.bld = null;
-    if(!S.done[s.id]){ S.done[s.id] = 1; reward(1); }
-    logAdd("s"); bump(); saveProg();
+    const firstTime = !S.done[s.id];
+    if(firstTime){ S.done[s.id] = 1; reward(1); }
+    logAdd("s"); bump(); earn(firstTime ? 2 : 1, firstTime ? "練習句子" : "再練一次"); saveProg();
     if(U.si+1 < U.list.length){ U.si++; resetStep(); }
     else { U.view = "tdone"; rwTopic(U.ti, lvl()); }
     render();
@@ -10496,8 +10619,9 @@ const ACT = {
   "a-done"(){
     stopSeq();
     const k = "art:"+U.art.id;
-    if(!S.done[k]){ const right = U.ans.filter((x,i)=>x===U.art.q[i][2]).length; S.done[k] = 1; reward(3 + right); }
-    logAdd("a"); bump(); saveProg(); U.view = "articles"; render();
+    const firstTime = !S.done[k];
+    if(firstTime){ const right = U.ans.filter((x,i)=>x===U.art.q[i][2]).length; S.done[k] = 1; reward(3 + right); }
+    logAdd("a"); bump(); earn(firstTime ? 5 : 2, firstTime ? "聽完文章" : "再聽一次文章"); saveProg(); U.view = "articles"; render();
   },
 
   review(){
@@ -10514,7 +10638,7 @@ const ACT = {
     if(r===0){ st[0] = 1; st[1] = n; U.rstats.a++; if(U.rq.slice(U.rc+1).indexOf(k) < 0) U.rq.push(k); }
     else if(r===1){ st[0] = Math.max(1, st[0]); st[1] = n + DAY; U.rstats.b++; }
     else { st[0] = Math.min(6, st[0]+1); st[1] = n + INTERVAL[st[0]]*DAY; U.rstats.c++; }
-    U.rc++; U.rphase = "listen"; logAdd("r");
+    U.rc++; U.rphase = "listen"; logAdd("r"); earn(1, "複習單字");
     if(U.rc >= U.rq.length){ reward(U.rstats.c); bump(); }
     saveProg(); render();
     if(U.rc < U.rq.length) speakEn(WORDS[U.rq[U.rc]].w);
