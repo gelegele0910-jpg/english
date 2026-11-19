@@ -1,0 +1,14 @@
+{
+  "name": "Echo Island 英文聽力",
+  "short_name": "Echo Island",
+  "description": "給國小到高中的英文聽力與口說練習",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "display": "browser",
+  "background_color": "#d4f0ff",
+  "theme_color": "#a6dcff",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -2,7 +2,7 @@
 
 ## 專案概述
 
-「英文聽力樂園」：給台灣國小～高中（學測）學生的英文聽力／口說練習網頁 App。介面全部是繁體中文（zh-Hant），以可愛角色、多種介面風格、星星與連續天數鼓勵學習。
+「英文聽力樂園」（英文名 **Echo Island**，網頁標題與手機主畫面名稱）：給台灣國小～高中（學測）學生的英文聽力／口說練習網頁 App。介面全部是繁體中文（zh-Hant），以可愛角色、多種介面風格、星星與連續天數鼓勵學習。
 
 - **沒有建置流程、沒有套件**：純 HTML + CSS + 原生 JavaScript，直接用瀏覽器開啟 `index.html` 即可。測試是 `tests/` 裡的獨立 Node 腳本（只需要 Playwright）。
 - 檔案：
@@ -10,6 +10,7 @@
   - `config.js`：一行，設定 `window.ELP_API`（Google Apps Script Web App 的 `/exec` 網址）。
   - `apps-script/Code.gs`：Google Apps Script 後端（資料存在 Google 試算表）。
   - `tests/`：測試腳本，`node tests/run-all.js` 全部執行（見「驗證與測試規範」）。
+  - 手機主畫面圖示：`icon.svg`、`icon-512.png`、`icon-192.png`、`apple-touch-icon.png`（180）、`favicon-32.png` 與 `manifest.webmanifest`，都由 `node tools/make-icons.js` 從 App 裡的啵啵畫出來（改圖示請改這支程式再重新產生）。manifest 的 `display` 刻意用 `browser`：iPhone 的獨立 App 模式（standalone）和 Safari 不共用 localStorage，會讓已加到主畫面的人看起來資料不見。Apps Script 版沒有這些圖檔。
 
 ## 兩個版本的對應關係
 
@@ -169,7 +170,7 @@ node tests/run-all.js --quick
 
 | 腳本 | 內容 |
 |---|---|
-| `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查；`font-size` 不可寫死成 px |
+| `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查；`font-size` 不可寫死成 px；主畫面圖示與 manifest 的檔案存在、尺寸正確 |
 | `backend-props.js` | 用模擬試算表執行 `Code.gs`：分段存讀往返一致、存檔冪等、`doPost` 白名單、學員進度總覽計算、舊資料搬家 |
 | `front-props.js` | `highlight()` / `findWord()` 不變量、`migrate()` 冪等、課程內容完整性（R-04）、`h()` 跳脫與惡意名字 |
 | `spelling.js` | 拼字間隔規則（含 2000 步隨機不變量）、逐字對照、三種拼字遊戲的訂正與重出題、隔天首頁複習、舊資料相容 |
