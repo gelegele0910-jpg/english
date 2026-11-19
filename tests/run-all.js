@@ -13,6 +13,7 @@ const suites = [
   ['隱藏版小怪獸', 'hidden.js', []],
   ['套裝與節慶', 'sets.js', []],
   ['星空圖', 'sky.js', []],
+  ['手機版面', 'mobile.js', []],
   ['端到端', 'e2e.js', quick ? ['--clicks=60'] : []]
 ];
 const summary = [];
