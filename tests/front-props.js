@@ -64,6 +64,10 @@ const { start, blockExternal } = require('./server');
     ARTICLES.forEach(ar => {
       if (aids.has(ar.id)) bad.push('文章 id 重複 ' + ar.id); aids.add(ar.id);
       (ar.q || []).forEach((q, i) => { if (!(q[2] >= 0 && q[2] < q[1].length)) bad.push(`題目答案超出選項範圍 ${ar.id} 第 ${i + 1} 題`); });
+      // 題數：入門 2、基礎 3、進階 4、高中 5、學測 6；選項：高中與學測 4 個（像學測），其他 3 個；選項不重複
+      const wantQ = { 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 }[ar.lv], wantO = ar.lv >= 4 ? 4 : 3;
+      if ((ar.q || []).length !== wantQ) bad.push(`${ar.id}（${ar.lv} 級）應有 ${wantQ} 題，實際 ${(ar.q || []).length}`);
+      (ar.q || []).forEach((q, i) => { if (q[1].length !== wantO || new Set(q[1]).size !== q[1].length) bad.push(`${ar.id} 第 ${i + 1} 題應有 ${wantO} 個不重複的選項`); });
       ar.w.forEach(([w]) => { if (!ar.s.some(s => findWord(s[0], w))) bad.push(`文章生字不在文中 ${ar.id}: "${w}"`); });
     });
     // 靜音模式要顯示 KK 音標：每個生字都要有 PRON
