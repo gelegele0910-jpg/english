@@ -275,6 +275,36 @@ body[data-skin=minimal] .opt,body[data-skin=minimaldark] .opt{border-color:var(-
 .slots{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:4px 0 14px}
 .slot{width:25px;height:38px;border-bottom:3px solid var(--line);font-size:22px;font-weight:700;display:flex;align-items:flex-end;justify-content:center}
 .slot.ok{color:var(--good);border-color:var(--good)}.slot.no{color:var(--bad);border-color:var(--bad)}
+/* 獎勵：今天的任務、商店、收藏冊 */
+.rwcard{display:flex;flex-direction:column;gap:8px}
+.rwhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rwhead b{font-size:17px}
+.coinpill{display:inline-flex;align-items:center;gap:4px;background:var(--warm-2);color:var(--ink);border:var(--bw) solid var(--bc);border-radius:var(--rp);padding:3px 10px 3px 5px;font:inherit;font-weight:700;cursor:pointer;box-shadow:var(--sh-s);font-variant-numeric:tabular-nums}
+.coinpill.static{cursor:default}
+.coinpill .muted{font-weight:400;font-size:12px}
+.rwrow{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1.5px dashed var(--line)}
+.rwi{width:34px;flex:none;display:flex;justify-content:center}
+.rwnum{font-family:var(--font-en);font-weight:700;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rwt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.rwt b{font-size:15px}.rwt>span{font-size:12.5px;color:var(--muted)}
+.rwbar{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.rwbar i{display:block;height:100%;background:var(--good);border-radius:3px}
+.rwok{color:var(--good);display:flex;padding:0 10px}
+.rwp{font-size:12.5px;white-space:nowrap}
+.rwnote{margin:0;font-size:12.5px;text-align:center}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.shopit{position:relative;background:var(--card);border:var(--bw) solid var(--bc);border-radius:var(--r);box-shadow:var(--sh-s);padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:0}
+.shopit b{font-size:14px;line-height:1.3}
+.shopit .btn{width:100%}
+.shopit.lockd .avc svg,.abopt.locked .avc svg{filter:grayscale(1);opacity:.45}
+.lockb{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:var(--card);border:2px solid var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center}
+.abopt{position:relative}
+.abopt.locked{color:var(--muted)}
+.rtag{font-size:11px;padding:1px 8px;border-radius:999px}
+.rtag.r1{background:var(--good-2);color:var(--good)}.rtag.r2{background:var(--accent-2);color:var(--accent)}.rtag.r3{background:var(--warm-2);color:var(--warm)}
+.rwpop{display:flex;flex-direction:column;align-items:center}
+.rwpop .stack{width:100%}
+svg.coin{flex:none}
 /* 拼字訂正：孩子拼的與正確拼法逐字對照 */
 .spfix{margin:6px 0 2px}
 .sp-correct{font-size:40px;font-weight:700;color:var(--good);letter-spacing:2px;line-height:1.2;margin:2px 0;word-break:break-all}
@@ -7690,12 +7720,8 @@ const MA_ACC = {
   none:     {n:"沒有", f:()=>""},
   glasses:  {n:"圓眼鏡", f:(s,L)=>`<circle cx="${60-s.dx}" cy="${s.ey}" r="8" fill="#fff" fill-opacity=".3" stroke="${L}" stroke-width="2.2"/><circle cx="${60+s.dx}" cy="${s.ey}" r="8" fill="#fff" fill-opacity=".3" stroke="${L}" stroke-width="2.2"/><path d="M${60-s.dx+8} ${s.ey} h${2*s.dx-16}" stroke="${L}" stroke-width="2.2"/>`},
   sunglass: {n:"墨鏡", f:(s,L)=>`<path d="M${60-s.dx-9} ${s.ey-5} h18 v4 q0 7 -9 7 q-9 0 -9 -7 Z M${60+s.dx-9} ${s.ey-5} h18 v4 q0 7 -9 7 q-9 0 -9 -7 Z" fill="#3f3a52" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><path d="M${60-s.dx+9} ${s.ey-3} h${2*s.dx-18}" stroke="${L}" stroke-width="2.2"/><path d="M${60-s.dx-5} ${s.ey-2} l3 -2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`},
-  bowtie:   {n:"領結", f:(s,L)=>`<path d="M60 ${s.my+11} L50 ${s.my+6} V${s.my+16} Z M60 ${s.my+11} L70 ${s.my+6} V${s.my+16} Z" fill="#e88a8a" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="60" cy="${s.my+11}" r="2.6" fill="#e88a8a" stroke="${L}" stroke-width="1.6"/>`},
-  scarf:    {n:"圍巾", f:(s,L)=>`<path d="M20 ${s.my+6} Q60 ${s.my+18} 100 ${s.my+6} L100 ${s.my+15} Q60 ${s.my+27} 20 ${s.my+15} Z" fill="#ffe08a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M78 ${s.my+16} Q84 ${s.my+24} 81 ${s.my+30} L90 ${s.my+29} Q92 ${s.my+20} 88 ${s.my+13} Z" fill="#ffe08a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>`},
-  bell:     {n:"鈴鐺", f:(s,L)=>`<path d="M28 ${s.my+9} Q60 ${s.my+18} 92 ${s.my+9}" fill="none" stroke="#ff6f95" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="${s.my+17}" r="5.4" fill="#ffd66b" stroke="${L}" stroke-width="1.8"/><path d="M57 ${s.my+18} h6" stroke="${L}" stroke-width="1.4"/>`},
   bandaid:  {n:"OK 繃", f:(s,L)=>`<g transform="translate(${60+s.dx+6} ${s.ey+10}) rotate(-25)"><rect x="-8" y="-3.5" width="16" height="7" rx="3.5" fill="#f5d1ad" stroke="${L}" stroke-width="1.5"/><rect x="-3" y="-3.5" width="6" height="7" fill="#e9b98c"/></g>`},
   starclip: {n:"星星夾", f:(s,L)=>`<path transform="translate(${60-s.dx-8} ${s.ey-14}) scale(.62)" d="M0 -10 L3 -3 L10 -3 L4 2 L6 9 L0 5 L-6 9 L-4 2 L-10 -3 L-3 -3 Z" fill="#ffe08a" stroke="${L}" stroke-width="2.6" stroke-linejoin="round"/>`},
-  necklace: {n:"珍珠項鍊", f:(s,L)=>[-20,-12,-4,4,12,20].map(o=>`<circle cx="${60+o}" cy="${s.my+11+Math.abs(o)*-0.18+4}" r="3.2" fill="#fff" stroke="${L}" stroke-width="1.4"/>`).join("")},
   headphone:{n:"耳機", f:(s,L)=>`<path d="M${60-s.dx-14} ${s.ey} Q${60-s.dx-14} ${s.ey-30} 60 ${s.ey-30} Q${60+s.dx+14} ${s.ey-30} ${60+s.dx+14} ${s.ey}" fill="none" stroke="#5f6f9c" stroke-width="4" stroke-linecap="round"/><rect x="${60-s.dx-20}" y="${s.ey-6}" width="9" height="15" rx="4" fill="#8fd1ff" stroke="${L}" stroke-width="1.8"/><rect x="${60+s.dx+11}" y="${s.ey-6}" width="9" height="15" rx="4" fill="#8fd1ff" stroke="${L}" stroke-width="1.8"/>`},
   mask:     {n:"英雄眼罩", f:(s,L)=>`<path d="M${60-s.dx-11} ${s.ey-2} Q60 ${s.ey-10} ${60+s.dx+11} ${s.ey-2} Q${60+s.dx+10} ${s.ey+8} 60 ${s.ey+2} Q${60-s.dx-10} ${s.ey+8} ${60-s.dx-11} ${s.ey-2} Z" fill="#7b6fd0" fill-opacity=".8" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`},
   mustache: {n:"小鬍子", f:(s,L)=>`<path d="M60 ${s.my-3} Q54 ${s.my-7} 49 ${s.my-3} Q51 ${s.my+1} 55 ${s.my-1} Q58 ${s.my-2} 60 ${s.my-3} Q62 ${s.my-2} 65 ${s.my-1} Q69 ${s.my+1} 71 ${s.my-3} Q66 ${s.my-7} 60 ${s.my-3} Z" fill="#6b5244" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>`}
@@ -7709,18 +7735,117 @@ const MA_PAT = {
   star:   {n:"星星", f:(s,c)=>`<path transform="translate(38 96) scale(.7)" d="M0 -10 L3 -3 L10 -3 L4 2 L6 9 L0 5 L-6 9 L-4 2 L-10 -3 L-3 -3 Z" fill="#ffe08a"/>`},
   freckle:{n:"雀斑", f:(s,c)=>[[-1,0],[1,0]].map(([k])=>`<circle cx="${60+k*(s.dx+7)}" cy="${s.ey+8}" r="1" fill="${c[3]}"/><circle cx="${60+k*(s.dx+10)}" cy="${s.ey+10}" r="1" fill="${c[3]}"/><circle cx="${60+k*(s.dx+5)}" cy="${s.ey+11}" r="1" fill="${c[3]}"/>`).join("")}
 };
+/* ---------- 獎勵部件（lock:true＝要收集才能用；取得方式見主程式 REWARDS） ---------- */
+const STAR5 = "M0 -10 L3 -3 L10 -3 L4 2 L6 9 L0 5 L-6 9 L-4 2 L-10 -3 L-3 -3 Z";
+function wizardOf(main, dark, star){ return (L)=>`
+    <path d="M36 44 Q38 30 52 22 Q62 14 70 4 Q72 18 76 30 Q82 40 86 44 Z" fill="${main}" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M70 4 Q80 2 84 10" fill="none" stroke="${L}" stroke-width="2.2" stroke-linecap="round"/><circle cx="85" cy="12" r="3.4" fill="${star}" stroke="${L}" stroke-width="1.8"/>
+    <ellipse cx="61" cy="44" rx="31" ry="6" fill="${dark}" stroke="${L}" stroke-width="2.2"/>
+    <path transform="translate(56 30) scale(.45)" d="${STAR5}" fill="${star}"/><path d="M42 40 Q61 34 80 40" fill="none" stroke="${star}" stroke-width="3"/>`; }
+Object.assign(MA_TOPS, {
+  wizard: {lock:true, n:"魔法師帽", f:(L)=>`
+    <path d="M36 44 Q38 30 52 22 Q62 14 70 4 Q72 18 76 30 Q82 40 86 44 Z" fill="#8c7bd6" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M70 4 Q80 2 84 10" fill="none" stroke="${L}" stroke-width="2.2" stroke-linecap="round"/><circle cx="85" cy="12" r="3.4" fill="#ffd66b" stroke="${L}" stroke-width="1.8"/>
+    <ellipse cx="61" cy="44" rx="31" ry="6" fill="#7462c4" stroke="${L}" stroke-width="2.2"/>
+    <path transform="translate(56 30) scale(.45)" d="${STAR5}" fill="#ffd66b"/><path transform="translate(68 20) scale(.3)" d="${STAR5}" fill="#fff6c8"/>
+    <path d="M42 40 Q61 34 80 40" fill="none" stroke="#ffd66b" stroke-width="3"/>`},
+  strawhat: {lock:true, n:"草帽", f:(L)=>`
+    <ellipse cx="60" cy="42" rx="40" ry="8" fill="#f3d58a" stroke="${L}" stroke-width="2.2"/>
+    <path d="M40 42 Q40 22 60 22 Q80 22 80 42 Z" fill="#f7df9c" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M40 37 Q60 33 80 37 L80 42 Q60 38 40 42 Z" fill="#ff8fab" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <g transform="translate(76 36)">${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-4" rx="3" ry="4.2" transform="rotate(${a})" fill="#fff" stroke="${L}" stroke-width="1.3"/>`).join("")}<circle r="2.6" fill="#ffd66b" stroke="${L}" stroke-width="1.2"/></g>
+    <path d="M46 28 l4 -2 M52 25 l4 -1 M64 25 l4 1" stroke="#d9b45e" stroke-width="1.6" stroke-linecap="round"/>`},
+  pirate: {lock:true, n:"海盜帽", f:(L)=>`
+    <path d="M24 44 Q30 18 60 18 Q90 18 96 44 Q80 36 60 38 Q40 36 24 44 Z" fill="#4a4258" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M24 44 Q40 36 60 38 Q80 36 96 44" fill="none" stroke="#ffd66b" stroke-width="2.6"/>
+    <circle cx="60" cy="29" r="6.4" fill="#fff" stroke="${L}" stroke-width="1.6"/><circle cx="57.6" cy="28.4" r="1.4" fill="#4a4258"/><circle cx="62.4" cy="28.4" r="1.4" fill="#4a4258"/>
+    <path d="M57.5 32 h5" stroke="#4a4258" stroke-width="1.4" stroke-linecap="round"/>`},
+  flowercrown: {lock:true, n:"花圈", f:(L)=>{
+    const fl = (x,y,c)=>`<g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-4.2" rx="3.2" ry="4.4" transform="rotate(${a})" fill="${c}" stroke="${L}" stroke-width="1.3"/>`).join("")}<circle r="2.4" fill="#ffd66b"/></g>`;
+    return `<path d="M30 46 Q60 30 90 46" fill="none" stroke="#8fc27a" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M38 41 q-4 -5 -9 -4 q3 5 9 4 Z M82 41 q4 -5 9 -4 q-3 5 -9 4 Z M60 36 q-3 -6 0 -10 q3 4 0 10 Z" fill="#a8d88e" stroke="${L}" stroke-width="1.3"/>
+      ${fl(36,43,"#ffc6d6")}${fl(48,37,"#fff")}${fl(60,34,"#ffe08a")}${fl(72,37,"#c9e4ff")}${fl(84,43,"#ffc6d6")}`; }},
+  earmuff: {lock:true, n:"毛毛耳罩", f:(L)=>`
+    <path d="M28 54 Q28 18 60 18 Q92 18 92 54" fill="none" stroke="#9aa6d6" stroke-width="4.6" stroke-linecap="round"/>
+    <path d="M28 54 Q28 18 60 18 Q92 18 92 54" fill="none" stroke="${L}" stroke-width="1.2" stroke-linecap="round" opacity=".5"/>
+    ${[[27,56],[93,56]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="#fff" stroke="${L}" stroke-width="2.2"/><circle cx="${x}" cy="${y}" r="5.4" fill="#ffd3e0"/>`).join("")}`},
+  donut: {lock:true, n:"甜甜圈帽", f:(L)=>`
+    <ellipse cx="60" cy="34" rx="22" ry="11" fill="#e8b878" stroke="${L}" stroke-width="2.2"/>
+    <path d="M40 32 Q42 22 60 22 Q78 22 80 32 Q78 38 70 36 Q66 40 60 37 Q54 40 48 36 Q42 38 40 32 Z" fill="#ff9fc0" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <ellipse cx="60" cy="31" rx="6.4" ry="3.2" fill="#e8b878" stroke="${L}" stroke-width="1.8"/>
+    ${[[47,28,"#ffe08a",20],[53,25,"#8fd1ff",-30],[67,25,"#a8d88e",40],[73,29,"#fff",-10],[56,35,"#8fd1ff",70],[65,35,"#ffe08a",0]].map(([x,y,c,r])=>`<rect x="${x-2.2}" y="${y-.9}" width="4.4" height="1.8" rx=".9" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`).join("")}`},
+  headband: {lock:true, n:"運動頭帶", f:(L)=>`
+    <path d="M26 52 Q60 40 94 52 L94 60 Q60 48 26 60 Z" fill="#ff7a8a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M28 55.5 Q60 44 92 55.5" fill="none" stroke="#fff" stroke-width="2"/>
+    <path d="M92 54 q10 -4 14 -12 q-2 9 -8 14 q8 0 12 6 q-8 -2 -16 -2 Z" fill="#ff7a8a" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`},
+  rainbow: {lock:true, n:"頭上彩虹", f:(L)=>`
+    ${[["#ff9fb6",26],["#ffd66b",21],["#a8d88e",16],["#8fd1ff",11]].map(([c,r])=>`<path d="M${60-r} 34 A${r} ${r} 0 0 1 ${60+r} 34" fill="none" stroke="${c}" stroke-width="5"/>`).join("")}
+    <path d="M34 34 A26 26 0 0 1 86 34" fill="none" stroke="${L}" stroke-width="1.2" opacity=".5"/>
+    ${[[30,36],[90,36]].map(([x,y])=>`<path d="M${x-8} ${y} q0 -6 6 -6 q2 -5 7 -3 q6 -1 6 5 q4 1 3 4 Z" fill="#fff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`).join("")}`},
+  wizRose: {lock:true, n:"魔法師帽・玫瑰", f:wizardOf("#ff9fb6","#f07a98","#fff3b8")},
+  wizMint: {lock:true, n:"魔法師帽・薄荷", f:wizardOf("#8fd6b4","#6cc29a","#ffd66b")},
+  wizNight:{lock:true, n:"魔法師帽・夜空", f:wizardOf("#4f4a8a","#3d3870","#ffd66b")}
+});
+Object.assign(MA_EYES, {
+  teary: {lock:true, n:"淚汪汪", f:(x,y,L,i)=>`<ellipse cx="${x}" cy="${y}" rx="4.4" ry="5.2" fill="${DK}"/><circle cx="${x+1.5}" cy="${y-2}" r="1.8" fill="#fff"/><circle cx="${x-1.4}" cy="${y+1.8}" r="1" fill="#fff"/><path d="M${x+(i?3:-3)} ${y+5} q${i?2:-2} 4 0 6 q${i?-2:2} -2 0 -6 Z" fill="#8fd1ff" stroke="#5aa2ef" stroke-width="1"/>`},
+  dizzy: {lock:true, n:"暈暈眼", f:(x,y,L)=>`<path d="M${x} ${y} m-0.5 0 a1.2 1.2 0 1 1 1.6 1 a2.6 2.6 0 1 1 -3.4 -2.6 a4 4 0 1 1 1.6 6.4" fill="none" stroke="${DK}" stroke-width="1.6" stroke-linecap="round"/>`},
+  wow: {lock:true, n:"嚇一跳", f:(x,y,L)=>`<circle cx="${x}" cy="${y}" r="5.4" fill="#fff" stroke="${L}" stroke-width="2"/><circle cx="${x}" cy="${y}" r="1.6" fill="${DK}"/><path d="M${x-4} ${y-9} q4 -3 8 0" fill="none" stroke="${L}" stroke-width="1.8" stroke-linecap="round"/>`},
+  sparkle: {lock:true, n:"閃閃發光", f:(x,y,L,i)=>`<ellipse cx="${x}" cy="${y}" rx="4.6" ry="5.4" fill="${DK}"/><circle cx="${x+1.6}" cy="${y-2}" r="2" fill="#fff"/><path transform="translate(${x-1.3} ${y+1.8}) scale(.22)" d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="#fff"/>${i ? `<path transform="translate(${x+8} ${y-8}) scale(.32)" d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="#ffd66b"/>` : ""}`}
+});
+Object.assign(MA_MOUTHS, {
+  gum: {lock:true, n:"吹泡泡", f:(x,y,L)=>`<circle cx="${x+1}" cy="${y+5}" r="7.4" fill="#ffb3cf" stroke="#e5709a" stroke-width="1.6"/><circle cx="${x-1.6}" cy="${y+2.4}" r="1.8" fill="#fff" opacity=".8"/>`},
+  drool: {lock:true, n:"流口水", f:(x,y,L)=>`<path d="M${x-5} ${y-1} Q${x} ${y+4} ${x+5} ${y-1}" fill="none" stroke="${L}" stroke-width="2" stroke-linecap="round"/><path d="M${x+4} ${y+.5} q1.6 4 0 6 q-1.6 -2 0 -6 Z" fill="#8fd1ff" stroke="#5aa2ef" stroke-width="1"/>`},
+  bigo: {lock:true, n:"大驚訝", f:(x,y,L)=>`<ellipse cx="${x}" cy="${y+2}" rx="4.4" ry="5.6" fill="#c4505f" stroke="${L}" stroke-width="1.8"/><ellipse cx="${x}" cy="${y+4.6}" rx="2.4" ry="1.8" fill="#ff9eae"/>`},
+  heartm: {lock:true, n:"愛心嘴", f:(x,y,L)=>`<path transform="translate(${x} ${y+1}) scale(.8)" d="M0 4 C-7 -1 -5 -7 0 -3.5 C5 -7 7 -1 0 4 Z" fill="#ff7f9c" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>`}
+});
+Object.assign(MA_ACC, {
+  heartglass: {lock:true, n:"愛心眼鏡", f:(s,L)=>[60-s.dx, 60+s.dx].map(x=>`<path transform="translate(${x} ${s.ey+1}) scale(1.55)" d="M0 4 C-7 -1 -5 -7 0 -3.5 C5 -7 7 -1 0 4 Z" fill="#ff8fab" fill-opacity=".35" stroke="#e5507a" stroke-width="1.5" stroke-linejoin="round"/>`).join("") + `<path d="M${60-s.dx+7} ${s.ey-2} Q60 ${s.ey-5} ${60+s.dx-7} ${s.ey-2}" fill="none" stroke="#e5507a" stroke-width="2"/>`},
+  monocle: {lock:true, n:"單片眼鏡", f:(s,L)=>`<circle cx="${60+s.dx}" cy="${s.ey}" r="8.6" fill="#fff" fill-opacity=".3" stroke="#c99a2e" stroke-width="2.4"/><path d="M${60+s.dx+6} ${s.ey+6} Q${60+s.dx+12} ${s.ey+18} ${60+s.dx+4} ${s.ey+26}" fill="none" stroke="#c99a2e" stroke-width="1.4" stroke-dasharray="2 2"/>`}
+});
+/* 脖子（依嘴巴位置擺放） */
+const MA_NECK = {
+  none:     {n:"沒有", f:()=>""},
+  bowtie:   {n:"領結", f:(s,L)=>`<path d="M60 ${s.my+11} L50 ${s.my+6} V${s.my+16} Z M60 ${s.my+11} L70 ${s.my+6} V${s.my+16} Z" fill="#e88a8a" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="60" cy="${s.my+11}" r="2.6" fill="#e88a8a" stroke="${L}" stroke-width="1.6"/>`},
+  scarf:    {n:"圍巾", f:(s,L)=>`<path d="M20 ${s.my+6} Q60 ${s.my+18} 100 ${s.my+6} L100 ${s.my+15} Q60 ${s.my+27} 20 ${s.my+15} Z" fill="#ffe08a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M78 ${s.my+16} Q84 ${s.my+24} 81 ${s.my+30} L90 ${s.my+29} Q92 ${s.my+20} 88 ${s.my+13} Z" fill="#ffe08a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>`},
+  bell:     {n:"鈴鐺", f:(s,L)=>`<path d="M28 ${s.my+9} Q60 ${s.my+18} 92 ${s.my+9}" fill="none" stroke="#ff6f95" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="${s.my+17}" r="5.4" fill="#ffd66b" stroke="${L}" stroke-width="1.8"/><path d="M57 ${s.my+18} h6" stroke="${L}" stroke-width="1.4"/>`},
+  necklace: {n:"珍珠項鍊", f:(s,L)=>[-20,-12,-4,4,12,20].map(o=>`<circle cx="${60+o}" cy="${s.my+11+Math.abs(o)*-0.18+4}" r="3.2" fill="#fff" stroke="${L}" stroke-width="1.4"/>`).join("")},
+  medal: {lock:true, n:"金牌", f:(s,L)=>`<path d="M50 ${s.my+6} L56 ${s.my+18} M70 ${s.my+6} L64 ${s.my+18}" stroke="#5aa2ef" stroke-width="5" stroke-linecap="round"/><circle cx="60" cy="${s.my+21}" r="7" fill="#ffd66b" stroke="${L}" stroke-width="1.8"/><path transform="translate(60 ${s.my+21}) scale(.42)" d="${STAR5}" fill="#fff6c8" stroke="#c99a2e" stroke-width="2"/>`},
+  tie: {lock:true, n:"小領帶", f:(s,L)=>`<path d="M56 ${s.my+8} h8 l-2 4 l4 12 l-6 5 l-6 -5 l4 -12 Z" fill="#5aa2ef" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><path d="M57 ${s.my+17} l6 -2 M56.5 ${s.my+21} l7 -2.4" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>`}
+};
+/* 身後（畫在身體後面） */
+const MA_BACK = {
+  none: {n:"沒有", f:()=>""},
+  cape: {lock:true, n:"英雄披風", f:(L)=>`<path d="M30 60 Q14 92 18 112 Q40 104 60 112 Q80 104 102 112 Q106 92 90 60 Z" fill="#e2574c" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M24 104 Q40 98 60 104 Q80 98 96 104" fill="none" stroke="#b8403a" stroke-width="1.6"/>`},
+  angel: {lock:true, n:"天使翅膀", f:(L)=>[[-1],[1]].map(([k])=>`<path transform="translate(${60+k*34} 66) scale(${k} 1)" d="M0 0 Q20 -18 30 -6 Q24 -4 26 2 Q20 0 22 8 Q14 6 14 14 Q6 10 0 12 Z" fill="#fff" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>`).join("")},
+  butterfly: {lock:true, n:"蝴蝶翅膀", f:(L)=>[[-1],[1]].map(([k])=>`<g transform="translate(60 74) scale(${k} 1)"><path d="M18 -6 Q44 -34 52 -12 Q54 2 30 4 Z" fill="#c9e4ff" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><path d="M18 6 Q42 8 44 24 Q36 34 22 18 Z" fill="#ffc6d6" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><circle cx="40" cy="-12" r="3.4" fill="#fff"/></g>`).join("")},
+  balloon: {lock:true, n:"星星氣球", f:(L)=>`<path d="M98 64 Q100 46 104 30" fill="none" stroke="${L}" stroke-width="1.4"/><path transform="translate(104 20) scale(1.2)" d="${STAR5}" fill="#ffd66b" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`}
+};
+/* 場景（取代背景色） */
+const MA_SCENE = {
+  none: {n:"沒有", f:()=>""},
+  stars: {lock:true, n:"星空", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#3a3168"/>${[[14,14,1.4],[30,6,1],[96,12,1.6],[108,34,1],[84,4,1],[20,40,1.1],[104,58,1.2],[10,70,1]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`).join("")}<path transform="translate(92 26) scale(.5)" d="${STAR5}" fill="#ffd66b"/><path d="M22 18 a10 10 0 1 0 10 14 a8 8 0 1 1 -10 -14 Z" fill="#fff3b8"/>`},
+  meadow: {lock:true, n:"彩虹草地", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#e1effb"/>${[["#ffc6d6",58],["#fff3b8",52],["#d8f0cc",46],["#d2e7f7",40]].map(([c,r])=>`<path d="M${60-r} 92 A${r} ${r} 0 0 1 ${60+r} 92" fill="none" stroke="${c}" stroke-width="7"/>`).join("")}<path d="M-10 96 Q30 86 60 94 Q90 86 130 96 V130 H-10 Z" fill="#b9e4a0"/><circle cx="16" cy="100" r="2.4" fill="#fff"/><circle cx="104" cy="104" r="2.4" fill="#ffd66b"/>`},
+  sea: {lock:true, n:"海底泡泡", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#cdeef4"/><path d="M-10 18 Q20 10 60 18 Q100 26 130 16" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>${[[14,30,5],[22,16,3],[104,40,6],[98,22,3.4],[110,70,3]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" fill-opacity=".45" stroke="#8fc9d6" stroke-width="1.2"/>`).join("")}<path d="M8 112 Q4 96 12 86 Q14 98 10 112 M112 112 Q118 98 110 88 Q108 100 112 112" stroke="#7fc8a0" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M-10 108 Q60 100 130 108 V130 H-10 Z" fill="#f3e2b8"/>`},
+  board: {lock:true, n:"教室黑板", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#fbf3e6"/><rect x="6" y="4" width="108" height="56" rx="4" fill="#4f7a62" stroke="#a6774a" stroke-width="4"/><text x="16" y="30" font-family="Gaegu,Fredoka,sans-serif" font-size="16" fill="#fff" opacity=".9">ABC</text><text x="70" y="48" font-family="Gaegu,Fredoka,sans-serif" font-size="12" fill="#ffe08a">hello!</text><path d="M86 18 l8 0 M90 14 l0 8" stroke="#ffc6d6" stroke-width="2" stroke-linecap="round"/>`},
+  party: {lock:true, n:"生日派對", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#fff4dc"/><path d="M-6 6 Q60 26 126 6" fill="none" stroke="#a86a5c" stroke-width="1.2"/>${[0,1,2,3,4,5,6].map(i=>{ const x = 4+i*17, y = 9+Math.sin(i/6*Math.PI)*8; return `<path d="M${x} ${y} l10 0 l-5 10 Z" fill="${["#ff9fb6","#8fd1ff","#ffd66b","#a8d88e"][i%4]}"/>`; }).join("")}${[[14,40,"#ff9fb6",20],[104,36,"#8fd1ff",-30],[22,70,"#ffd66b",60],[100,78,"#a8d88e",10],[110,56,"#c9b6e8",40]].map(([x,y,c,r])=>`<rect x="${x}" y="${y}" width="6" height="3" rx="1" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`).join("")}`},
+  garden: {lock:true, n:"花園", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#eaf6df"/><circle cx="100" cy="16" r="10" fill="#ffe08a"/><path d="M-10 100 Q60 92 130 100 V130 H-10 Z" fill="#c3e3cb"/>${[[10,98,"#ff9fb6"],[24,104,"#fff"],[96,102,"#c9b6e8"],[110,96,"#ff9fb6"]].map(([x,y,c])=>`<path d="M${x} ${y} v10" stroke="#7fae6a" stroke-width="1.6"/><g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-3" rx="2.2" ry="3" transform="rotate(${a})" fill="${c}"/>`).join("")}<circle r="1.6" fill="#ffd66b"/></g>`).join("")}`}
+};
 const MA_CATS = [
   ["b","身體",MA_SHAPES],["c","顏色",MA_COLORS],["e","眼睛",MA_EYES],["m","嘴巴",MA_MOUTHS],
-  ["t","頭頂",MA_TOPS],["a","配件",MA_ACC],["p","花紋",MA_PAT],["g","背景",MA_BG]
+  ["t","頭頂",MA_TOPS],["a","臉上",MA_ACC],["n","脖子",MA_NECK],["k","身後",MA_BACK],["p","花紋",MA_PAT],["g","背景",MA_BG],["s","場景",MA_SCENE]
 ];
-function maRandom(){
-  const pk = o => { const k = Object.keys(o); return k[Math.floor(Math.random()*k.length)]; };
-  const pkMaybe = (o, chanceNone) => Math.random() < chanceNone ? "none" : pk(o);
-  return {b:pk(MA_SHAPES), c:pk(MA_COLORS), e:pk(MA_EYES), m:pk(MA_MOUTHS), t:pkMaybe(MA_TOPS,.15), a:pkMaybe(MA_ACC,.35), p:pkMaybe(MA_PAT,.3), g:pk(MA_BG)==="none"?"cream":pk(MA_BG)};
+const MA_DEF = {b:"round",c:"mint",e:"dots",m:"cat",t:"horns",a:"none",n:"none",k:"none",p:"belly",g:"cream",s:"none"};
+function maRandom(canUse){
+  canUse = canUse || ((k, v, o) => !o[v].lock);
+  const pk = (k, o) => { const ks = Object.keys(o).filter(v=>v!=="none" && canUse(k, v, o)); return ks.length ? ks[Math.floor(Math.random()*ks.length)] : "none"; };
+  const pkMaybe = (k, o, chanceNone) => Math.random() < chanceNone ? "none" : pk(k, o);
+  const g = pk("g", MA_BG);
+  return {b:pk("b",MA_SHAPES), c:pk("c",MA_COLORS), e:pk("e",MA_EYES), m:pk("m",MA_MOUTHS), t:pkMaybe("t",MA_TOPS,.15), a:pkMaybe("a",MA_ACC,.6), n:pkMaybe("n",MA_NECK,.6), k:"none", p:pkMaybe("p",MA_PAT,.3), g:g==="none"?"cream":g, s:"none"};
 }
 function maFix(cfg){
-  cfg = Object.assign({b:"round",c:"mint",e:"dots",m:"cat",t:"horns",a:"none",p:"belly",g:"cream"}, cfg||{});
-  [["b",MA_SHAPES],["c",MA_COLORS],["e",MA_EYES],["m",MA_MOUTHS],["t",MA_TOPS],["a",MA_ACC],["p",MA_PAT],["g",MA_BG]].forEach(([k,o])=>{ if(!o[cfg[k]]) cfg[k] = Object.keys(o)[0]; });
+  cfg = Object.assign({}, MA_DEF, cfg||{});
+  if(MA_NECK[cfg.a] && !MA_ACC[cfg.a]){ if(cfg.n === "none") cfg.n = cfg.a; cfg.a = "none"; }   // 舊版：領結、圍巾等原本放在「配件」
+  MA_CATS.forEach(([k,,o])=>{ if(!o[cfg[k]]) cfg[k] = MA_DEF[k] in o ? MA_DEF[k] : Object.keys(o)[0]; });
   return cfg;
 }
 function maSvg(cfg, size, opts){
@@ -7735,19 +7860,19 @@ function maSvg(cfg, size, opts){
   else eyes = [60-s.dx, 60+s.dx].map((x,i)=>eye.f(x, s.ey, L, i)).join("");
   const blushOff = (eye.single||eye.triple) ? s.dx+10 : s.dx+9;
   const body = `
+    ${MA_BACK[cfg.k].f(L)}
     ${MA_TOPS[cfg.t].f && ["catears","bunny","roundears","horns"].includes(cfg.t) ? `<g transform="translate(0 ${ty})">${MA_TOPS[cfg.t].f(L,c)}</g>` : ""}
     <path d="${s.d}" fill="${c[1]}" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
     ${MA_PAT[cfg.p].f(s,c)}
     <ellipse cx="${60-blushOff}" cy="${s.ey+8}" rx="5" ry="3" fill="#f4a7a3" opacity=".7"/><ellipse cx="${60+blushOff}" cy="${s.ey+8}" rx="5" ry="3" fill="#f4a7a3" opacity=".7"/>
     ${eyes}
     ${MA_MOUTHS[cfg.m].f(60, s.my, L)}
+    ${MA_NECK[cfg.n].f(s,L)}
     ${MA_ACC[cfg.a].f(s,L)}
     ${!["catears","bunny","roundears","horns"].includes(cfg.t) ? `<g transform="translate(0 ${ty})">${MA_TOPS[cfg.t].f(L,c)}</g>` : ""}`;
   const vb = opts.full ? "0 -4 120 120" : "1 -5 118 118";
-  return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${body}</svg>`;
+  return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${body}</svg>`;
 }
-
-
 /* 底部選單用線條圖示 */
 ICON_LINE.home = c => `<path d="M8 22 L24 9 L40 22 V38 a2 2 0 0 1 -2 2 H29 V29 H19 V40 H10 a2 2 0 0 1 -2 -2 Z" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/>`;
 ICON_LINE.words = c => `<rect x="11" y="7" width="26" height="34" rx="4" fill="none" stroke="${c}" stroke-width="2.6"/><path d="M17 16 h14 M17 23 h14 M17 30 h8" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
@@ -7759,6 +7884,8 @@ ICON_LINE.mic = c => `<rect x="18" y="7" width="12" height="22" rx="6" fill="non
 ICON_LINE.users = c => `<circle cx="18" cy="17" r="6" fill="none" stroke="${c}" stroke-width="2.6"/><path d="M7 38 q1 -11 11 -11 q10 0 11 11" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/><circle cx="33" cy="19" r="4.5" fill="none" stroke="${c}" stroke-width="2.4"/><path d="M32 28 q8 0 9 9" fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/>`;
 ICON_LINE.dice = c => `<rect x="8" y="8" width="32" height="32" rx="8" fill="none" stroke="${c}" stroke-width="2.6"/><circle cx="17" cy="17" r="2.6" fill="${c}"/><circle cx="31" cy="17" r="2.6" fill="${c}"/><circle cx="24" cy="24" r="2.6" fill="${c}"/><circle cx="17" cy="31" r="2.6" fill="${c}"/><circle cx="31" cy="31" r="2.6" fill="${c}"/>`;
 ICON_LINE.headphones = c => `<path d="M9 30 V24 a15 15 0 0 1 30 0 V30" fill="none" stroke="${c}" stroke-width="2.6"/><rect x="7" y="27" width="8" height="12" rx="3" fill="none" stroke="${c}" stroke-width="2.6"/><rect x="33" y="27" width="8" height="12" rx="3" fill="none" stroke="${c}" stroke-width="2.6"/>`;
+ICON_LINE.check = c => `<path d="M10 25 L20 35 L39 13" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+ICON_LINE.lock = c => `<rect x="11" y="21" width="26" height="20" rx="4" fill="${c}"/><path d="M16 21 v-5 a8 8 0 0 1 16 0 v5" fill="none" stroke="${c}" stroke-width="3.6"/>`;
 function li(name, size) { return `<svg class="li" aria-hidden="true" viewBox="0 0 48 48" width="${size||20}" height="${size||20}">${ICON_LINE[name]("currentColor")}</svg>`; }
 
 /* 夥伴台詞 */
@@ -8071,7 +8198,7 @@ function gas(fn, ...args){
 let P = {updated:0, list:[]};
 let cur = null;
 let S = null;
-function newProg(){ return {done:{}, words:{}, sp:{}, streak:{last:"",count:0}, todays:{date:"",n:0}, stars:0, updated:0}; }
+function newProg(){ return {done:{}, words:{}, sp:{}, rw:newRw(), streak:{last:"",count:0}, todays:{date:"",n:0}, stars:0, updated:0}; }
 
 /* 舊版資料轉換：表情符號頭像、舊的主題名稱 */
 const OLD_AV = {"🐰":"bunny","🐻":"bear","🐱":"cat","🐶":"dog","🐼":"panda","🦊":"fox","🐯":"tiger","🐸":"frog","🐧":"penguin","🦄":"bunny","🐳":"penguin","🐥":"chick","👩":"cat","👨":"bear","👧":"bunny","👦":"dog"};
@@ -8400,8 +8527,10 @@ function avEditor(x, from){
 function vAvatar(){
   const cfg = U.ab, cat = MA_CATS.find(c=>c[0]===U.abTab) || MA_CATS[0];
   const [k, name, obj] = cat;
+  const own = U.abFrom==="edit" ? {} : rwOwned();
   const opts = Object.keys(obj).map(v=>{
     const on = cfg[k]===v, label = (k==="c"||k==="g") ? obj[v][0] : obj[v].n;
+    if(obj[v].lock && !own[k+":"+v]) return `<button type="button" class="abopt locked" data-act="ab-locked" data-id="${k}:${v}"><span class="avc" style="width:58px;height:58px">${maSvg(Object.assign({}, cfg, {[k]:v}), 58)}</span><span class="lockb">${li("lock",14)}</span><span>${h(label)}</span></button>`;
     const thumb = k==="g" ? (obj[v][1] ? `<span class="swatch" style="background:${obj[v][1]}"></span>` : `<span class="swatch" style="background:repeating-linear-gradient(45deg,var(--line) 0 4px,transparent 4px 8px)"></span>`)
                 : avCircle(Object.assign({}, cfg, {[k]:v}), 58);
     return `<button type="button" class="abopt ${on?"on":""}" data-act="ab-set" data-k="${k}" data-v="${v}">${thumb}<span>${h(label)}</span></button>`;
@@ -8412,6 +8541,7 @@ function vAvatar(){
     <div class="row" style="width:100%"><button class="btn warm small" data-act="ab-rand">${li("dice",18)} 全部隨機</button><button class="btn sec small" data-act="ab-rand-one">只換「${name}」</button></div></div>
   <div class="abtabs">${MA_CATS.map(([kk,nn])=>`<button class="chip ${kk===k?"on":""}" data-act="ab-tab" data-k="${kk}">${nn}</button>`).join("")}</div>
   <div class="card"><div class="abgrid">${opts}</div></div>
+  ${U.abFrom==="edit" ? "" : `<button class="btn sec" data-act="shop-open">${coinSvg(20)} 去寶物商店看看</button>`}
   <button class="btn" data-act="ab-done">完成，就用這個！</button>`;
 }
 function vPartner(){
@@ -8457,6 +8587,7 @@ function vHome(){
     ${pendBanner()}
     ${spBanner()}
     ${lvSeg()}
+    ${dailyCard()}
     <div class="card mlist">${items.map(it=>`<button class="mrow" data-act="${it.act}" ${it.data}><span class="ri">${li(it.ic,24)}</span><span class="rt"><b>${it.t}</b><span>${h(it.s)}</span></span>${it.due?`<span class="badge">${it.due}</span>`:`<span class="muted">›</span>`}</button>`).join("")}</div>
     ${stats}`;
   }
@@ -8465,6 +8596,7 @@ function vHome(){
   ${pendBanner()}
   ${spBanner()}
   ${lvSeg()}
+  ${dailyCard()}
   <div class="tiles">${items.map((it,i)=>`<button class="tile t${i+1} ${it.due?"due":""}" data-act="${it.act}" ${it.data}>${ic(it.ic,40)}<b>${it.t}</b><span class="ts">${h(it.s)}</span></button>`).join("")}</div>
   ${stats}`;
 }
@@ -8745,6 +8877,177 @@ function spBanner(){
   return `<div class="card pendcard"><span>${li("pen",22)}</span><div style="flex:1"><b>今天要複習的拼字：${n} 個</b><div class="muted">拼對了，下次會隔更久再考；拼錯的會明天再練。</div></div><button class="btn small" data-act="sp-review">開始</button></div>`;
 }
 
+/* ================= 獎勵：金幣、簽到、每日任務、寶箱、商店、收藏冊 =================
+   S.rw = {coins, own:{"t:wizard":1}, ci:{last, days}, day:{date, claim:{}, gc, sp}, taskDays, perfect, topics:{}}
+   - 金幣只用來買東西；星星（S.stars）照舊只增不減。
+   - 簽到：當天有完成任何練習（todayN()>0）才能領。
+   - 每日任務 3 個，各 +10；三個都領完再送一個任務寶物（送完改 +20 金幣）。
+   - 遊戲每天前 3 次給金幣；完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
+   - 寶箱只當獎勵送（連續練習每 7 天），開出沒有的寶箱寶物，全部都有就給 50 金幣。 */
+const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE]};
+const RW_SRC = {ci3:"簽到滿 3 天", streak3:"連續練習 3 天", streak7:"連續練習 7 天", streak14:"連續練習 14 天", perfect5:"拼字複習全對 5 次", task:"完成每日任務", task10:"完成 10 次每日任務", chest:"寶箱"};
+const REWARDS = [
+  ["t","wizard",150,3],["t","wizRose",40,1],["t","wizMint",40,1],["t","wizNight",60,1],["t","strawhat","ci3",1],["t","pirate","chest",2],
+  ["t","flowercrown","task",1],["t","earmuff",80,1],["t","donut","chest",2],["t","headband","streak3",1],["t","rainbow","streak14",3],
+  ["a","heartglass",60,1],["a","monocle",100,2],["n","medal","perfect5",2],["n","tie",40,1],
+  ["k","cape","streak7",2],["k","angel",300,3],["k","butterfly","chest",2],["k","balloon","task",1],
+  ["e","teary",30,1],["e","dizzy",30,1],["e","wow",40,1],["e","sparkle",60,2],
+  ["m","gum",50,1],["m","drool",30,1],["m","bigo",30,1],["m","heartm","task",1],
+  ["s","stars",120,2],["s","meadow","streak7",2],["s","sea","chest",2],["s","board","task10",1],["s","party","chest",3],["s","garden",100,1]
+].map(([c,k,get,rare])=>({id:c+":"+k, c, k, get, rare, price: typeof get==="number" ? get : null}));
+const RW_BY = {}; REWARDS.forEach(r=>{ RW_BY[r.id] = r; });
+const RW_RARE = {1:["普通","r1"],2:["稀有","r2"],3:["傳說","r3"]};
+const TASKS = [
+  {id:"s", n:"完成 5 個句子", goal:5, v:d=>(d.s||0) + (d.a||0)*5},
+  {id:"g", n:"玩 1 次遊戲", goal:1, v:d=>d.g||0},
+  {id:"r", n:"複習 5 個字", goal:5, v:d=>d.r||0}
+];
+function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}}; }
+function RW(){
+  if(!S.rw || typeof S.rw !== "object") S.rw = newRw();
+  const d = newRw(); for(const k in d) if(S.rw[k] == null) S.rw[k] = d[k];   // 補齊舊資料缺的欄位（原地修改，不換物件）
+  return S.rw;
+}
+function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0}; if(!r.day.claim) r.day.claim = {}; return r.day; }
+function rwName(it){ return RW_CAT[it.c][1][it.k].n; }
+function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : RW_SRC[it.get]; }
+function rwOwned(){ return (S && cur) ? RW().own : {}; }
+function canUsePart(own){ return (k, v, o) => !o[v].lock || !!own[k + ":" + v]; }
+function coinSvg(size){ return `<svg class="coin" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><circle cx="24" cy="25.5" r="17" fill="#e9a93a"/><circle cx="24" cy="23" r="17" fill="#ffd66b" stroke="#a8741c" stroke-width="2.4"/><circle cx="24" cy="23" r="12" fill="none" stroke="#e9a93a" stroke-width="2"/><path transform="translate(24 23) scale(.68)" d="${STAR5}" fill="#fff3b8" stroke="#a8741c" stroke-width="2.4" stroke-linejoin="round"/></svg>`; }
+function earn(n, why){ if(!n) return; RW().coins += n; toast(`+${n} 金幣・${why}`); saveProg(); }
+function grant(id){
+  const r = RW(); if(!RW_BY[id] || r.own[id]) return false;
+  r.own[id] = 1; (U.rwq = U.rwq || []).push(id); U.sheet = "reward"; saveProg();
+  return true;
+}
+function openChest(){
+  const pool = REWARDS.filter(it=>it.get==="chest" && !RW().own[it.id]);
+  if(!pool.length){ earn(50, "寶箱"); return null; }
+  const it = pick(pool); grant(it.id); return it.id;
+}
+function previewAv(){ return (cur && cur.avatar && typeof cur.avatar==="object") ? maFix(cur.avatar) : maFix({}); }
+function withPart(it){ return Object.assign(previewAv(), {[it.c]: it.k}); }
+function wearing(it){ return !!(cur && cur.avatar && typeof cur.avatar==="object" && maFix(cur.avatar)[it.c] === it.k); }
+
+/* 簽到與任務的狀態 */
+function ciState(){ const r = RW(); return r.ci.last === today() ? "done" : todayN() > 0 ? "ready" : "wait"; }
+function taskState(t){ const d = rwDay(); if(d.claim[t.id]) return "done"; return t.v((S.log||{})[today()] || {}) >= t.goal ? "ready" : "wait"; }
+function claimCheckin(){
+  const r = RW(); if(ciState() !== "ready") return;
+  r.ci.last = today(); r.ci.days++; earn(10, "簽到");
+  const st = streakNow();
+  if(r.ci.days >= 3) grant("t:strawhat");
+  if(st >= 3) grant("t:headband");
+  if(st >= 7){ grant("k:cape"); grant("s:meadow"); }
+  if(st >= 14) grant("t:rainbow");
+  if(st >= 7 && st % 7 === 0) openChest();
+  saveProg();
+}
+function claimTask(id){
+  const t = TASKS.find(x=>x.id===id), d = rwDay(), r = RW();
+  if(!t || taskState(t) !== "ready") return;
+  d.claim[id] = 1; earn(10, "每日任務");
+  if(TASKS.every(x=>d.claim[x.id])){
+    r.taskDays++;
+    const next = REWARDS.find(it=>it.get==="task" && !r.own[it.id]);
+    if(next) grant(next.id); else earn(20, "三個任務都完成");
+    if(r.taskDays >= 10) grant("s:board");
+  }
+  saveProg();
+}
+/** 遊戲結束：每天前 3 次給金幣；拼字複習完成與全對另外計算 */
+function rwGame(g){
+  if(!S) return;
+  const d = rwDay(), r = RW();
+  if(d.gc < 3){ d.gc++; earn(Math.min(10, 5 + Math.floor((g.stars||0)/3)), "玩遊戲"); }
+  if(g.review){
+    const total = g.rt ? g.rt.filter(x=>!x).length : g.qs.length;
+    if(total >= 3 && g.score === total){ r.perfect++; if(r.perfect >= 5) grant("n:medal"); }
+    if(!spDue().length && !d.sp){ d.sp = 1; earn(20, "拼字複習完成"); }
+  }
+  saveProg();
+}
+/** 完成一個主題：每個主題＋難度只給一次 */
+function rwTopic(tid, lv){
+  const r = RW(), key = tid + "-" + lv, t = TOPICS.find(x=>x.id===tid);
+  if(r.topics[key] || !t || topicDone(t, lv) < t.sents[lv].length) return;
+  r.topics[key] = 1; earn(15, "完成主題");
+}
+
+/* 首頁：今天的任務 */
+function dailyCard(){
+  const r = RW(), ci = ciState();
+  const btn = (st, act, data, extra) => st === "done" ? `<span class="rwok" aria-label="已領取">${li("check",18)}</span>`
+    : st === "ready" ? `<button class="btn small" data-act="${act}" ${data}>領取 +10</button>` : `<span class="muted rwp">${extra}</span>`;
+  const rows = [
+    `<div class="rwrow"><span class="rwi">${coinSvg(26)}</span><span class="rwt"><b>每日簽到</b><span>${ci==="done" ? `已簽到・累計 ${r.ci.days} 天` : "今天完成一次練習就能簽到"}</span></span>${btn(ci, "rw-ci", "", "還沒練習")}</div>`,
+    ...TASKS.map(t=>{ const st = taskState(t), v = Math.min(t.goal, t.v((S.log||{})[today()] || {}));
+      return `<div class="rwrow"><span class="rwi rwnum">${v}/${t.goal}</span><span class="rwt"><b>${t.n}</b><span class="rwbar"><i style="width:${v/t.goal*100}%"></i></span></span>${btn(st, "rw-task", `data-t="${t.id}"`, "進行中")}</div>`; })
+  ].join("");
+  return `<div class="card rwcard">
+    <div class="rwhead"><b>今天的任務</b><button class="coinpill" data-act="shop-open" aria-label="金幣 ${r.coins}，打開寶物商店">${coinSvg(22)}<span>${r.coins}</span><span class="muted">商店 ›</span></button></div>
+    ${rows}
+    <p class="muted rwnote">三個任務都完成，再送一個寶物！</p></div>`;
+}
+
+/* 商店與收藏冊 */
+function vShop(){
+  const r = RW(), tab = U.shopTab || "shop", cat = U.shopCat || "t";
+  const own = r.own, have = REWARDS.filter(it=>own[it.id]).length;
+  const head = `<div class="lhead"><button class="x" data-act="shop-close" aria-label="返回">✕</button><b>寶物商店</b><span class="coinpill static">${coinSvg(22)}<span>${r.coins}</span></span></div>
+    <div class="chips" style="margin:0 0 10px"><button class="chip ${tab==="shop"?"on":""}" data-act="shop-tab" data-t="shop">商店</button><button class="chip ${tab==="book"?"on":""}" data-act="shop-tab" data-t="book">收藏冊（${have}/${REWARDS.length}）</button></div>
+    <div class="chips abtabs" style="margin:0 0 10px">${Object.keys(RW_CAT).map(c=>`<button class="chip ${c===cat?"on":""}" data-act="shop-cat" data-c="${c}">${RW_CAT[c][0]}</button>`).join("")}</div>`;
+  const list = REWARDS.filter(it=>it.c===cat && (tab==="book" || it.price != null));
+  const cards = list.map(it=>{
+    const has = !!own[it.id], rare = RW_RARE[it.rare];
+    const art = `<span class="avc shopav" style="width:88px;height:88px">${maSvg(withPart(it), 88)}</span>`;
+    let act;
+    if(has) act = wearing(it) ? `<button class="btn ghost small" data-act="rw-wear" data-id="${it.id}">穿著中・脫下</button>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">穿上</button>`;
+    else if(it.price != null) act = U.arm === "buy:" + it.id
+      ? `<button class="btn warm small" data-act="rw-buy" data-id="${it.id}">確定花 ${it.price} 金幣？</button>`
+      : `<button class="btn small" data-act="rw-buy" data-id="${it.id}" ${r.coins < it.price ? "disabled" : ""}>${coinSvg(16)} ${it.price}</button>`;
+    else act = `<span class="muted" style="font-size:12px">${h(RW_SRC[it.get])}</span>`;
+    const locked = !has && tab === "book";   // 灰色＋鎖頭只在收藏冊；商店用彩色預覽
+    return `<div class="shopit ${has ? "own" : locked ? "lockd" : ""}">${art}${locked ? `<span class="lockb">${li("lock",14)}</span>` : ""}<b>${h(rwName(it))}</b><span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
+  }).join("");
+  const empty = list.length ? "" : `<p class="muted center">這一類現在沒有在賣，可以到收藏冊看看怎麼拿到。</p>`;
+  const tip = tab==="shop" ? `<p class="muted center" style="margin:10px 0 0">金幣在首頁「今天的任務」領，也可以玩遊戲、完成主題、做完拼字複習得到。</p>` : "";
+  return head + `<div class="shopgrid">${cards}</div>${empty}${tip}`;
+}
+function vRewardSheet(){
+  const id = U.rwq[0], it = RW_BY[id];
+  return `<div class="sheet-bg" data-act="rw-close"></div><div class="sheet center rwpop">
+    <div class="sheet-h"><b>獲得新寶物！</b><button class="x" data-act="rw-close" aria-label="關閉">✕</button></div>
+    <span class="avc" style="width:150px;height:150px">${maSvg(withPart(it), 150)}</span>
+    <h3 style="margin:10px 0 2px">${h(rwName(it))}</h3><p class="muted" style="margin:0 0 12px">${h(rwHow(it))}・${RW_RARE[it.rare][0]}</p>
+    <div class="stack"><button class="btn" data-act="rw-wear" data-id="${id}" data-close="1">馬上穿上</button><button class="btn sec" data-act="rw-close">收進收藏冊</button></div></div>`;
+}
+const RW_ACT = {
+  "rw-ci"(){ claimCheckin(); render(); },
+  "rw-task"(el){ claimTask(el.dataset.t); render(); },
+  "shop-open"(){ leaveActivity(); U.shopFrom = U.view; U.shopTab = U.shopTab || "shop"; U.shopCat = U.shopCat || "t"; U.arm = ""; U.view = "shop"; render(); },
+  "shop-close"(){ U.arm = ""; U.view = U.shopFrom === "avatar" ? "avatar" : "home"; render(); },
+  "shop-tab"(el){ U.shopTab = el.dataset.t; U.arm = ""; render(); },
+  "shop-cat"(el){ U.shopCat = el.dataset.c; U.arm = ""; render(); },
+  "rw-buy"(el){
+    const it = RW_BY[el.dataset.id], r = RW();
+    if(!it || it.price == null || r.own[it.id]) return;
+    if(r.coins < it.price){ toast("金幣還不夠，再練習一下就有了！"); return; }
+    if(U.arm !== "buy:" + it.id){ U.arm = "buy:" + it.id; render(); return; }
+    U.arm = ""; r.coins -= it.price; r.own[it.id] = 1; saveProg(); pop(0); toast(`買到「${rwName(it)}」了！`); render();
+  },
+  "rw-wear"(el){
+    const it = RW_BY[el.dataset.id]; if(!it || !RW().own[it.id]) return;
+    const av = previewAv();
+    if(wearing(it)) av[it.c] = ["e","m"].includes(it.c) ? MA_DEF[it.c] : "none"; else av[it.c] = it.k;
+    cur.avatar = av; saveProfiles();
+    if(el.dataset.close){ U.rwq.shift(); if(!U.rwq.length) U.sheet = null; }
+    toast(av[it.c] === it.k ? "穿上了！" : "脫下了"); render();
+  },
+  "rw-close"(){ if(U.rwq) U.rwq.shift(); if(!U.rwq || !U.rwq.length) U.sheet = null; render(); },
+  "ab-locked"(el){ const it = RW_BY[el.dataset.id]; if(it) toast(`「${rwName(it)}」還沒收集到：${rwHow(it)}`); }
+};
+
 /* ================= 遊戲中心 ================= */
 const GAMES = [
   {id:"meaning", name:"聽音選意思", desc:"聽單字，選出中文意思", host:"momo", kind:"word"},
@@ -8882,7 +9185,7 @@ function finishGame(){
   let stars = g.score;
   if(g.id==="memory") stars = g.moves <= 9 ? 6 : g.moves <= 13 ? 4 : 2;
   if(g.id==="speed") stars = Math.ceil(g.score/2);
-  g.stars = stars; reward(stars); logAdd("g"); bump(); saveProg();
+  g.stars = stars; reward(stars); logAdd("g"); bump(); saveProg(); rwGame(g);
 }
 function answer(ok, keys){
   const g = U.g;
@@ -8893,7 +9196,7 @@ function answer(ok, keys){
 function spellAnswer(ok, attempt){
   const g = U.g, q = g.qs[g.i];
   g.attempt = attempt; g.picked = ok ? 1 : 0;
-  if(!isRetry(g)){ if(g.id==="spell") spPick(q, ok); else spRecall(q, ok); }
+  if(!isRetry(g)){ if(g.id==="spell") spPick(q, ok); else spRecall(q, ok); if(g.review) logAdd("r"); }
   if(!ok) spRequeue(g, q);
   answer(ok, [q]); speakEn(WORDS[q].w);
 }
@@ -9435,10 +9738,10 @@ let lastView = "";
 function render(){
   const v = U.view;
   const map = {catchup:vCatchup, plisten:vPodcast, profiles:vProfiles, edit:vEdit, partner:vPartner, avatar:vAvatar, games:vGames, vsort:vSort, vdaily:vDaily, vlist:vList, home:vHome, topics:vTopics, articles:vArticles, lesson:vLesson, tdone:vTopicDone,
-               listen:vListen, article:vArticle, game:vGame, review:vReview, words:vWords, settings:vSettings, board:vBoard, record:vRecord};
+               listen:vListen, article:vArticle, game:vGame, review:vReview, words:vWords, settings:vSettings, board:vBoard, record:vRecord, shop:vShop};
   if(!map[v]) return;
   $("#main").innerHTML = map[v]();
-  const focus = ["lesson","listen","article","game","review","edit","profiles","tdone","partner","avatar","games","vsort","vdaily","vlist","catchup","plisten","board","record"].includes(v);
+  const focus = ["lesson","listen","article","game","review","edit","profiles","tdone","partner","avatar","games","vsort","vdaily","vlist","catchup","plisten","board","record","shop"].includes(v);
   const tabs = $("#tabs");
   if(cur && !focus){
     tabs.style.display = "flex";
@@ -9450,7 +9753,7 @@ function render(){
       <button class="who" data-act="go" data-v="profiles"><span class="av">${av(cur.avatar,48)}</span><span><b>${h(cur.name)}</b><small>${LEVELS[lvl()-1].name} · 點這裡換人</small></span></button>
       <div class="pills"><button class="pill mpill" data-act="mode-open" aria-label="切換練習情境：${MODES[mode()].n}">${li(MODES[mode()].ic,20)}<span>${MODES[mode()].s}</span></button><span class="pill">${ic("star",22)}${S.stars}</span><span class="pill">${ic("fire",22)}${streakNow()}</span></div>
     </div>` : "";
-  $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : "";
+  $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : (U.sheet==="reward" && cur && U.rwq && U.rwq.length) ? vRewardSheet() : "";
   if(lastView !== v){ window.scrollTo(0,0); lastView = v; }
   const spIn = v==="game" ? $("#spIn") : null;
   if(spIn && !IS_MOBILE){ spIn.focus(); spIn.setSelectionRange(spIn.value.length, spIn.value.length); }
@@ -9532,7 +9835,7 @@ function vBoard(){
       <div class="brow">${avCircle(p.avatar,54)}<div class="binfo"><b>${h(p.name)}</b><span class="muted">${LEVELS[(p.level||1)-1].name} · 最後練習：${agoText(la)}</span></div>
       <span class="tag2 ${td?"ok":""}">${td?"今天有練":"今天還沒練"}</span></div>
       <div class="bstats"><div><b>${w.days}</b><span>近7天練習天數</span></div><div><b>${w.min}</b><span>近7天分鐘</span></div><div><b>${w.avg==null?"—":w.avg}</b><span>跟讀平均分</span></div><div><b>${g.stars||0}</b><span>星星</span></div></div>
-      ${(()=>{ const sp = spStats(g.sp); return sp.mastered + sp.learning ? `<p class="muted" style="margin:0 0 8px;font-size:13px">拼字：熟練 ${sp.mastered} 字・學習中 ${sp.learning} 字・今天待複習 ${sp.due} 字</p>` : ""; })()}
+      ${(()=>{ const sp = spStats(g.sp); const rw = g.rw || {}; return (sp.mastered + sp.learning ? `<p class="muted" style="margin:0 0 4px;font-size:13px">拼字：熟練 ${sp.mastered} 字・學習中 ${sp.learning} 字・今天待複習 ${sp.due} 字</p>` : "") + (rw.coins != null ? `<p class="muted" style="margin:0 0 8px;font-size:13px">寶物：收集 ${Object.keys(rw.own||{}).length} / ${REWARDS.length} 件・金幣 ${rw.coins}</p>` : ""); })()}
       <div class="bweek"><span class="muted">近 7 天</span><span class="hdots">${dots}</span><span class="muted">看詳細 ›</span></div>
     </div>`;
   }).join("");
@@ -9638,20 +9941,20 @@ const ACT = {
   },
   partner(){ U.ppick = partnerId(); U.view = "partner"; render(); },
   "ab-open"(el){
-    U.abFrom = el.dataset.from;
+    U.abFrom = el.dataset.from || U.abFrom;
     const srcAv = U.abFrom==="edit" ? U.edit.avatar : cur.avatar;
     U.ab = (srcAv && typeof srcAv==="object") ? maFix(Object.assign({}, srcAv)) : maRandom();
     U.abTab = "b"; U.view = "avatar"; render();
   },
   "ab-quick"(el){
-    const r = maRandom();
+    const r = maRandom(canUsePart(el.dataset.from==="edit" ? {} : rwOwned()));
     if(el.dataset.from==="edit"){ U.edit.avatar = r; U.edit.touched = true; } else { cur.avatar = r; saveProfiles(); }
     render();
   },
   "ab-tab"(el){ U.abTab = el.dataset.k; render(); },
-  "ab-set"(el){ U.ab[el.dataset.k] = el.dataset.v; render(); },
-  "ab-rand"(){ U.ab = maRandom(); render(); },
-  "ab-rand-one"(){ const cat = MA_CATS.find(c=>c[0]===U.abTab); const ks = Object.keys(cat[2]).filter(v=>v!==U.ab[U.abTab]); U.ab[U.abTab] = pick(ks); render(); },
+  "ab-set"(el){ const k = el.dataset.k, v = el.dataset.v, cat = MA_CATS.find(c=>c[0]===k); if(cat && cat[2][v] && !canUsePart(U.abFrom==="edit" ? {} : rwOwned())(k, v, cat[2])) return; U.ab[k] = v; render(); },
+  "ab-rand"(){ U.ab = maRandom(canUsePart(U.abFrom==="edit" ? {} : rwOwned())); render(); },
+  "ab-rand-one"(){ const cat = MA_CATS.find(c=>c[0]===U.abTab), ok = canUsePart(U.abFrom==="edit" ? {} : rwOwned()); const ks = Object.keys(cat[2]).filter(v=>v!==U.ab[U.abTab] && ok(U.abTab, v, cat[2])); if(ks.length){ U.ab[U.abTab] = pick(ks); } render(); },
   "ab-cancel"(){ U.view = U.abFrom==="edit" ? "edit" : "settings"; render(); },
   "ab-done"(){
     if(U.abFrom==="edit"){ U.edit.avatar = U.ab; U.edit.touched = true; U.view = "edit"; }
@@ -9704,7 +10007,7 @@ const ACT = {
     if(!S.done[s.id]){ S.done[s.id] = 1; reward(1); }
     logAdd("s"); bump(); saveProg();
     if(U.si+1 < U.list.length){ U.si++; resetStep(); }
-    else U.view = "tdone";
+    else { U.view = "tdone"; rwTopic(U.ti, lvl()); }
     render();
   },
   "listen-topic"(el){
@@ -9777,7 +10080,7 @@ const ACT = {
   }
 };
 
-Object.assign(ACT, GAME_ACT, VOCAB_ACT, MODE_ACT, REC_ACT);
+Object.assign(ACT, GAME_ACT, VOCAB_ACT, MODE_ACT, REC_ACT, RW_ACT);
 ACT.game = GAME_ACT.games;
 
 document.addEventListener("click", e=>{

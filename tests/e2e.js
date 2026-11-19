@@ -74,7 +74,7 @@ const result = (name, ok, info) => { if (!ok) fail++; console.log((ok ? 'PASS ' 
   // 5. 每種風格 × 情境 × 主要畫面都能繪製（不需先經過按鈕初始化狀態的畫面）
   where = 'matrix';
   const mat = await p.evaluate(() => {
-    const bad = [], views = ['home', 'topics', 'articles', 'words', 'settings', 'profiles', 'games', 'board', 'vlist', 'partner'];
+    const bad = [], views = ['home', 'topics', 'articles', 'words', 'settings', 'profiles', 'games', 'board', 'vlist', 'partner', 'shop'];
     const sk0 = cur.skin, m0 = cur.mode;
     for (const sk of SKINS.map(s => s.id)) for (const md of Object.keys(MODES)) for (const v of views) {
       cur.skin = sk; cur.mode = md; applySkin(); U.view = v;
@@ -82,7 +82,7 @@ const result = (name, ok, info) => { if (!ok) fail++; console.log((ok ? 'PASS ' 
     }
     cur.skin = sk0; cur.mode = m0; applySkin(); U.view = 'home'; render(); return bad;
   });
-  result('E5 6 風格 × 3 情境 × 10 畫面都能繪製', !mat.length, mat.slice(0, 10).join('; '));
+  result('E5 6 風格 × 3 情境 × 11 畫面都能繪製', !mat.length, mat.slice(0, 10).join('; '));
 
   // 6. 隨機點擊（每種情境 CLICKS 次），不得出現執行錯誤
   const errBefore = errs.length;
