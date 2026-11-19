@@ -275,6 +275,19 @@ body[data-skin=minimal] .opt,body[data-skin=minimaldark] .opt{border-color:var(-
 .slots{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:4px 0 14px}
 .slot{width:25px;height:38px;border-bottom:3px solid var(--line);font-size:22px;font-weight:700;display:flex;align-items:flex-end;justify-content:center}
 .slot.ok{color:var(--good);border-color:var(--good)}.slot.no{color:var(--bad);border-color:var(--bad)}
+/* 拼字訂正：孩子拼的與正確拼法逐字對照 */
+.spfix{margin:6px 0 2px}
+.sp-correct{font-size:40px;font-weight:700;color:var(--good);letter-spacing:2px;line-height:1.2;margin:2px 0;word-break:break-all}
+.dgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;margin:10px 0 6px}
+.dcol{display:flex;flex-direction:column;gap:3px;min-width:24px}
+.dcol i{font-style:normal;height:34px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;border-radius:8px;padding:0 2px}
+.dcol.dlab i{font-size:12px;font-weight:500;color:var(--muted);padding-right:6px;justify-content:flex-end;font-family:var(--font-zh)}
+.dx-bad{color:var(--bad);background:var(--bad-2);text-decoration:line-through;text-decoration-thickness:2px}
+.dx-fix{color:var(--good);background:var(--good-2);box-shadow:inset 0 -3px 0 var(--good)}
+.dx-gap{color:var(--muted)}
+.sp-in{text-align:center;font-size:24px;letter-spacing:2px;margin:4px 0 10px}
+.sp-in::placeholder{font-size:15px;letter-spacing:0}
+.sptag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--good-2);color:var(--good);margin-left:4px}
 .letters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .lt{width:46px;height:50px;border-radius:14px;border:var(--bw) solid var(--bc);background:var(--accent-2);color:var(--ink);font-size:22px;font-weight:700;cursor:pointer;box-shadow:var(--sh-s)}
 .lt.used{opacity:.25;box-shadow:none}
@@ -8058,7 +8071,7 @@ function gas(fn, ...args){
 let P = {updated:0, list:[]};
 let cur = null;
 let S = null;
-function newProg(){ return {done:{}, words:{}, streak:{last:"",count:0}, todays:{date:"",n:0}, stars:0, updated:0}; }
+function newProg(){ return {done:{}, words:{}, sp:{}, streak:{last:"",count:0}, todays:{date:"",n:0}, stars:0, updated:0}; }
 
 /* 舊版資料轉換：表情符號頭像、舊的主題名稱 */
 const OLD_AV = {"🐰":"bunny","🐻":"bear","🐱":"cat","🐶":"dog","🐼":"panda","🦊":"fox","🐯":"tiger","🐸":"frog","🐧":"penguin","🦄":"bunny","🐳":"penguin","🐥":"chick","👩":"cat","👨":"bear","👧":"bunny","👦":"dog"};
@@ -8420,7 +8433,7 @@ function homeItems(){
   return [
     {ic:"sent", t:"句子練習", s: nt ? `繼續：${nt.zh}（${topicDone(nt,lv)}/${nt.sents[lv].length}）` : "這個難度全部完成！", act: nt?"start-topic":"go", data: nt?`data-t="${nt.id}"`:`data-v="topics"`},
     {ic:"book", t:"文章聽力", s:`已完成 ${ad} / ${arts.length} 篇`, act:"go", data:`data-v="articles"`},
-    {ic:"game", t:"遊戲中心", s:"7 種遊戲，邊玩邊複習", act:"games", data:""},
+    {ic:"game", t:"遊戲中心", s:`${GAMES.length} 種遊戲，邊玩邊複習`, act:"games", data:""},
     {ic:"review", t:"複習生字", s: due ? `有 ${due} 個該複習了` : "目前沒有到期的字", act:"review", data:"", due}
   ];
 }
@@ -8442,6 +8455,7 @@ function vHome(){
       <div class="big">${monster(partnerId(),"normal",46)}<span>${h(cur.name)}，今天練習 ${goal} 次就好。</span></div>
       <div class="goal"><div class="gl"><span>今日目標</span><span>${todayN()} / ${goal}</span></div><div class="gb"><i style="width:${n/goal*100}%"></i></div></div></div>
     ${pendBanner()}
+    ${spBanner()}
     ${lvSeg()}
     <div class="card mlist">${items.map(it=>`<button class="mrow" data-act="${it.act}" ${it.data}><span class="ri">${li(it.ic,24)}</span><span class="rt"><b>${it.t}</b><span>${h(it.s)}</span></span>${it.due?`<span class="badge">${it.due}</span>`:`<span class="muted">›</span>`}</button>`).join("")}</div>
     ${stats}`;
@@ -8449,6 +8463,7 @@ function vHome(){
   return `
   <div class="hero"><span class="mon">${buddy("normal",112)}</span><div class="bubble">${h(MON[partnerId()].name)}：${h(U.greet)}</div></div>
   ${pendBanner()}
+  ${spBanner()}
   ${lvSeg()}
   <div class="tiles">${items.map((it,i)=>`<button class="tile t${i+1} ${it.due?"due":""}" data-act="${it.act}" ${it.data}>${ic(it.ic,40)}<b>${it.t}</b><span class="ts">${h(it.s)}</span></button>`).join("")}</div>
   ${stats}`;
@@ -8638,11 +8653,104 @@ function playArticle(r, from){
   render();
 }
 
+/* ================= 拼字複習（自己拼出來與選拼法分開記錄） =================
+   S.sp[單字] = {l: 已完成的跨天階段, d: 下次複習日（dayNo，null＝還沒排）, last: 最後一次前進或拼錯的日子,
+                m: 1＝已熟練, ok/ng: 自己拼出來的對／錯次數, pc/pw: 選拼法的對／錯次數}
+   規則：
+   - 自己拼出來（拼字積木、打字）才會延長間隔：隔天 → 3 → 7 → 14 → 30 天 → 熟練。
+   - 一天最多前進一格，而且要到了複習日才會前進（提早拼對不算）。
+   - 拼錯：退回「隔天」，從頭開始累積。
+   - 選拼法只記錄對錯；選錯會讓複習提早到隔天（已熟練的字退回 14 天階段）。
+   - 同一輪遊戲裡拼錯的字，隔 2～3 題會再出現（每個字最多 2 次）；這次是「當場訂正」，不算跨天進度。 */
+const SP_INT = [1,3,7,14,30];
+const SPELL_GAMES = ["spell","tiles","type"];
+const SP_RETRY_MAX = 2;
+function dayNo(t){ t = t==null ? Date.now() : t; return Math.floor((t - new Date(t).getTimezoneOffset()*60000)/DAY); }
+function spRec(k, due){
+  if(!S.sp) S.sp = {};
+  return S.sp[k] || (S.sp[k] = {l:0, d:due, last:-1, m:0, ok:0, ng:0, pc:0, pw:0});
+}
+function spIsDue(r, t){ return !!r && !r.m && r.d != null && (t==null ? dayNo() : t) >= r.d; }
+/** 自己拼出來的結果（只在每一題第一次作答時呼叫） */
+function spRecall(k, ok){
+  const t = dayNo(), r = spRec(k, t);
+  if(r.d == null) r.d = t;
+  if(ok){
+    r.ok++;
+    if(!r.m && r.last !== t && t >= r.d){
+      if(r.l >= SP_INT.length) r.m = 1;
+      else { r.d = t + SP_INT[r.l]; r.l++; }
+      r.last = t;
+    }
+  } else {
+    r.ng++; r.l = 0; r.m = 0; r.d = t + 1; r.last = t;
+  }
+  saveProg();
+}
+/** 選拼法的結果：只記錄，選錯讓複習提早 */
+function spPick(k, ok){
+  const t = dayNo(), r = spRec(k, null);
+  if(ok) r.pc++;
+  else {
+    r.pw++;
+    if(r.m){ r.m = 0; r.l = Math.min(r.l, SP_INT.length - 2); }
+    r.d = r.d == null ? t + 1 : Math.min(r.d, t + 1);
+  }
+  saveProg();
+}
+function spDue(){ const t = dayNo(), sp = S.sp || {}; return Object.keys(sp).filter(k=>WORDS[k] && spIsDue(sp[k], t)).sort((a,b)=>sp[a].d - sp[b].d); }
+function spStats(sp){
+  const t = dayNo(), o = {mastered:0, learning:0, due:0};
+  Object.keys(sp||{}).forEach(k=>{ const r = sp[k]; if(r.m) o.mastered++; else if(r.d != null){ o.learning++; if(t >= r.d) o.due++; } });
+  return o;
+}
+/** 逐字對齊（編輯距離）：= 相同、~ 拼錯、+ 少了、- 多的 */
+function spDiff(a, b){
+  const n = a.length, m = b.length, D = [];
+  for(let i=0;i<=n;i++){ D[i] = [i]; for(let j=1;j<=m;j++) D[i][j] = i ? 0 : j; }
+  for(let i=1;i<=n;i++) for(let j=1;j<=m;j++) D[i][j] = Math.min(D[i-1][j]+1, D[i][j-1]+1, D[i-1][j-1] + (a[i-1]===b[j-1] ? 0 : 1));
+  const ops = []; let i = n, j = m;
+  while(i || j){
+    if(i && j && D[i][j] === D[i-1][j-1] + (a[i-1]===b[j-1] ? 0 : 1)){ ops.push({t: a[i-1]===b[j-1] ? "=" : "~", a:a[i-1], b:b[j-1]}); i--; j--; }
+    else if(j && D[i][j] === D[i][j-1] + 1){ ops.push({t:"+", b:b[j-1]}); j--; }
+    else { ops.push({t:"-", a:a[i-1]}); i--; }
+  }
+  return ops.reverse();
+}
+function spDiffHtml(attempt, correct){
+  const cols = spDiff(attempt, correct).map(o=>{
+    const top = o.t==="=" ? `<i>${h(o.a)}</i>` : o.t==="+" ? `<i class="dx-gap">_</i>` : `<i class="dx-bad">${h(o.a)}</i>`;
+    const bot = o.t==="=" ? `<i>${h(o.b)}</i>` : o.t==="-" ? `<i class="dx-gap"></i>` : `<i class="dx-fix">${h(o.b)}</i>`;
+    return `<span class="dcol">${top}${bot}</span>`;
+  }).join("");
+  return `<div class="dgrid en" aria-label="你拼的是 ${h(attempt)}，正確是 ${h(correct)}"><span class="dcol dlab"><i>你拼的</i><i>正確</i></span>${cols}</div>`;
+}
+/** 拼錯的正確答案區：逐字對照 ＋ 大字正確拼法 */
+function spFixBox(attempt, correct){
+  return `<div class="spfix">${attempt ? spDiffHtml(attempt, correct) : ""}<div class="sp-correct en">${h(correct)}</div>${pron(correct)}</div>`;
+}
+/** 拼錯的字在同一輪隔 2～3 題後再出現 */
+function spRequeue(g, q){
+  g.re = g.re || {};
+  if((g.re[q]||0) >= SP_RETRY_MAX) return;
+  g.re[q] = (g.re[q]||0) + 1;
+  const at = Math.min(g.qs.length, g.i + 3 + (Math.random() < .5 ? 0 : 1));
+  g.qs.splice(at, 0, q); g.rt.splice(at, 0, 1);
+}
+function isRetry(g){ return !!(g.rt && g.rt[g.i]); }
+function spSkill(){ return lvl() >= 3 ? "type" : "tiles"; }
+function spBanner(){
+  const n = spDue().length;
+  if(!n) return "";
+  return `<div class="card pendcard"><span>${li("pen",22)}</span><div style="flex:1"><b>今天要複習的拼字：${n} 個</b><div class="muted">拼對了，下次會隔更久再考；拼錯的會明天再練。</div></div><button class="btn small" data-act="sp-review">開始</button></div>`;
+}
+
 /* ================= 遊戲中心 ================= */
 const GAMES = [
   {id:"meaning", name:"聽音選意思", desc:"聽單字，選出中文意思", host:"momo", kind:"word"},
   {id:"spell",   name:"哪個拼對了？", desc:"聽單字，挑出正確的拼法", host:"hulu", kind:"word1"},
   {id:"tiles",   name:"拼字積木", desc:"聽單字，用字母積木拼出來", host:"gugu", kind:"word1"},
+  {id:"type",    name:"打字拼拼看", desc:"聽單字，自己用鍵盤打出來", host:"hulu", kind:"word1"},
   {id:"cloze",   name:"聽力填空", desc:"聽句子，選出空格裡的字", host:"dudu", kind:"sent"},
   {id:"order",   name:"句子重組", desc:"聽句子，把單字排回正確順序", host:"pupu", kind:"sent"},
   {id:"memory",  name:"翻牌配對", desc:"翻開卡片，把英文和中文配成一對", host:"bobo", kind:"word"},
@@ -8671,7 +8779,10 @@ function mineSents(){
 function wordPool(single){
   let p = U.gsrc==="mine" ? mineWords() : shuffle(LV_WORDS[lvl()]);
   if(single) p = p.filter(k=>/^[a-z]{3,11}$/.test(k) && !isProper(k));
-  if(U.gsrc==="mine") p = shuffle(p.slice(0, 40));
+  if(U.gsrc==="mine"){
+    if(single){ const d = new Set(spDue()); p = shuffle(p.filter(k=>d.has(k))).concat(shuffle(p.filter(k=>!d.has(k)).slice(0, 40))); }
+    else p = shuffle(p.slice(0, 40));
+  }
   return p;
 }
 function sentPool(){
@@ -8704,12 +8815,13 @@ function clozeOpts(k){
   return shuffle([k, ...shuffle(pool).slice(0,3)]);
 }
 
-function startGame(id){
+function startGame(id, preset){
   stopGameTimer();
   const G = GAMES.find(g=>g.id===id);
-  const g = {id, i:0, score:0, picked:null, qs:[], done:false, combo:0, best:0};
+  const g = {id, i:0, score:0, picked:null, qs:[], done:false, combo:0, best:0, fixedN:0};
   const need = id==="memory" ? 6 : id==="speed" ? 60 : 10;
-  if(G.kind==="sent"){
+  if(preset){ g.qs = preset.slice(); g.review = true; }
+  else if(G.kind==="sent"){
     let p = sentPool();
     if(p.length < 3 && U.gsrc==="mine"){ toast("練過的句子還不夠，先用目前難度的句子"); U.gsrc = "new"; p = sentPool(); }
     g.qs = p.slice(0, 8);
@@ -8719,6 +8831,7 @@ function startGame(id){
     if(p.length < min && U.gsrc==="mine"){ toast("生字本的字還不夠，先用目前難度的新字"); U.gsrc = "new"; p = wordPool(single); }
     g.qs = p.slice(0, need);
   }
+  if(SPELL_GAMES.includes(id)) g.rt = g.qs.map(()=>0);
   U.g = g; U.react = null; U.view = "game";
   if(id==="memory") setupMemory(); else setupQ();
   if(id==="speed"){ g.end = Date.now() + 60000; U.gtimer = setInterval(tickSpeed, 250); }
@@ -8729,11 +8842,13 @@ function setupQ(){
   if(!q) return;
   if(g.id==="meaning" || g.id==="speed") g.opts = meaningOpts(q);
   if(g.id==="spell") g.opts = shuffle([q, ...misspell(q)]);
+  g.attempt = ""; g.fixed = false;
   if(g.id==="tiles"){
     const extra = "abcdefghiklmnoprstuwy".split("").filter(c=>!q.includes(c));
-    g.letters = shuffle(q.split("").concat(shuffle(extra).slice(0,2))).map((ch,i)=>({ch, i}));
+    g.letters = shuffle(q.split("").concat(shuffle(extra).slice(0, q.length <= 5 ? 3 : 4))).map((ch,i)=>({ch, i}));
     g.built = [];
   }
+  if(g.id==="type") g.typed = "";
   if(g.id==="cloze"){
     const k = pick(q.w)[0].toLowerCase(); g.key = k; g.opts = clozeOpts(k);
   }
@@ -8771,8 +8886,16 @@ function finishGame(){
 }
 function answer(ok, keys){
   const g = U.g;
-  if(ok){ g.score++; pop(0); }
+  if(ok){ if(isRetry(g)) g.fixedN++; else g.score++; pop(0); }
   react(ok); if(keys) learn(keys);
+}
+/** 拼字遊戲作答：記錄、錯了就排進後面的題目 */
+function spellAnswer(ok, attempt){
+  const g = U.g, q = g.qs[g.i];
+  g.attempt = attempt; g.picked = ok ? 1 : 0;
+  if(!isRetry(g)){ if(g.id==="spell") spPick(q, ok); else spRecall(q, ok); }
+  if(!ok) spRequeue(g, q);
+  answer(ok, [q]); speakEn(WORDS[q].w);
 }
 function nextQ(){
   const g = U.g; g.i++;
@@ -8796,30 +8919,36 @@ function vGames(){
     <button class="gcard" data-act="gstart" data-g="${G.id}">
       ${monster(G.host, G.id==="speed"?"cheer":"normal", 64)}
       <b>${G.name}</b><span>${G.desc}</span>
-      <small class="gtag">${G.kind==="sent"?"句子":"單字"}</small>
+      <small class="gtag">${G.kind==="sent"?"句子":"單字"}</small>${G.id===spSkill() ? `<small class="sptag">拼字推薦</small>` : ""}
     </button>`).join("")}</div>`;
 }
 function gameHead(){
   const g = U.g, G = GAMES.find(x=>x.id===g.id);
   const prog = g.id==="speed" ? `<span class="muted">得分 ${g.score}</span>` : g.id==="memory" ? `<span class="muted">翻了 ${g.moves} 次</span>` : `<span class="muted">${Math.min(g.i+1,g.qs.length)}/${g.qs.length}</span>`;
-  return `<div class="lhead"><button class="x" data-act="exit-game" aria-label="離開">✕</button><b>${G.name}</b>${prog}</div>`;
+  return `<div class="lhead"><button class="x" data-act="exit-game" aria-label="離開">✕</button><b>${g.review ? "拼字複習" : G.name}</b>${prog}</div>`;
 }
 function vGameDone(){
-  const g = U.g, total = g.id==="speed" ? null : g.qs.length;
+  const g = U.g, total = g.id==="speed" ? null : g.rt ? g.rt.filter(x=>!x).length : g.qs.length;
   const msg = g.id==="memory" ? `用了 ${g.moves} 次翻牌完成配對` : g.id==="speed" ? `60 秒內答對 ${g.score} 題，最高連對 ${g.best} 題` : `答對 ${g.score} / ${total} 題`;
+  const left = g.review ? spDue().length : 0;
   const good = g.id==="memory" ? g.moves <= 13 : g.id==="speed" ? g.score >= 8 : g.score >= total*0.6;
   return gameHead() + `
   <div class="card center">${buddy(good?"cheer":"happy",130)}
     <h3 style="font-size:20px">${msg}</h3>
-    <p class="muted">${h(MON[partnerId()].name)}：${h(bline(good?"done":"wrong"))}<br>獲得 ${g.stars} 顆星星，玩過的字都收進生字本了。</p></div>
-  <div class="stack"><button class="btn" data-act="gstart" data-g="${g.id}">再玩一次</button><button class="btn sec" data-act="games">換一種遊戲</button><button class="btn ghost" data-act="exit-game">回首頁</button></div>`;
+    <p class="muted">${h(MON[partnerId()].name)}：${h(bline(good?"done":"wrong"))}<br>獲得 ${g.stars} 顆星星，玩過的字都收進生字本了。</p>
+    ${g.fixedN ? `<p class="muted" style="margin:0">拼錯的字有 ${g.fixedN} 個當場訂正成功，明天會再複習一次。</p>` : ""}</div>
+  <div class="stack">${g.review
+    ? (left ? `<button class="btn" data-act="sp-review">繼續複習（還有 ${left} 個）</button>` : "") + `<button class="btn sec" data-act="games">去遊戲中心</button>`
+    : `<button class="btn" data-act="gstart" data-g="${g.id}">再玩一次</button><button class="btn sec" data-act="games">換一種遊戲</button>`}<button class="btn ghost" data-act="exit-game">回首頁</button></div>`;
 }
 function vGame(){
   const g = U.g;
   if(g.done) return vGameDone();
   const q = g.qs[g.i], ans = g.picked != null;
   const fb = ans && U.react ? buddyBox(U.react.e, U.react.t) : "";
-  const next = ans ? `<button class="btn" style="margin-top:14px" data-act="gnext">${g.i+1<g.qs.length?"下一題 →":"看成績"}</button>` : "";
+  const mustFix = ans && !g.picked && (g.id==="tiles" || g.id==="type") && !g.fixed;
+  const next = ans && !mustFix ? `<button class="btn" style="margin-top:14px" data-act="gnext">${g.i+1<g.qs.length?"下一題 →":"看成績"}</button>` : "";
+  const retryTag = isRetry(g) ? `<p class="muted" style="margin:0 0 6px">剛剛拼錯的字，再試一次！</p>` : "";
   const sil = mode()==="silent";
   const playBig = `<button class="play" data-act="gsay" aria-label="再聽一次">${li("speaker",50)}</button>`;
   const wordBig = (typeof q==="string" && WORDS[q]) ? `<div class="big-word en" style="font-size:32px">${h(WORDS[q].w)}</div>${pron(q)}` : "";
@@ -8829,17 +8958,31 @@ function vGame(){
     <div class="gopts">${g.opts.map((o,i)=>`<button class="opt ${ans&&o===q?"ok":""} ${ans&&g.picked===i&&o!==q?"no":""}" data-act="gpick" data-i="${i}" ${ans?"disabled":""}>${h(WORDS[o].zh)}</button>`).join("")}</div>${fb}${next}`;
   }
   if(g.id==="spell"){
-    return gameHead() + `<div class="card center"><p class="hint">${sil?"看中文，哪一個是正確的拼法？":"聽聽看，哪一個是正確的拼法？"}</p>${playBig}<p class="muted" style="margin:0">提示：${h(WORDS[q].zh)}</p></div>
+    return gameHead() + `<div class="card center">${retryTag}<p class="hint">${sil?"看中文，哪一個是正確的拼法？":"聽聽看，哪一個是正確的拼法？"}</p>${playBig}<p class="muted" style="margin:0">提示：${h(WORDS[q].zh)}</p>
+      ${ans && !g.picked ? spFixBox(g.attempt, q) : ""}</div>
     <div class="gopts">${g.opts.map((o,i)=>`<button class="opt en ${ans&&o===q?"ok":""} ${ans&&g.picked===i&&o!==q?"no":""}" style="font-size:20px" data-act="gpick" data-i="${i}" ${ans?"disabled":""}>${h(o)}</button>`).join("")}</div>${fb}${next}`;
   }
   if(g.id==="tiles"){
     const built = g.built.map(i=>g.letters[i].ch).join("");
-    const slots = q.split("").map((c,i)=>`<span class="slot ${ans?(g.picked?"ok":"no"):""}">${h(built[i]||"")}</span>`).join("");
-    return gameHead() + `<div class="card center"><p class="hint">${sil?"看中文，用積木拼出這個字":"聽單字，用積木拼出來"}</p>${playBig}<p class="muted" style="margin:0 0 12px">提示：${h(WORDS[q].zh)}（${q.length} 個字母）</p>
+    const fixing = ans && !g.picked && !g.fixed, st = !ans || fixing ? "" : g.picked || g.fixed ? "ok" : "no";
+    const shown = ans && !fixing ? (g.picked ? q : g.fixed ? q : g.attempt) : built;
+    const slots = q.split("").map((c,i)=>`<span class="slot ${st}">${h(shown[i]||"")}</span>`).join("");
+    return gameHead() + `<div class="card center">${retryTag}<p class="hint">${sil?"看中文，用積木拼出這個字":"聽單字，用積木拼出來"}</p>${playBig}<p class="muted" style="margin:0 0 12px">提示：${h(WORDS[q].zh)}（${q.length} 個字母）</p>
+      ${ans && !g.picked ? spFixBox(g.attempt, q) + `<p class="hint" style="margin:8px 0">${g.fixed ? "訂正好了，很棒！" : "照著正確拼法，再拼一次"}</p>` : ""}
       <div class="slots en">${slots}</div>
-      ${ans && !g.picked ? `<p class="muted">正確拼法：<b class="en" style="color:var(--good);font-size:18px">${h(q)}</b></p>` : ""}
-      ${ans ? "" : `<div class="letters en">${g.letters.map((L,i)=>`<button class="lt ${g.built.includes(i)?"used":""}" data-act="tile" data-i="${i}" ${g.built.includes(i)?"disabled":""}>${h(L.ch)}</button>`).join("")}</div>
+      ${ans && !fixing ? "" : `<div class="letters en">${g.letters.map((L,i)=>`<button class="lt ${g.built.includes(i)?"used":""}" data-act="tile" data-i="${i}" ${g.built.includes(i)?"disabled":""}>${h(L.ch)}</button>`).join("")}</div>
       <div class="row" style="margin-top:12px"><button class="btn sec small" data-act="tile-back">退一格</button><button class="btn ghost small" data-act="tile-clear">清除</button></div>`}
+    </div>${fb}${next}`;
+  }
+  if(g.id==="type"){
+    const fixing = ans && !g.picked && !g.fixed;
+    const box = !ans || fixing
+      ? `<input id="spIn" class="dict-in sp-in en" type="text" lang="en" inputmode="latin" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="20" placeholder="${fixing ? "照著上面的正確拼法打一次" : "在這裡打出這個字"}" value="${h(g.typed||"")}">
+         <button class="btn small" data-act="sp-submit">${fixing ? "訂正好了" : "確定"}</button>`
+      : `<div class="sp-correct en" style="font-size:32px">${h(q)}</div>`;
+    return gameHead() + `<div class="card center">${retryTag}<p class="hint">${sil?"看中文，打出這個字的拼法":"聽單字，用鍵盤打出來"}</p>${playBig}<p class="muted" style="margin:0 0 12px">提示：${h(WORDS[q].zh)}（${q.length} 個字母）</p>
+      ${ans && !g.picked ? spFixBox(g.attempt, q) + `<p class="hint" style="margin:8px 0">${g.fixed ? "訂正好了，很棒！" : "照著正確拼法，再打一次"}</p>` : ""}
+      ${box}
     </div>${fb}${next}`;
   }
   if(g.id==="cloze"){
@@ -8896,22 +9039,44 @@ const GAME_ACT = {
     }
     if(g.picked != null) return;
     g.picked = i;
-    if(g.id==="meaning" || g.id==="spell"){ const ok = g.opts[i]===q; answer(ok, [q]); if(!ok) speakEn(WORDS[q].w); }
+    if(g.id==="meaning"){ const ok = g.opts[i]===q; answer(ok, [q]); if(!ok) speakEn(WORDS[q].w); }
+    if(g.id==="spell"){ const ok = g.opts[i]===q; spellAnswer(ok, g.opts[i]); }
     if(g.id==="cloze"){ const ok = g.opts[i]===g.key; answer(ok, [g.key]); speakEn(q.en); }
     render();
   },
   tile(el){
     const g = U.g, i = +el.dataset.i, q = g.qs[g.i];
-    if(g.picked != null || g.built.includes(i)) return;
+    const fixing = g.picked === 0 && !g.fixed;
+    if((g.picked != null && !fixing) || g.built.includes(i)) return;
     g.built.push(i);
     if(g.built.length === q.length){
-      const ok = g.built.map(j=>g.letters[j].ch).join("") === q;
-      g.picked = ok ? 1 : 0; answer(ok, [q]); speakEn(WORDS[q].w);
+      const word = g.built.map(j=>g.letters[j].ch).join("");
+      if(fixing){
+        if(word === q){ g.fixed = true; pop(0); speakEn(WORDS[q].w); }
+        else { g.built = []; toast("再對照一次上面的正確拼法喔"); }
+      } else spellAnswer(word === q, word);
+      if(g.picked === 0 && !fixing) g.built = [];
     }
     render();
   },
-  "tile-back"(){ const g = U.g; if(g.picked==null){ g.built.pop(); render(); } },
-  "tile-clear"(){ const g = U.g; if(g.picked==null){ g.built = []; render(); } },
+  "tile-back"(){ const g = U.g; if(g.picked==null || (g.picked===0 && !g.fixed)){ g.built.pop(); render(); } },
+  "tile-clear"(){ const g = U.g; if(g.picked==null || (g.picked===0 && !g.fixed)){ g.built = []; render(); } },
+  "sp-submit"(){
+    const g = U.g; if(!g || g.id!=="type") return;
+    const q = g.qs[g.i], i = $("#spIn"), v = ((i && i.value) || g.typed || "").trim().toLowerCase();
+    if(!v){ toast("先打出這個字喔"); return; }
+    if(g.picked == null) spellAnswer(v === q, v);
+    else if(g.picked === 0 && !g.fixed){
+      if(v === q){ g.fixed = true; pop(0); speakEn(WORDS[q].w); }
+      else toast("還不太一樣，對照上面的正確拼法再打一次");
+    } else return;
+    g.typed = ""; render();
+  },
+  "sp-review"(){
+    const due = spDue().filter(k=>/^[a-z]{3,11}$/.test(k));
+    if(!due.length){ toast("今天的拼字都複習完了！"); U.view = "home"; render(); return; }
+    leaveActivity(); startGame(spSkill(), due.slice(0, 10));
+  },
   tok(el){
     const g = U.g, j = +el.dataset.j, q = g.qs[g.i];
     if(g.picked != null || g.built.includes(j)) return;
@@ -9287,6 +9452,8 @@ function render(){
     </div>` : "";
   $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : "";
   if(lastView !== v){ window.scrollTo(0,0); lastView = v; }
+  const spIn = v==="game" ? $("#spIn") : null;
+  if(spIn && !IS_MOBILE){ spIn.focus(); spIn.setSelectionRange(spIn.value.length, spIn.value.length); }
 }
 
 /* ================= 學習紀錄（每日紀錄、日曆、家長看板） =================
@@ -9365,6 +9532,7 @@ function vBoard(){
       <div class="brow">${avCircle(p.avatar,54)}<div class="binfo"><b>${h(p.name)}</b><span class="muted">${LEVELS[(p.level||1)-1].name} · 最後練習：${agoText(la)}</span></div>
       <span class="tag2 ${td?"ok":""}">${td?"今天有練":"今天還沒練"}</span></div>
       <div class="bstats"><div><b>${w.days}</b><span>近7天練習天數</span></div><div><b>${w.min}</b><span>近7天分鐘</span></div><div><b>${w.avg==null?"—":w.avg}</b><span>跟讀平均分</span></div><div><b>${g.stars||0}</b><span>星星</span></div></div>
+      ${(()=>{ const sp = spStats(g.sp); return sp.mastered + sp.learning ? `<p class="muted" style="margin:0 0 8px;font-size:13px">拼字：熟練 ${sp.mastered} 字・學習中 ${sp.learning} 字・今天待複習 ${sp.due} 字</p>` : ""; })()}
       <div class="bweek"><span class="muted">近 7 天</span><span class="hdots">${dots}</span><span class="muted">看詳細 ›</span></div>
     </div>`;
   }).join("");
@@ -9621,7 +9789,11 @@ document.addEventListener("click", e=>{
 document.addEventListener("input", e=>{
   if(e.target.id==="pname" && U.edit){ U.edit.name = e.target.value; U.edit.touched = true; }
   if(e.target.id==="vsearch"){ U.vq = e.target.value; const vl = $("#vl"); if(vl) vl.innerHTML = vListHtml(); }
+  if(e.target.id==="spIn" && U.g){ U.g.typed = e.target.value; }
   if(e.target.id==="wsearch"){ U.q = e.target.value; const wl = $("#wl"); if(wl) wl.innerHTML = wordListHtml(); }
+});
+document.addEventListener("keydown", e=>{
+  if(e.target.id==="spIn" && e.key==="Enter" && !e.isComposing){ e.preventDefault(); ACT["sp-submit"](); }
 });
 document.addEventListener("change", e=>{
   if(e.target.id==="sname" && cur){ const v = e.target.value.trim(); if(v){ cur.name = v; saveProfiles(); render(); } }
