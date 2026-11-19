@@ -9141,7 +9141,10 @@ function spBanner(){
    - 金幣只用來買東西；星星（S.stars）照舊只增不減。
    - 簽到：當天有完成任何練習（todayN()>0）才能領。
    - 每日任務 3 個，各 +10；三個都領完再送一個任務寶物（送完改 +20 金幣）。
-   - 遊戲每天前 3 次給金幣；完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
+   - 做越多得越多：每句 +2（重練 +1）、每篇文章 +5（重聽 +2）、複習每個字 +1、拼字複習拼對每個字 +1、跟讀 80 分以上 +1。
+   - 遊戲：8 種遊戲每種每天第一次玩完 +5，同一種再玩只給星星。
+   - 當天賺的金幣：前 150 全額、150～300 減半、300 以上剩四分之一（earn 的 fixed＝成就獎勵不打折）。
+   - 完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
    - 寶箱只當獎勵送（連續練習每 7 天），開出沒有的寶箱寶物，全部都有就給 50 金幣。 */
 const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE], x:["動作",MA_MOVES], h:["隱藏版",HIDDEN]};
 const RW_SRC = {streak30:"連續練習 30 天", spm30:"拼字熟練 30 個字", art20:"聽完 20 篇文章", lvall:"完成一個難度的全部主題", task5:"完成 5 天的每日任務", speed20:"60 秒快問快答答對 20 題", shadow90:"跟讀 90 分以上 10 次", night7:"晚上 8 點後練習 7 天", egg:"神秘蛋",
@@ -9179,6 +9182,7 @@ const SETS = [
   {id:"ninja",  n:"忍者",     title:"影子忍者",   items:["t:ninjaband","a:ninjamask","k:shuriken","s:bamboo"]}
 ];
 const SET_BONUS = 100;
+const GAME_COIN = 5;   // 每種遊戲每天第一次玩完
 /* 節慶：農曆節日每年國曆日期不同，先內建 2026～2030 年（之後要補上新的年份） */
 const FEST = {
   cny:       {n:"春節",   dates:{2026:"2-17",2027:"2-6",2028:"1-26",2029:"2-13",2030:"2-3"}, pre:7, post:14},
@@ -9200,13 +9204,31 @@ function RW(){
   const d = newRw(); for(const k in d) if(S.rw[k] == null) S.rw[k] = d[k];   // 補齊舊資料缺的欄位（原地修改，不換物件）
   return S.rw;
 }
-function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0}; if(!r.day.claim) r.day.claim = {}; return r.day; }
+function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0, games:{}, got:0, frac:0}; if(!r.day.claim) r.day.claim = {}; if(!r.day.games) r.day.games = {}; return r.day; }
 function rwName(it){ return RW_CAT[it.c][1][it.k].n; }
 function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : it.fest ? `${FEST[it.fest].n}期間商店 ${it.fp} 金幣（${festWhen(it.fest)}）` : it.c === "h" ? `${RW_SRC[it.get]}，或用神秘蛋孵出來` : RW_SRC[it.get]; }
 function rwOwned(){ return (S && cur) ? RW().own : {}; }
 function canUsePart(own){ return (k, v, o) => !o[v].lock || !!own[k + ":" + v]; }
 function coinSvg(size){ return `<svg class="coin" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><circle cx="24" cy="25.5" r="17" fill="#e9a93a"/><circle cx="24" cy="23" r="17" fill="#ffd66b" stroke="#a8741c" stroke-width="2.4"/><circle cx="24" cy="23" r="12" fill="none" stroke="#e9a93a" stroke-width="2"/><path transform="translate(24 23) scale(.68)" d="${STAR5}" fill="#fff3b8" stroke="#a8741c" stroke-width="2.4" stroke-linejoin="round"/></svg>`; }
-function earn(n, why){ if(!n) return; RW().coins += n; toast(`+${n} 金幣・${why}`); saveProg(); }
+const COIN_TIERS = [[150, 1], [300, 0.5], [Infinity, 0.25]];   // 當天已賺到多少之前，用幾成
+function coinRate(got){ return COIN_TIERS.find(([lim])=>got < lim)[1]; }
+/** 給金幣。fixed＝成就類獎勵（套裝、寶箱、神秘蛋、節慶禮物），不受每天打折影響 */
+function earn(n, why, fixed){
+  if(!n) return 0;
+  const r = RW();
+  let give = n, msg = null;
+  if(!fixed){
+    const d = rwDay(), rate = coinRate(d.got || 0);
+    d.frac = (d.frac || 0) + n * rate;          // 打折後的零頭累積起來，湊滿 1 枚才給
+    give = Math.floor(d.frac + 1e-9); d.frac -= give;
+    d.got = (d.got || 0) + give;
+    if(rate < 1 && !d.told){ d.told = 1; msg = "今天賺好多金幣了！接下來的金幣會變少，明天又會恢復喔"; }
+  }
+  r.coins += give;
+  if(give || msg) toast(msg || `+${give} 金幣・${why}`);
+  saveProg();
+  return give;
+}
 function grant(id){
   const r = RW(); if(!RW_BY[id] || r.own[id]) return false;
   r.own[id] = 1; (U.rwq = U.rwq || []).push(id); U.sheet = "reward"; saveProg();
@@ -9214,7 +9236,7 @@ function grant(id){
 }
 function openChest(){
   const pool = REWARDS.filter(it=>it.get==="chest" && !RW().own[it.id]);
-  if(!pool.length){ earn(50, "寶箱"); return null; }
+  if(!pool.length){ earn(50, "寶箱", true); return null; }
   const it = pick(pool); grant(it.id); return it.id;
 }
 /* ---- 節慶：期間判斷 ---- */
@@ -9247,7 +9269,7 @@ function festGift(){
     const key = f + "-" + y; if(r.fgift[key]) return;
     r.fgift[key] = 1;
     const pool = REWARDS.filter(it=>it.fest === f && !r.own[it.id]);
-    if(pool.length) grant(pick(pool).id); else earn(30, FEST[f].n + "禮物");
+    if(pool.length) grant(pick(pool).id); else earn(30, FEST[f].n + "禮物", true);
   });
 }
 /* ---- 主題套裝：集滿送稱號與金幣 ---- */
@@ -9256,7 +9278,7 @@ function rwSets(){
   const r = RW();
   SETS.forEach(st=>{
     if(r.sets[st.id] || setOwned(st) < st.items.length) return;
-    r.sets[st.id] = 1; r.title = st.title; earn(SET_BONUS, "集滿" + st.n);
+    r.sets[st.id] = 1; r.title = st.title; earn(SET_BONUS, "集滿" + st.n, true);
     (U.rwq = U.rwq || []).push("set:" + st.id); U.sheet = "reward";
   });
 }
@@ -9294,7 +9316,7 @@ function hatchEgg(){
   const r = RW(); if(r.egg.d < EGG_DAYS) return null;
   r.egg = {d:0, last:today(), n:(r.egg.n||0) + 1};       // 今天的練習不再算進下一顆蛋
   const pool = Object.keys(HIDDEN).filter(k=>!r.own["h:" + k]);
-  if(!pool.length){ earn(100, "神秘蛋"); saveProg(); return null; }
+  if(!pool.length){ earn(100, "神秘蛋", true); saveProg(); return null; }
   const k = pick(pool); grant("h:" + k); saveProg(); return k;
 }
 function eggRow(){
@@ -9335,7 +9357,7 @@ function claimTask(id){
 function rwGame(g){
   if(!S) return;
   const d = rwDay(), r = RW();
-  if(d.gc < 3){ d.gc++; earn(Math.min(10, 5 + Math.floor((g.stars||0)/3)), "玩遊戲"); }
+  if(!g.review && !d.games[g.id]){ d.games[g.id] = 1; earn(GAME_COIN, "今天第一次玩" + (GAMES.find(x=>x.id===g.id) || {name:"遊戲"}).name); }
   if(g.id === "speed") r.speedBest = Math.max(r.speedBest || 0, g.score || 0);
   if(g.review){
     const total = g.rt ? g.rt.filter(x=>!x).length : g.qs.length;
@@ -9362,6 +9384,14 @@ function moveHtml(inner, x, loop){
 /** 自己的小怪獸，size 大小；play＝這次繪製要播一次動作 */
 function meDance(size, play){ return moveHtml(avCircle(cur.avatar, size), moveOf(), false).replace("mv-once", play ? "mv-once" : "mv-still"); }
 
+/** 今天賺了多少、之後一次給幾成 */
+function coinNote(){
+  const d = rwDay(), got = d.got || 0, rate = coinRate(got), played = Object.keys(d.games).length;
+  const next = COIN_TIERS.find(([lim])=>got < lim)[0];
+  const tip = rate === 1 ? `再賺 ${next - got} 枚以後，金幣會減半` : rate === .5 ? `現在金幣減半，超過 ${next} 枚剩四分之一` : "現在金幣是平常的四分之一，明天會恢復";
+  return `<div class="rwrow"><span class="rwi rwnum">${got}</span><span class="rwt"><b>今天賺到的金幣</b><span>${tip}・遊戲今天已領 ${played} / ${GAMES.length} 種</span></span></div>`;
+}
+
 /* 首頁：今天的任務 */
 function dailyCard(){
   const r = RW(), ci = ciState();
@@ -9376,6 +9406,7 @@ function dailyCard(){
     <div class="rwhead"><button class="rwme" data-act="me-dance" aria-label="讓我的小怪獸動一動">${meDance(52, U.dance)}</button><b style="flex:1">今天的任務</b><button class="coinpill" data-act="shop-open" aria-label="金幣 ${r.coins}，打開寶物商店">${coinSvg(22)}<span>${r.coins}</span><span class="muted">商店 ›</span></button></div>
     ${rows}
     ${eggRow()}
+    ${coinNote()}
     <p class="muted rwnote">三個任務都完成，再送一個寶物！</p></div>`;
 }
 
@@ -9655,7 +9686,7 @@ function answer(ok, keys){
 function spellAnswer(ok, attempt){
   const g = U.g, q = g.qs[g.i];
   g.attempt = attempt; g.picked = ok ? 1 : 0;
-  if(!isRetry(g)){ if(g.id==="spell") spPick(q, ok); else spRecall(q, ok); if(g.review) logAdd("r"); }
+  if(!isRetry(g)){ if(g.id==="spell") spPick(q, ok); else spRecall(q, ok); if(g.review){ logAdd("r"); if(ok) earn(1, "拼對了"); } }
   if(!ok) spRequeue(g, q);
   answer(ok, [q]); speakEn(WORDS[q].w);
 }
@@ -10263,7 +10294,7 @@ setInterval(()=>{
 }, 15000);
 
 /* 跟讀分數：每次結果只記一次 */
-function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); if(score >= 90) RW().hi90++; saveProg(); }
+function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); if(score >= 90) RW().hi90++; if(score >= 80) earn(1, "跟讀很棒"); saveProg(); }
 
 /* 讀取任何一位學習者的進度（家長看板用） */
 function loadProgOf(id){
@@ -10464,8 +10495,9 @@ const ACT = {
     leaveActivity();
     const s = curSent(); learn(s.w.map(x=>x[0]));
     addPend("s:"+s.id); U.bld = null;
-    if(!S.done[s.id]){ S.done[s.id] = 1; reward(1); }
-    logAdd("s"); bump(); saveProg();
+    const firstTime = !S.done[s.id];
+    if(firstTime){ S.done[s.id] = 1; reward(1); }
+    logAdd("s"); bump(); earn(firstTime ? 2 : 1, firstTime ? "練習句子" : "再練一次"); saveProg();
     if(U.si+1 < U.list.length){ U.si++; resetStep(); }
     else { U.view = "tdone"; rwTopic(U.ti, lvl()); }
     render();
@@ -10496,8 +10528,9 @@ const ACT = {
   "a-done"(){
     stopSeq();
     const k = "art:"+U.art.id;
-    if(!S.done[k]){ const right = U.ans.filter((x,i)=>x===U.art.q[i][2]).length; S.done[k] = 1; reward(3 + right); }
-    logAdd("a"); bump(); saveProg(); U.view = "articles"; render();
+    const firstTime = !S.done[k];
+    if(firstTime){ const right = U.ans.filter((x,i)=>x===U.art.q[i][2]).length; S.done[k] = 1; reward(3 + right); }
+    logAdd("a"); bump(); earn(firstTime ? 5 : 2, firstTime ? "聽完文章" : "再聽一次文章"); saveProg(); U.view = "articles"; render();
   },
 
   review(){
@@ -10514,7 +10547,7 @@ const ACT = {
     if(r===0){ st[0] = 1; st[1] = n; U.rstats.a++; if(U.rq.slice(U.rc+1).indexOf(k) < 0) U.rq.push(k); }
     else if(r===1){ st[0] = Math.max(1, st[0]); st[1] = n + DAY; U.rstats.b++; }
     else { st[0] = Math.min(6, st[0]+1); st[1] = n + INTERVAL[st[0]]*DAY; U.rstats.c++; }
-    U.rc++; U.rphase = "listen"; logAdd("r");
+    U.rc++; U.rphase = "listen"; logAdd("r"); earn(1, "複習單字");
     if(U.rc >= U.rq.length){ reward(U.rstats.c); bump(); }
     saveProg(); render();
     if(U.rc < U.rq.length) speakEn(WORDS[U.rq[U.rc]].w);
