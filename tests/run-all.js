@@ -8,6 +8,7 @@ const suites = [
   ['後端屬性測試', 'backend-props.js', []],
   ['前端屬性測試', 'front-props.js', []],
   ['雲端同步', 'sync.js', []],
+  ['拼字複習', 'spelling.js', []],
   ['端到端', 'e2e.js', quick ? ['--clicks=60'] : []]
 ];
 const summary = [];
