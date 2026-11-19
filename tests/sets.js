@@ -130,7 +130,8 @@ const DAYS = {
     const bad = [];
     await p.evaluate(() => { S.rw = newRw(); S.rw.coins = 600; cur.avatar = maFix({ b: 'round', c: 'sky' }); U.rwq = []; U.sheet = null; U.shopCat = null; U.shopTab = null; U.view = 'home'; render(); });
     await p.click('[data-act=shop-open]');
-    if ((await p.$$('.setbox')).length !== 4) bad.push('套裝分類沒有 4 組');
+    const nSets = await p.evaluate(() => SETS.length);
+    if ((await p.$$('.setbox')).length !== nSets) bad.push(`套裝分類應有 ${nSets} 組`);
     const ids = await p.evaluate(() => SETS.find(s => s.id === 'detect').items);
     for (const id of ids) { await p.click(`[data-act=rw-buy][data-id="${id}"]`); await p.click(`[data-act=rw-buy][data-id="${id}"]`); }
     if (!(await p.$('.rwpop')) || !(await p.textContent('.rwpop')).includes('集滿「小偵探」套裝')) bad.push('集滿沒有彈出視窗');
@@ -147,7 +148,7 @@ const DAYS = {
     await p.click('[data-act=set-wear][data-s=ninja]');
     if ((await p.evaluate(() => maFix(cur.avatar).t)) !== 'ninjaband') bad.push('「穿上有的 1 件」沒有作用');
     await p.screenshot({ path: path.join(OUT, 'sets-shop.png') });
-    result('E1 套裝：商店預設顯示 4 組、單買集滿彈出視窗、整套穿上、頂端顯示稱號、部分收集也能穿', bad);
+    result('E1 套裝：商店預設顯示全部套裝、單買集滿彈出視窗、整套穿上、頂端顯示稱號、部分收集也能穿', bad);
   }
 
   // E2 節慶分類：沒有活動時顯示下次日期；聖誕期間顯示活動並能買；頭像工作室沒買的上鎖

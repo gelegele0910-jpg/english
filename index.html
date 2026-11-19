@@ -8109,6 +8109,939 @@ SKY.forEach(c=>{
   MA_NECK["zod_" + c.id] = {lock:true, n:c.n + "徽章", f:(s,L)=>`<path d="M54 ${s.my+6} L57 ${s.my+12} M66 ${s.my+6} L63 ${s.my+12}" stroke="#7a62c9" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="${s.my+19}" r="8.5" fill="#2f2a5a" stroke="${L}" stroke-width="1.8"/>${skyShape(c, [53.5, s.my+12.5, 13], null, {lw:.7, r:.9})}`};
 });
 MA_SCENE.allsky = {lock:true, n:"滿天星座", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#262056"/>${[["dipper",-4,-4,40],["orion",84,-2,34],["leo",-6,72,36],["scorpio",88,62,32],["gemini",34,-8,26],["pisces",30,94,30]].map(([id,x,y,w])=>skyShape(SKY.find(c=>c.id===id), [x, y, w], null, {lw:.8, r:1.1})).join("")}`};
+/* ---------- 第二批主題套裝的部件（衣服、手上、身旁是新欄位） ---------- */
+/* ---------- 第二批主題套裝的部件（衣服、手上、身旁是新欄位）：有亮面、陰影、車縫線等細節 ---------- */
+const PSH = "rgba(63,53,64,.16)";     // 陰影
+const PHI = "rgba(255,255,255,.78)";  // 亮面
+/** 一道弧形亮光 */
+function pHi(x1, y1, cx, cy, x2, y2, w){ return `<path d="M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}" fill="none" stroke="${PHI}" stroke-width="${w || 2}" stroke-linecap="round"/>`; }
+/** 車縫線 */
+function pStitch(d, c){ return `<path d="${d}" fill="none" stroke="${c || "rgba(255,255,255,.75)"}" stroke-width="1.1" stroke-dasharray="2.2 2" stroke-linecap="round"/>`; }
+/** 衣服共用：右側與下方的陰影，讓衣服看起來是圓的 */
+function pShade(y){ return `<path d="M86 ${y} Q100 ${y + 20} 96 130 H130 V${y} Z" fill="${PSH}"/><path d="M-4 ${y + 30} Q60 ${y + 40} 124 ${y + 30} V130 H-4 Z" fill="${PSH}" opacity=".6"/>`; }
+/** 衣服共用：弧形領口的衣身（上緣是往下彎的弧線） */
+function pBody(y, fill, L, dip){ return `<path d="M-4 ${y} Q60 ${y + (dip == null ? 14 : dip)} 124 ${y} V130 H-4 Z" fill="${fill}" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`; }
+
+/* 頭飾（以頭頂 y=40、中心 x=60 繪製） */
+Object.assign(MA_TOPS, {
+  chefTall: {lock:true, n:"高高廚師帽", f:(L)=>`
+    <path d="M45 38 C44 30 45 24 47 19 H73 C75 24 76 30 75 38 Z" fill="#fff" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M66 20 C68 26 69 31 68 38 H75 C76 30 75 24 73 19 Z" fill="${PSH}"/>
+    ${[[48,15,9],[72,15,9],[60,10,11.5]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${L}" stroke-width="2.2"/>`).join("")}
+    <path d="M44 19 Q60 26 76 19" fill="#fff"/><path d="M55 14 Q60 17 65 14" stroke="#e6dfe9" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M52 22 Q51 30 52 37 M60 20 Q60 29 60 37 M68 22 Q69 30 68 37" stroke="#e6dfe9" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M41 36 Q60 32 79 36 L79 45 Q60 41 41 45 Z" fill="#fff" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M68 34.5 Q74 35 79 36 L79 45 Q74 43.5 68 43 Z" fill="${PSH}"/>
+    ${pHi(53, 7, 56, 4, 60, 3.5, 2.2)}${pHi(41, 14, 42, 10, 45, 8)}`},
+  fireHelmet: {lock:true, n:"消防頭盔", f:(L)=>`
+    <path d="M16 46 Q60 36 104 46 Q108 52 100 54 Q60 47 22 54 Q14 52 16 46 Z" fill="#c43a34" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M28 46 Q27 18 60 15 Q93 18 92 46 Z" fill="#e2463f" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M78 22 Q92 30 92 46 H82 Q83 32 74 22 Z" fill="${PSH}"/>
+    <path d="M56 15 Q60 12 64 15 V46 H56 Z" fill="#c43a34" stroke="${L}" stroke-width="1.6"/>
+    <path d="M50 26 L60 22 L70 26 V36 Q60 42 50 36 Z" fill="#ffd66b" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+    <path transform="translate(60 31) scale(.4)" d="${STAR5}" fill="#e2463f"/>
+    ${[36,84].map(x=>`<circle cx="${x}" cy="42" r="1.6" fill="#ffd66b"/>`).join("")}
+    ${pHi(36, 34, 38, 24, 48, 19, 2.4)}`},
+  sunHat: {lock:true, n:"探險遮陽帽", f:(L)=>`
+    <ellipse cx="60" cy="43" rx="43" ry="9" fill="#d9c08a" stroke="${L}" stroke-width="2.2"/>
+    ${pStitch("M24 43 Q60 51 96 43", "#b89a62")}${pStitch("M30 41 Q60 47 90 41", "#efdcae")}
+    <path d="M38 43 Q36 21 60 19 Q84 21 82 43 Z" fill="#e8d3a4" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M60 19 Q57 26 60 31" stroke="#cdb582" stroke-width="2" fill="none"/>
+    <path d="M70 21 Q82 25 82 43 H72 Q74 30 66 21 Z" fill="${PSH}"/>
+    <path d="M38 35 Q60 31 82 35 L82 41 Q60 37 38 41 Z" fill="#8a6a3e"/>
+    <path d="M44 33 Q38 24 42 18 Q46 26 48 33 Z" fill="#8fc27a" stroke="${L}" stroke-width="1.2"/><path d="M44 31 L43 22" stroke="#6fa85e" stroke-width="1"/>
+    ${pHi(42, 32, 44, 25, 50, 22, 2)}`},
+  captain: {lock:true, n:"海盜船長帽", f:(L)=>`
+    <path d="M18 44 Q28 12 60 10 Q92 12 102 44 Q82 34 60 36 Q38 34 18 44 Z" fill="#3f3a52" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M72 14 Q94 20 102 44 Q92 38 84 37 Q84 24 72 14 Z" fill="rgba(0,0,0,.18)"/>
+    <path d="M18 44 Q38 34 60 36 Q82 34 102 44" fill="none" stroke="#ffd66b" stroke-width="3.2"/><path d="M20 41 Q38 31 60 33 Q82 31 100 41" fill="none" stroke="#e9a93a" stroke-width="1"/>
+    <path d="M78 16 Q90 0 106 3 Q96 9 86 22 Z" fill="#e2463f" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M84 16 l6 -3 M88 11 l6 -3 M86 20 l7 -2" stroke="#ff8a7a" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="60" cy="23" r="7" fill="#fff" stroke="${L}" stroke-width="1.6"/><circle cx="57.4" cy="22.4" r="1.7" fill="#3f3a52"/><circle cx="62.6" cy="22.4" r="1.7" fill="#3f3a52"/>
+    <path d="M57.5 26.5 q2.5 1.6 5 0" stroke="#3f3a52" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M50 31 L70 33 M70 31 L50 33" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    ${pHi(30, 34, 34, 22, 44, 16, 2)}`},
+  leafHat: {lock:true, n:"葉子帽", f:(L)=>`
+    <path d="M27 47 Q27 18 60 12 Q93 18 93 47 Q77 39 60 41 Q43 39 27 47 Z" fill="#8fc27a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M74 18 Q93 26 93 47 Q86 43 80 41 Q82 26 70 16 Z" fill="${PSH}"/>
+    <path d="M60 22 V40 M60 30 Q50 30 42 38 M60 30 Q70 30 78 38 M60 24 Q53 22 46 27 M60 24 Q67 22 74 27" stroke="#6fa85e" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M60 13 Q61 4 70 1 Q74 6 66 10" stroke="#5d8a4a" stroke-width="2.4" fill="#a8d88e" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M30 44 q-6 -3 -6 -9 q6 1 8 6" fill="#a8d88e" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/>
+    <circle cx="44" cy="26" r="2" fill="#e6f7ff" stroke="#8fd1ff" stroke-width=".8"/>
+    ${pHi(36, 36, 40, 24, 50, 18, 2)}`},
+  beeBand: {lock:true, n:"蜜蜂觸角髮箍", f:(L)=>`
+    <path d="M30 52 Q30 30 60 30 Q90 30 90 52" fill="none" stroke="#3f3540" stroke-width="5" stroke-linecap="round"/><path d="M36 42 Q40 33 52 31" stroke="#6b6380" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M48 32 Q42 18 33 12 M72 32 Q78 18 87 12" fill="none" stroke="#3f3540" stroke-width="2.4" stroke-linecap="round"/>
+    ${[33,87].map(x=>`<circle cx="${x}" cy="10" r="6" fill="#ffd23f" stroke="${L}" stroke-width="1.8"/><path d="M${x-5} 11 h10" stroke="#3f3540" stroke-width="2"/><circle cx="${x-2}" cy="7.5" r="1.6" fill="#fff"/>`).join("")}`},
+  kabuto: {lock:true, n:"武士頭盔", f:(L)=>`
+    ${[0,1,2].map(i=>`<path d="M${24-i*2} ${46+i*5} Q60 ${40+i*5} ${96+i*2} ${46+i*5} L${98+i*2} ${51+i*5} Q60 ${45+i*5} ${22-i*2} ${51+i*5} Z" fill="${["#3a3348","#4a4258","#3a3348"][i]}" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/>`).join("")}
+    <path d="M30 48 Q30 20 60 18 Q90 20 90 48 Z" fill="#4a4258" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M40 27 Q60 21 80 27 M34 37 Q60 31 86 37" stroke="#6b6380" stroke-width="1.6" fill="none"/>
+    ${[38,48,60,72,82].map(x=>`<circle cx="${x}" cy="${x===60?32:33}" r="1.3" fill="#c9cfe0"/>`).join("")}
+    <path d="M47 23 Q40 6 28 3 Q38 14 43 27 Z M73 23 Q80 6 92 3 Q82 14 77 27 Z" fill="#ffd66b" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M43 18 Q38 10 32 7 M77 18 Q82 10 88 7" stroke="#fff3b8" stroke-width="1.2" fill="none"/>
+    <circle cx="60" cy="27" r="4.4" fill="#e2463f" stroke="${L}" stroke-width="1.4"/><circle cx="58.8" cy="25.8" r="1.2" fill="#fff" opacity=".8"/>
+    ${pHi(36, 38, 38, 28, 46, 22, 2)}`},
+  capBack: {lock:true, n:"反戴鴨舌帽", f:(L)=>`
+    <path d="M33 43 Q16 41 9 48 Q22 53 35 48 Z" fill="#3a7cc9" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><path d="M14 47 Q24 46 33 47" stroke="#2c62a3" stroke-width="1.2"/>
+    <path d="M32 46 Q32 22 60 22 Q88 22 88 46 Z" fill="#5aa2ef" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M60 22 Q52 32 50 46 M60 22 Q68 32 70 46" stroke="#4a8fd8" stroke-width="1.4" fill="none"/>
+    <path d="M74 25 Q88 30 88 46 H80 Q81 34 70 24 Z" fill="${PSH}"/>
+    ${pStitch("M34 44 Q60 40 86 44", "#bfe0ff")}
+    <path d="M53 41 h14 v5 h-14 Z" fill="#fff" stroke="${L}" stroke-width="1.2"/><path d="M56 43.5 h8" stroke="#5aa2ef" stroke-width="1.2" stroke-dasharray="1.2 1.2"/>
+    <circle cx="60" cy="22" r="2.6" fill="#3a7cc9" stroke="${L}" stroke-width="1"/>
+    <path transform="translate(42 34) scale(.3)" d="${STAR5}" fill="#ffd66b"/>
+    ${pHi(38, 36, 41, 28, 50, 24, 2)}`},
+  bobaHat: {lock:true, n:"珍珠奶茶杯頭套", f:(L)=>`
+    <path d="M66 14 L74 -6" stroke="${L}" stroke-width="7" stroke-linecap="round"/><path d="M66 14 L74 -6" stroke="#ff7aa8" stroke-width="5" stroke-linecap="round"/><path d="M67.5 10 L72 -1" stroke="#ffc6da" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M38 47 L42 14 H78 L82 47 Z" fill="#f3d9b5" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M42 14 H78 L77 24 H43 Z" fill="#fff6ea"/><path d="M43 24 Q60 27 77 24" stroke="#e4c08f" stroke-width="1.4" fill="none"/>
+    <path d="M70 15 L78 15 L82 47 H74 Z" fill="${PSH}"/>
+    ${[[47,41],[55,43],[63,41],[71,43],[51,36],[67,36],[59,37],[45,45]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.2" fill="#4a3434"/><circle cx="${x-1}" cy="${y-1.1}" r="1" fill="#fff" opacity=".65"/>`).join("")}
+    <circle cx="60" cy="30" r="5" fill="#fff" opacity=".9"/><path d="M57.6 30 h4.8 M60 27.6 v4.8" stroke="#ff7aa8" stroke-width="1.4" stroke-linecap="round"/>
+    <ellipse cx="60" cy="14" rx="20.5" ry="4.8" fill="#fff" stroke="${L}" stroke-width="2"/><ellipse cx="54" cy="13" rx="6" ry="1.4" fill="#fff" stroke="#e6dfe9" stroke-width=".8"/>
+    ${[[45,30],[75,34]].map(([x,y])=>`<path d="M${x} ${y} q1.4 2.2 0 3.4 q-1.4 -1.2 0 -3.4 Z" fill="#fff" opacity=".8"/>`).join("")}
+    ${pHi(44, 42, 44, 30, 46, 22, 1.8)}`},
+  boxHead: {lock:true, n:"紙箱頭套", f:(L)=>`
+    <path d="M32 12 L40 4 H96 L88 12 Z" fill="#e8bf88" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M88 12 L96 4 V40 L88 48 Z" fill="#c4935a" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M32 48 V12 H88 V48 Z" fill="#d9a86c" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M60 12 L68 4" stroke="#b5864f" stroke-width="1.4"/><rect x="54" y="10" width="12" height="38" fill="#e8dcb8" opacity=".7"/>
+    ${[36,40,44].map(x=>`<path d="M${x} 46 V40" stroke="#c4935a" stroke-width="1"/>`).join("")}
+    <ellipse cx="46" cy="27" rx="2.6" ry="3.2" fill="#3f3540"/><ellipse cx="74" cy="27" rx="2.6" ry="3.2" fill="#3f3540"/>
+    <path d="M50 36 Q60 43 70 36" fill="none" stroke="#3f3540" stroke-width="2.4" stroke-linecap="round"/>
+    <ellipse cx="40" cy="33" rx="4" ry="2.4" fill="#ff9f9f" opacity=".6"/><ellipse cx="80" cy="33" rx="4" ry="2.4" fill="#ff9f9f" opacity=".6"/>
+    <path d="M88 18 l4 -4 M88 26 l5 -5" stroke="#b5864f" stroke-width="1"/>`},
+  luckyEars: {lock:true, n:"招財貓耳", f:(L)=>`
+    <path d="M28 56 L31 24 L53 41 Z M92 56 L89 24 L67 41 Z" fill="#fff" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M34 47 L35 32 L46 41 Z M86 47 L85 32 L74 41 Z" fill="#ff9a9a"/>
+    <path d="M36 44 l2 -5 M38 46 l3 -4 M84 44 l-2 -5 M82 46 l-3 -4" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M78 44 Q84 38 90 44 Q84 48 78 44 Z" fill="#e2463f" stroke="${L}" stroke-width="1.2"/><circle cx="84" cy="48" r="3.4" fill="#ffd66b" stroke="${L}" stroke-width="1.2"/><path d="M82 48.6 h4" stroke="${L}" stroke-width="1"/>`}
+});
+/* 臉上（依眼睛位置擺放） */
+Object.assign(MA_ACC, {
+  starShades: {lock:true, n:"巨星墨鏡", f:(s,L)=>[60-s.dx, 60+s.dx].map(x=>`<path transform="translate(${x} ${s.ey}) scale(1)" d="${STAR5}" fill="#3f3a52" stroke="#ff6fae" stroke-width="2.6" stroke-linejoin="round"/><path transform="translate(${x} ${s.ey}) scale(.55)" d="${STAR5}" fill="#6b5f8f"/><path d="M${x-4} ${s.ey-4} l3 -3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>`).join("") + `<path d="M${60-s.dx+9} ${s.ey-2} Q60 ${s.ey-5} ${60+s.dx-9} ${s.ey-2}" stroke="#ff6fae" stroke-width="2.4" fill="none"/>${[[60-s.dx-9,s.ey-9],[60+s.dx+9,s.ey-9]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.3" fill="#fff"/>`).join("")}`},
+  eyePatch: {lock:true, n:"海盜眼罩", f:(s,L)=>`<path d="M20 ${s.ey-17} L${60-s.dx-6} ${s.ey-5} M${60-s.dx+7} ${s.ey-5} L100 ${s.ey-23}" stroke="#2a2433" stroke-width="2.4" stroke-linecap="round"/><path d="M${60-s.dx-9} ${s.ey-7} Q${60-s.dx} ${s.ey-10} ${60-s.dx+9} ${s.ey-7} Q${60-s.dx+10} ${s.ey+6} ${60-s.dx} ${s.ey+8} Q${60-s.dx-10} ${s.ey+6} ${60-s.dx-9} ${s.ey-7} Z" fill="#2a2433" stroke="${L}" stroke-width="1.4"/>${pStitch(`M${60-s.dx-6} ${s.ey-5} Q${60-s.dx} ${s.ey-7} ${60-s.dx+6} ${s.ey-5} Q${60-s.dx+7} ${s.ey+4} ${60-s.dx} ${s.ey+5} Q${60-s.dx-7} ${s.ey+4} ${60-s.dx-6} ${s.ey-5}`, "#6b6380")}<path d="M${60-s.dx-3} ${s.ey-3} l2 -1" stroke="#fff" stroke-width="1.2" opacity=".5" stroke-linecap="round"/>`},
+  diveMask: {lock:true, n:"潛水面鏡", f:(s,L)=>`<path d="M18 ${s.ey} H${60-s.dx-12} M${60+s.dx+12} ${s.ey} H102" stroke="#3a5ea8" stroke-width="4.4" stroke-linecap="round"/><path d="M${60+s.dx+12} ${s.ey-2} Q${60+s.dx+20} ${s.ey-6} ${60+s.dx+20} ${s.ey-24} L${60+s.dx+20} ${s.ey-30}" fill="none" stroke="${L}" stroke-width="5.6" stroke-linecap="round"/><path d="M${60+s.dx+12} ${s.ey-2} Q${60+s.dx+20} ${s.ey-6} ${60+s.dx+20} ${s.ey-24} L${60+s.dx+20} ${s.ey-30}" fill="none" stroke="#ff9f43" stroke-width="3.6" stroke-linecap="round"/><rect x="${60-s.dx-13}" y="${s.ey-10}" width="${2*s.dx+26}" height="20" rx="10" fill="#2f4a7a" stroke="${L}" stroke-width="1.6"/><rect x="${60-s.dx-10}" y="${s.ey-7.5}" width="${2*s.dx+20}" height="15" rx="7.5" fill="#bfe9ff" fill-opacity=".55" stroke="#8fc4ff" stroke-width="1"/><path d="M${60-s.dx-6} ${s.ey-4} L${60-s.dx+2} ${s.ey-4} M${60-s.dx-6} ${s.ey-1} L${60-s.dx-2} ${s.ey-1}" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>`},
+  cyberVisor: {lock:true, n:"發光機械護目鏡", f:(s,L)=>`<rect x="${60-s.dx-16}" y="${s.ey-8}" width="${2*s.dx+32}" height="15" rx="5" fill="#4ff0ff" opacity=".22"/><path d="M${60-s.dx-14} ${s.ey-6} H${60+s.dx+14} L${60+s.dx+11} ${s.ey+6} H${60-s.dx-11} Z" fill="#1d2235" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>${[-3,0,3].map(d=>`<path d="M${60-s.dx-9} ${s.ey+d} H${60+s.dx+9}" stroke="#4ff0ff" stroke-width="${d===0?2.2:.8}" opacity="${d===0?1:.6}" stroke-linecap="round"/>`).join("")}<circle cx="${60+s.dx+13}" cy="${s.ey}" r="2" fill="#ff4fd8"/><circle cx="${60-s.dx-13}" cy="${s.ey}" r="1.4" fill="#4ff0ff"/>`},
+  labGoggles: {lock:true, n:"防風眼鏡", f:(s,L)=>`<path d="M16 ${s.ey-2} H${60-s.dx-10} M${60+s.dx+10} ${s.ey-2} H104" stroke="#6b4a32" stroke-width="4"/>${pStitch(`M18 ${s.ey-2} H${60-s.dx-11}`, "#a6774a")}${[60-s.dx, 60+s.dx].map(x=>`<circle cx="${x}" cy="${s.ey}" r="9.4" fill="#a6774a" stroke="${L}" stroke-width="1.4"/><circle cx="${x}" cy="${s.ey}" r="6.8" fill="#bfe9e6" fill-opacity=".55" stroke="#7a5638" stroke-width="1"/><path d="M${x-4} ${s.ey-2} q2 -3 5 -3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>${[0,90,180,270].map(a=>`<circle cx="${(x+Math.cos(a*Math.PI/180)*8.1).toFixed(1)}" cy="${(s.ey+Math.sin(a*Math.PI/180)*8.1).toFixed(1)}" r=".9" fill="#ffd66b"/>`).join("")}`).join("")}<path d="M${60-s.dx+9} ${s.ey-1} Q60 ${s.ey-4} ${60+s.dx-9} ${s.ey-1}" stroke="#a6774a" stroke-width="2.6" fill="none"/>`},
+  hunterVisor: {lock:true, n:"科幻面甲", f:(s,L)=>`<path d="M${60-s.dx-16} ${s.ey-3} l-6 -1 M${60+s.dx+16} ${s.ey-3} l6 -1" stroke="#5a5f78" stroke-width="3.4" stroke-linecap="round"/><path d="M${60-s.dx-16} ${s.ey-10} H${60+s.dx+16} V${s.ey+3} Q60 ${s.ey+14} ${60-s.dx-16} ${s.ey+3} Z" fill="#ff9f43" fill-opacity=".5" stroke="#5a5f78" stroke-width="2.6" stroke-linejoin="round"/><path d="M${60-s.dx-12} ${s.ey-6} l9 0 M${60-s.dx-12} ${s.ey-3} l5 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/><path d="M${60+s.dx+4} ${s.ey+5} h6 v-3" stroke="#ffe0b8" stroke-width="1" fill="none"/><circle cx="${60+s.dx+12}" cy="${s.ey-6}" r="1.4" fill="#ff4f4f"/>`},
+  tiredGlasses: {lock:true, n:"黑眼圈眼鏡", f:(s,L)=>[60-s.dx, 60+s.dx].map(x=>`<ellipse cx="${x}" cy="${s.ey+6.5}" rx="6.5" ry="2.8" fill="#8a7fa8" opacity=".55"/><rect x="${x-9.5}" y="${s.ey-7.5}" width="19" height="15" rx="3.5" fill="#fff" fill-opacity=".22" stroke="#3f3540" stroke-width="2.8"/><path d="M${x-6} ${s.ey-4} l4 0" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>`).join("") + `<path d="M${60-s.dx+9.5} ${s.ey-2} Q60 ${s.ey-5} ${60+s.dx-9.5} ${s.ey-2}" stroke="#3f3540" stroke-width="2.4" fill="none"/>`}
+});
+/* 脖子（依嘴巴位置擺放） */
+Object.assign(MA_NECK, {
+  telescope: {lock:true, n:"望遠鏡", f:(s,L)=>`<path d="M42 ${s.my+3} Q48 ${s.my+12} 54 ${s.my+17} M78 ${s.my+3} Q72 ${s.my+12} 66 ${s.my+17}" stroke="#8a6a3e" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M46 ${s.my+15} H58 V${s.my+24} H46 Z" fill="#c9a77c" stroke="${L}" stroke-width="1.6"/><path d="M57 ${s.my+14} H70 V${s.my+25} H57 Z" fill="#ffd66b" stroke="${L}" stroke-width="1.6"/><path d="M69 ${s.my+13} H77 V${s.my+26} H69 Z" fill="#8a6a3e" stroke="${L}" stroke-width="1.6"/><path d="M58 ${s.my+16} H69" stroke="#fff" stroke-width="1.4" opacity=".7"/><ellipse cx="46" cy="${s.my+19.5}" rx="1.6" ry="3.6" fill="#bfe9ff" stroke="${L}" stroke-width="1"/>`},
+  neckPhones: {lock:true, n:"耳罩式耳機", f:(s,L)=>`<path d="M32 ${s.my+2} Q60 ${s.my+25} 88 ${s.my+2}" fill="none" stroke="${L}" stroke-width="6" stroke-linecap="round"/><path d="M32 ${s.my+2} Q60 ${s.my+25} 88 ${s.my+2}" fill="none" stroke="#3f3540" stroke-width="4" stroke-linecap="round"/><path d="M44 ${s.my+12} Q60 ${s.my+20} 76 ${s.my+12}" fill="none" stroke="#6b6380" stroke-width="1.2"/>${[24,83].map(x=>`<rect x="${x}" y="${s.my-7}" width="13" height="18" rx="6" fill="#ff6f9c" stroke="${L}" stroke-width="1.8"/><rect x="${x+2.5}" y="${s.my-4}" width="8" height="12" rx="4" fill="#ffd0e0"/><circle cx="${x+6.5}" cy="${s.my+2}" r="2.6" fill="#ffd66b"/>`).join("")}<path d="M89 ${s.my+11} Q92 ${s.my+20} 86 ${s.my+28}" stroke="#3f3540" stroke-width="1.4" fill="none"/>`}
+});
+/* 衣服：畫在身體上，會依身體形狀裁切（maSvg 用 clipPath）；y＝嘴巴下方 */
+const MA_OUTFIT = {
+  none: {n:"沒有", f:()=>""},
+  apron: {lock:true, n:"圍裙", f:(s,L)=>{ const y = s.my + 8; return `
+    <path d="M38 ${y-1} L28 ${y-9} M82 ${y-1} L92 ${y-9}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M38 ${y} Q60 ${y+4} 82 ${y} L84 126 H36 Z" fill="#fff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M38 ${y} ${[0,1,2,3,4,5,6,7].map(i=>`q2.75 ${i%2?-3:3} 5.5 0`).join(" ")}" fill="none" stroke="#ff8fab" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M72 ${y+2} L76 126 H84 L82 ${y} Z" fill="${PSH}"/>
+    <path d="M50 ${y+10} H70 V${y+22} Q60 ${y+25} 50 ${y+22} Z" fill="#fdf3f6" stroke="${L}" stroke-width="1.4"/>${pStitch(`M52 ${y+12} H68`, "#ff8fab")}
+    <path d="M60 ${y+15} c-2 -2 -4 0 -2 2 l2 2 l2 -2 c2 -2 0 -4 -2 -2 Z" fill="#ff8fab"/>
+    <path d="M84 ${y+14} q8 -2 10 4 q-6 2 -10 -1 Z M84 ${y+14} q6 6 2 12" fill="#fff" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    ${pHi(42, y+8, 41, y+20, 42, y+30, 1.8)}`; }},
+  fireVest: {lock:true, n:"反光背心", f:(s,L)=>{ const y = s.my + 6; return `
+    ${pBody(y, "#ff8a3d", L, 10)}
+    ${[10,20].map(d=>`<path d="M-4 ${y+d} Q60 ${y+d+8} 124 ${y+d}" fill="none" stroke="#ffe27a" stroke-width="6.4"/><path d="M-4 ${y+d} Q60 ${y+d+8} 124 ${y+d}" fill="none" stroke="#e6ecf4" stroke-width="2.6"/>`).join("")}
+    <path d="M60 ${y+10} V130" stroke="#c95f1f" stroke-width="2.4"/><rect x="58" y="${y+10}" width="4" height="5" rx="1" fill="#c9cfe0" stroke="${L}" stroke-width=".8"/>
+    <rect x="70" y="${y+26}" width="12" height="9" rx="2" fill="#f07a2c" stroke="${L}" stroke-width="1.2"/>${pStitch(`M70 ${y+28} H82`, "#ffd0a8")}
+    ${pShade(y)}${pHi(30, y+8, 26, y+20, 28, y+32, 1.8)}`; }},
+  exploreVest: {lock:true, n:"多口袋背心", f:(s,L)=>{ const y = s.my + 4; return `
+    <path d="M-4 ${y} Q60 ${y+12} 124 ${y} V130 H-4 Z" fill="#d6ecc1"/>
+    <path d="M-4 ${y} Q26 ${y+6} 52 ${y+10} L50 130 H-4 Z M124 ${y} Q94 ${y+6} 68 ${y+10} L70 130 H124 Z" fill="#c9a77c" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M52 ${y+10} L44 ${y+20} L50 ${y+22} M68 ${y+10} L76 ${y+20} L70 ${y+22}" fill="#b38e60" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    ${[[24,y+12],[82,y+12],[24,y+24],[82,y+24]].map(([x,yy])=>`<rect x="${x}" y="${yy}" width="14" height="10" rx="2" fill="#b89668" stroke="${L}" stroke-width="1.2"/><path d="M${x} ${yy} h14 v3.6 q-7 2 -14 0 Z" fill="#a8855a" stroke="${L}" stroke-width="1"/><circle cx="${x+7}" cy="${yy+3.6}" r="1.1" fill="#6b4a32"/>`).join("")}
+    ${pStitch(`M48 ${y+14} L46 130 M72 ${y+14} L74 130`, "#e8d3a4")}
+    ${pShade(y)}`; }},
+  wetsuit: {lock:true, n:"潛水衣", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#2f4a7a", L, 12)}
+    <path d="M-4 ${y+8} Q20 ${y+30} 16 130 H-4 Z M124 ${y+8} Q100 ${y+30} 104 130 H124 Z" fill="#4fc3e8"/>
+    <path d="M-4 ${y+20} Q60 ${y+34} 124 ${y+20}" fill="none" stroke="#4a6aa8" stroke-width="2.4"/>
+    <path d="M60 ${y+12} V130" stroke="#ffd66b" stroke-width="2.6"/><path d="M57 ${y+12} h6 v6 h-6 Z" fill="#ffd66b" stroke="${L}" stroke-width="1"/>
+    <circle cx="44" cy="${y+22}" r="4.4" fill="#ff9f43" stroke="${L}" stroke-width="1.2"/><path d="M42 ${y+22} q2 -3 4 0 q-2 3 -4 0" fill="#fff"/>
+    ${pShade(y)}${pHi(30, y+14, 28, y+24, 30, y+34, 2)}`; }},
+  beeOveralls: {lock:true, n:"條紋吊帶褲", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#ffd23f", L, 12)}
+    ${[0,1,2,3].map(i=>`<path d="M-4 ${y+8+i*10} Q60 ${y+18+i*10} 124 ${y+8+i*10}" fill="none" stroke="#3f3540" stroke-width="4.4"/>`).join("")}
+    <path d="M40 ${y+10} L32 ${y-2} M80 ${y+10} L88 ${y-2}" stroke="#5aa2ef" stroke-width="5" stroke-linecap="round"/>
+    <path d="M38 ${y+12} Q60 ${y+15} 82 ${y+12} L84 130 H36 Z" fill="#5aa2ef" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M48 ${y+18} H72 V${y+28} Q60 ${y+31} 48 ${y+28} Z" fill="#4a8fd8" stroke="${L}" stroke-width="1.2"/>${pStitch(`M49 ${y+20} H71`, "#bfe0ff")}${pStitch(`M40 ${y+15} L42 130 M80 ${y+15} L78 130`, "#bfe0ff")}
+    <circle cx="44" cy="${y+16}" r="2.2" fill="#ffd66b" stroke="${L}" stroke-width=".8"/><circle cx="76" cy="${y+16}" r="2.2" fill="#ffd66b" stroke="${L}" stroke-width=".8"/>
+    <path d="M60 ${y+22} c-2 -3 -5 0 -2 2 l2 2 l2 -2 c3 -2 0 -5 -2 -2" fill="#ffd23f"/>
+    ${pShade(y)}`; }},
+  techHoodie: {lock:true, n:"高科技連帽外套", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#2a2d3e", L, 12)}
+    <path d="M26 ${y+1} Q60 ${y+22} 94 ${y+1}" fill="none" stroke="#3c4258" stroke-width="7" stroke-linecap="round"/><path d="M28 ${y-1} Q60 ${y+18} 92 ${y-1}" fill="none" stroke="#4ff0ff" stroke-width="1" opacity=".7"/>
+    <path d="M14 ${y+14} H40 L46 ${y+22} H50 M106 ${y+14} H80 L74 ${y+22} H70 M20 ${y+30} H38 L42 ${y+26}" stroke="#4ff0ff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${[[50,y+22],[70,y+22],[42,y+26]].map(([x,yy])=>`<circle cx="${x}" cy="${yy}" r="1.6" fill="#4ff0ff"/>`).join("")}
+    <path d="M60 ${y+12} V130" stroke="#4a5068" stroke-width="2.4"/>
+    <path d="M54 ${y+8} v12 M66 ${y+8} v12" stroke="#ff4fd8" stroke-width="1.6" stroke-linecap="round"/><circle cx="54" cy="${y+21}" r="1.6" fill="#ff4fd8"/><circle cx="66" cy="${y+21}" r="1.6" fill="#ff4fd8"/>
+    ${pShade(y)}`; }},
+  nightSuit: {lock:true, n:"夜行衣", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#2e2a48", L, 4)}
+    <path d="M38 ${y} L60 ${y+18} L82 ${y}" fill="none" stroke="#5a5383" stroke-width="7" stroke-linejoin="round"/><path d="M44 ${y} L60 ${y+13} L76 ${y}" fill="none" stroke="#d9d4ef" stroke-width="2"/>
+    <path d="M60 ${y+18} L36 130" stroke="#3d3860" stroke-width="2"/>
+    <path d="M-4 ${y+20} Q60 ${y+28} 124 ${y+20} V${y+27} Q60 ${y+35} -4 ${y+27} Z" fill="#b8403a" stroke="${L}" stroke-width="1.2"/>
+    <path d="M68 ${y+26} q4 -6 8 0 q-4 6 -8 0 Z" fill="#b8403a" stroke="${L}" stroke-width="1.2"/><path d="M70 ${y+28} l-2 10 M74 ${y+28} l3 9" stroke="#b8403a" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M20 ${y+34} Q24 ${y+40} 22 ${y+46} M96 ${y+34} Q92 ${y+40} 94 ${y+46}" stroke="#3d3860" stroke-width="1.6" fill="none"/>
+    ${pShade(y)}`; }},
+  labCoat: {lock:true, n:"白色實驗袍", f:(s,L)=>{ const y = s.my + 4; return `
+    <path d="M-4 ${y} Q60 ${y+12} 124 ${y} V130 H-4 Z" fill="#cfe6f7"/>
+    <path d="M-4 ${y} Q26 ${y+6} 52 ${y+10} L48 130 H-4 Z M124 ${y} Q94 ${y+6} 68 ${y+10} L72 130 H124 Z" fill="#fff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M52 ${y+10} L40 ${y+18} L48 ${y+24} M68 ${y+10} L80 ${y+18} L72 ${y+24}" fill="#f1ecf4" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    <rect x="80" y="${y+22}" width="16" height="11" rx="2" fill="#fff" stroke="${L}" stroke-width="1.2"/><path d="M84 ${y+22} v-6 M89 ${y+22} v-5" stroke="#5aa2ef" stroke-width="2" stroke-linecap="round"/><path d="M84 ${y+17} v-2" stroke="#e2463f" stroke-width="2" stroke-linecap="round"/>
+    ${[[50,y+20],[50,y+30],[70,y+20],[70,y+30]].map(([x,yy])=>`<circle cx="${x}" cy="${yy}" r="1.6" fill="#c9cfe0" stroke="${L}" stroke-width=".7"/>`).join("")}
+    <path d="M20 ${y+16} q4 -3 6 1 q4 1 1 4 q1 4 -4 3 q-5 1 -4 -3 q-3 -3 1 -5 Z" fill="#ff8fab"/><path d="M30 ${y+30} q3 -2 5 1 q2 3 -2 4 q-4 0 -3 -5 Z" fill="#a8d88e"/><path d="M98 ${y+8} q4 -2 5 2 q1 4 -3 4 q-4 -1 -2 -6 Z" fill="#8fd1ff"/><circle cx="24" cy="${y+26}" r="1.4" fill="#ff8fab"/><circle cx="102" cy="${y+18}" r="1.2" fill="#8fd1ff"/>
+    ${pShade(y)}`; }},
+  bigHoodie: {lock:true, n:"Oversize 帽T", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#9b7fe0", L, 12)}
+    <path d="M26 ${y+1} Q60 ${y+22} 94 ${y+1}" fill="none" stroke="#8466cc" stroke-width="7" stroke-linecap="round"/>
+    <path d="M54 ${y+10} q-1 6 1 12 M66 ${y+10} q1 6 -1 12" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><rect x="53" y="${y+21}" width="3" height="4" rx="1" fill="#ffd66b"/><rect x="64" y="${y+21}" width="3" height="4" rx="1" fill="#ffd66b"/>
+    <path d="M38 ${y+22} Q60 ${y+19} 82 ${y+22} L86 ${y+36} Q60 ${y+39} 34 ${y+36} Z" fill="#8a6ed6" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/>${pStitch(`M40 ${y+24} Q60 ${y+21} 80 ${y+24}`, "#c8b8f2")}
+    <path transform="translate(60 ${y+30}) scale(.36)" d="${STAR5}" fill="#ffd66b"/>
+    <path d="M-4 ${y+40} H124" stroke="#8466cc" stroke-width="4"/>${pStitch(`M-4 ${y+38} H124`, "#c8b8f2")}
+    ${pShade(y)}`; }},
+  teaApron: {lock:true, n:"飲料店圍裙", f:(s,L)=>{ const y = s.my + 8; return `
+    <path d="M38 ${y-1} L28 ${y-9} M82 ${y-1} L92 ${y-9}" stroke="#8a5a3c" stroke-width="4" stroke-linecap="round"/>
+    <path d="M38 ${y} Q60 ${y+4} 82 ${y} L84 126 H36 Z" fill="#8a5a3c" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>${pStitch(`M40 ${y+3} Q60 ${y+6} 80 ${y+3}`, "#d9b08f")}
+    <path d="M72 ${y+2} L76 126 H84 L82 ${y} Z" fill="${PSH}"/>
+    <circle cx="60" cy="${y+16}" r="9" fill="#f3d9b5" stroke="#fff" stroke-width="1.4"/><path d="M55 ${y+11} L56.5 ${y+21} H63.5 L65 ${y+11} Z" fill="#fff6ea" stroke="#8a5a3c" stroke-width="1"/>${[[58,y+19],[61.5,y+19],[60,y+17]].map(([x,yy])=>`<circle cx="${x}" cy="${yy}" r="1.2" fill="#4a3434"/>`).join("")}<path d="M61 ${y+11} l3 -6" stroke="#ff7aa8" stroke-width="1.8" stroke-linecap="round"/>
+    <rect x="46" y="${y+28}" width="28" height="8" rx="2" fill="#7a4e33" stroke="${L}" stroke-width="1.1"/>${pStitch(`M47 ${y+30} H73`, "#d9b08f")}`; }},
+  pajamas: {lock:true, n:"星星睡衣", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#a9c8ef", L, 10)}
+    <path d="M44 ${y+4} L60 ${y+14} L76 ${y+4}" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+    ${[[18,y+14],[42,y+26],[86,y+14],[100,y+30],[28,y+36],[76,y+34]].map(([x,yy],i)=>i%2?`<path d="M${x} ${yy-4} a4 4 0 1 0 4 5 a3 3 0 1 1 -4 -5 Z" fill="#fff6c8"/>`:`<path transform="translate(${x} ${yy}) scale(.32)" d="${STAR5}" fill="#fff6c8"/>`).join("")}
+    <path d="M60 ${y+14} V130" stroke="#8aaedd" stroke-width="1.6"/>${[20,30,40].map(d=>`<circle cx="60" cy="${y+d}" r="2" fill="#fff" stroke="#8aaedd" stroke-width=".8"/>`).join("")}
+    <rect x="70" y="${y+20}" width="12" height="9" rx="2" fill="#bcd6f5" stroke="#fff" stroke-width="1.2"/>
+    ${pShade(y)}`; }},
+  boxArmor: {lock:true, n:"紙箱盔甲", f:(s,L)=>{ const y = s.my + 4; return `
+    <path d="M8 ${y} L22 ${y-4} H98 L112 ${y} V130 H8 Z" fill="#d9a86c" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M8 ${y} L30 ${y+10} H90 L112 ${y}" fill="#c4935a" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M20 ${y+16} L42 ${y+46} M100 ${y+16} L78 ${y+46}" stroke="#e8dcb8" stroke-width="6" opacity=".9"/>
+    <rect x="46" y="${y+16}" width="28" height="16" rx="3" fill="#c4935a" stroke="${L}" stroke-width="1.3"/><circle cx="54" cy="${y+24}" r="3.4" fill="#4ff0ff" stroke="${L}" stroke-width="1"/><circle cx="66" cy="${y+24}" r="3.4" fill="#ff6f9c" stroke="${L}" stroke-width="1"/>
+    ${[16,104].map(x=>`<circle cx="${x}" cy="${y+8}" r="1.6" fill="#8a6a3e"/>`).join("")}
+    ${[0,1,2].map(i=>`<path d="M${30+i*4} ${y+36} v8" stroke="#c4935a" stroke-width="1"/>`).join("")}
+    ${pShade(y)}`; }},
+  luckyBib: {lock:true, n:"紅色圍兜", f:(s,L)=>{ const y = s.my + 4; return `
+    <path d="M28 ${y} Q60 ${y+36} 92 ${y} Z" fill="#e2463f" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M28 ${y} ${Array.from({length:8},(_,i)=>`a4 3 0 0 0 8 0`).join(" ")}" fill="none" stroke="#ffd66b" stroke-width="1.8"/>
+    <path d="M34 ${y+4} Q60 ${y+30} 86 ${y+4}" fill="none" stroke="#ffd66b" stroke-width="1.6"/>
+    <path d="M70 ${y+4} Q78 ${y+14} 74 ${y+20} Q84 ${y+12} 86 ${y+4} Z" fill="${PSH}"/>
+    <circle cx="60" cy="${y+13}" r="5.4" fill="#ffd66b" stroke="${L}" stroke-width="1.4"/><path d="M56 ${y+14} h8" stroke="${L}" stroke-width="1.2"/><circle cx="60" cy="${y+16}" r="1.2" fill="${L}"/><circle cx="58.4" cy="${y+11}" r="1.4" fill="#fff" opacity=".8"/>`; }}
+};
+/* 手上：右下方，小圓手握著 */
+function maPaw(x, y, c, L){ return `<ellipse cx="${x}" cy="${y}" rx="6.2" ry="5.4" fill="${c[1]}" stroke="${L}" stroke-width="2"/><path d="M${x-3} ${y-1.6} q1.6 -1.6 3.4 -1.4" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" opacity=".7"/><path d="M${x+1} ${y+4.6} v-2.4 M${x+3.8} ${y+3.4} v-2" stroke="${L}" stroke-width="1" stroke-linecap="round" opacity=".5"/>`; }
+const MA_HAND = {
+  none: {n:"沒有", f:()=>""},
+  pan: {lock:true, n:"平底鍋", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M99 ${y} L104 ${y-15}" stroke="${L}" stroke-width="6" stroke-linecap="round"/><path d="M99 ${y} L104 ${y-15}" stroke="#8a5a3c" stroke-width="4" stroke-linecap="round"/><path d="M100 ${y-5} l3 -1 M101 ${y-9} l3 -1" stroke="#6b4a32" stroke-width="1"/>
+    <ellipse cx="105" cy="${y-24}" rx="13" ry="9" fill="#3a3348" stroke="${L}" stroke-width="2"/><ellipse cx="105" cy="${y-25.5}" rx="10.4" ry="6.6" fill="#5a5372"/>
+    <path d="M97 ${y-27} q5 -4 12 -3" stroke="#8c86a6" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M98 ${y-25} q3 -5 8 -3 q5 -3 7 2 q1 4 -5 4 q-5 2 -10 -3 Z" fill="#fff" stroke="#e8e0d0" stroke-width=".8"/><circle cx="105" cy="${y-24.5}" r="3" fill="#ffb92e"/><circle cx="104" cy="${y-25.5}" r="1" fill="#fff" opacity=".8"/>
+    <path d="M100 ${y-36} q-2 -3 0 -6 M108 ${y-37} q-2 -3 0 -6" stroke="#cfc6d8" stroke-width="1.6" fill="none" stroke-linecap="round"/>` + maPaw(99, y, c, L); }},
+  waterGun: {lock:true, n:"水槍", f:(s,L,c)=>{ const y = s.my + 6; return `
+    <path d="M90 ${y-14} H110 Q115 ${y-14} 115 ${y-10} V${y-7} Q115 ${y-5} 112 ${y-5} H101 L99 ${y+2} H91 L92 ${y-6} Q88 ${y-8} 90 ${y-14} Z" fill="#5aa2ef" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M93 ${y-12} H110" stroke="#9fcbff" stroke-width="1.6" stroke-linecap="round"/><rect x="113" y="${y-11.5}" width="4" height="4" rx="1" fill="#ffd23f" stroke="${L}" stroke-width="1"/>
+    <rect x="95" y="${y-22}" width="12" height="9" rx="4" fill="#ffd23f" stroke="${L}" stroke-width="1.6"/><path d="M97 ${y-19} q4 -2 8 0" stroke="#fff3b0" stroke-width="1.3" fill="none"/><rect x="99" y="${y-24}" width="4" height="3" rx="1" fill="#ff8a3d" stroke="${L}" stroke-width=".9"/>
+    <path d="M98 ${y-4} q2 3 0 5" stroke="${L}" stroke-width="1.4" fill="none"/>
+    ${[[118,y-14,1],[114,y-24,.85],[108,y-33,.7],[101,y-39,.55]].map(([x,yy,k])=>`<path d="M${x} ${yy} q2.4 3.4 0 5 q-2.4 -1.6 0 -5 Z" fill="#8fd1ff" stroke="#5aa2ef" stroke-width=".7" opacity="${k}"/>`).join("")}` + maPaw(95, y, c, L); }},
+  bugNet: {lock:true, n:"蝴蝶網", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M97 ${y} L104 ${y-37}" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M97 ${y} L104 ${y-37}" stroke="#c49564" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M97 ${y-46} Q99 ${y-26} 108 ${y-28} Q116 ${y-32} 115 ${y-46}" fill="#fff" fill-opacity=".55" stroke="${L}" stroke-width="1.4"/>
+    <path d="M100 ${y-44} Q103 ${y-32} 107 ${y-30} M106 ${y-46} V${y-29} M112 ${y-44} Q112 ${y-34} 109 ${y-30} M98 ${y-38} Q106 ${y-36} 114 ${y-39}" stroke="${L}" stroke-width=".8" fill="none" opacity=".35"/>
+    <ellipse cx="106" cy="${y-46}" rx="9.6" ry="4" fill="none" stroke="#e2a24a" stroke-width="2.4"/>
+    <g transform="translate(88 ${y-56})"><path d="M0 0 q-6 -6 -6 0 q0 5 6 1 q6 4 6 -1 q0 -6 -6 0" fill="#ff9fc8" stroke="${L}" stroke-width="1"/><path d="M0 -2 v5" stroke="${L}" stroke-width="1.2"/></g>` + maPaw(97, y, c, L); }},
+  mic: {lock:true, n:"麥克風", f:(s,L,c)=>{ const y = s.my + 6, cid = "mic" + (++MA_UID); return `
+    <path d="M98 ${y} L102 ${y-15}" stroke="${L}" stroke-width="6.4" stroke-linecap="round"/><path d="M98 ${y} L102 ${y-15}" stroke="#4a4258" stroke-width="4.6" stroke-linecap="round"/><path d="M98.4 ${y-3} L101 ${y-13}" stroke="#7a7290" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M96 ${y-12} L107 ${y-9}" stroke="#ff6fae" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="103" cy="${y-21}" r="7.4" fill="#c9cfe0" stroke="${L}" stroke-width="2"/>
+    <clipPath id="${cid}"><circle cx="103" cy="${y-21}" r="6.4"/></clipPath><g clip-path="url(#${cid})" stroke="#9aa3bd" stroke-width="1">${[-4,-1,2,5].map(d=>`<path d="M95 ${y-21+d} h16 M${103+d} ${y-29} v16"/>`).join("")}</g>
+    <path d="M98 ${y-24} q2 -3 5 -3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M112 ${y-30} q4 -4 4 -9 M115 ${y-24} q6 -4 6 -10" stroke="#ff6fae" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/><path transform="translate(88 ${y-34}) scale(.3)" d="M0 -10 V6 a4 4 0 1 1 -3 -4 V-10 h12 v4 h-9" fill="#ff6fae"/>` + maPaw(98, y, c, L); }},
+  hook: {lock:true, n:"海盜鉤子", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M100 ${y-6} V${y-22} Q100 ${y-33} 108 ${y-33} Q115 ${y-32} 113 ${y-24}" fill="none" stroke="${L}" stroke-width="6" stroke-linecap="round"/><path d="M100 ${y-6} V${y-22} Q100 ${y-33} 108 ${y-33} Q115 ${y-32} 113 ${y-24}" fill="none" stroke="#d6dbe8" stroke-width="3.8" stroke-linecap="round"/>
+    <path d="M101.5 ${y-10} V${y-22} Q102 ${y-30} 108 ${y-31}" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><path d="M113 ${y-24} l-1 3 l3 -1.4" fill="#d6dbe8" stroke="${L}" stroke-width="1"/>
+    <path d="M93 ${y-9} H107 L106 ${y+1} H94 Z" fill="#6b4a32" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><path d="M93 ${y-9} H107 V${y-6} H93 Z" fill="#c9a14a" stroke="${L}" stroke-width="1.2"/>
+    <path d="M96 ${y-3} h8" stroke="#4e3524" stroke-width="1"/>` + maPaw(100, y+2, c, L); }},
+  dandelion: {lock:true, n:"蒲公英棒", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y} Q102 ${y-16} 103 ${y-30}" stroke="#6a9c56" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M100 ${y-12} q-7 -2 -9 -8 q7 0 9 6" fill="#8fc27a" stroke="#5f8f4c" stroke-width=".8"/>
+    <circle cx="104" cy="${y-38}" r="11.5" fill="#fff" opacity=".35"/>
+    <g transform="translate(104 ${y-38})">${Array.from({length:16},(_,i)=>{ const a=i*Math.PI/8, r=i%2?8:10, x=(Math.cos(a)*r).toFixed(1), yy=(Math.sin(a)*r).toFixed(1); return `<path d="M0 0 L${x} ${yy}" stroke="#fff" stroke-width="1"/><circle cx="${x}" cy="${yy}" r="1.8" fill="#fff" stroke="#e3e9ee" stroke-width=".6"/>`; }).join("")}<circle r="3" fill="#e9e08a" stroke="#c9bd5a" stroke-width=".8"/></g>
+    ${[[86,y-50,1],[90,y-58,.8],[116,y-54,.9]].map(([x,yy,k])=>`<g transform="translate(${x} ${yy}) scale(${k})"><path d="M0 0 v4" stroke="#fff" stroke-width=".8"/><path d="M-2 -1 l2 1 l2 -1 M0 0 v-2.4" stroke="#fff" stroke-width=".8" fill="none"/></g>`).join("")}` + maPaw(98, y, c, L); }},
+  wateringCan: {lock:true, n:"小花灑", f:(s,L,c)=>{ const y = s.my + 4; return `
+    <path d="M92 ${y-14} Q98 ${y-26} 104 ${y-14}" fill="none" stroke="${L}" stroke-width="4.4"/><path d="M92 ${y-14} Q98 ${y-26} 104 ${y-14}" fill="none" stroke="#6fc4a0" stroke-width="2.4"/>
+    <path d="M106 ${y-9} L117 ${y-19}" stroke="${L}" stroke-width="5.4" stroke-linecap="round"/><path d="M106 ${y-9} L117 ${y-19}" stroke="#8fd6b4" stroke-width="3.6" stroke-linecap="round"/><path d="M115 ${y-23} L121 ${y-17} L118 ${y-15} L113 ${y-20} Z" fill="#6fc4a0" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M89 ${y-14} H107 Q108 ${y-14} 108 ${y-12} V${y-1} Q108 ${y+1} 105 ${y+1} H91 Q88 ${y+1} 88 ${y-2} V${y-12} Q88 ${y-14} 89 ${y-14} Z" fill="#8fd6b4" stroke="${L}" stroke-width="1.8"/>
+    <path d="M91 ${y-11} V${y-3}" stroke="#d4f3e4" stroke-width="2" stroke-linecap="round"/><path d="M102 ${y-14} V${y+1}" stroke="#6fc4a0" stroke-width="2.4"/>
+    <path d="M96 ${y-8} c-1.6 -2 -4 0 -1.6 2 l1.6 1.4 l1.6 -1.4 c2.4 -2 0 -4 -1.6 -2" fill="#ff8fab"/>
+    ${[[120,y-12,1.6],[122,y-6,1.3],[118,y-4,1.4],[123,y,1.1]].map(([x,yy,r])=>`<path d="M${x} ${yy-r*1.6} q${r} ${r*1.4} 0 ${r*2.6} q-${r} -1 0 -${r*2.6} Z" fill="#8fd1ff"/>`).join("")}` + maPaw(94, y+4, c, L); }},
+  holoKey: {lock:true, n:"全息投影鍵盤", f:(s,L,c)=>{ const y = s.my + 10; return `
+    <path d="M96 ${y+8} L80 ${y+2} M100 ${y+8} L112 ${y-4}" stroke="#4ff0ff" stroke-width=".8" opacity=".5"/>
+    <path d="M76 ${y} L114 ${y-6} L114 ${y+8} L76 ${y+14} Z" fill="#4ff0ff" fill-opacity=".18" stroke="#4ff0ff" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M76 ${y} L114 ${y-6}" stroke="#bdfcff" stroke-width="1"/>
+    ${[0,1,2].map(r=>[0,1,2,3,4].map(k=>`<rect x="${79+k*7}" y="${y+2+r*4-k*1.1}" width="5" height="2.6" rx=".6" fill="${(r*5+k)%7===3?"#ff4fd8":"#4ff0ff"}" opacity=".8"/>`).join("")).join("")}
+    <path d="M82 ${y-4} h8 M84 ${y-7} h12 M80 ${y-10} h6" stroke="#4ff0ff" stroke-width="1" opacity=".6" stroke-linecap="round"/>
+    ${[[78,y-14],[110,y-14],[92,y-18]].map(([x,yy])=>`<circle cx="${x}" cy="${yy}" r="1" fill="#bdfcff"/>`).join("")}` + maPaw(98, y+12, c, L); }},
+  scroll: {lock:true, n:"捲軸", f:(s,L,c)=>{ const y = s.my + 6; return `
+    <path d="M88 ${y-8} H114 V${y+4} H88 Z" fill="#f3e2b8" stroke="${L}" stroke-width="1.8"/>
+    <path d="M90 ${y-6} H112" stroke="#fff7e0" stroke-width="1.6"/><path d="M88 ${y+1} H114" stroke="#dcc590" stroke-width="2"/>
+    <path d="M92 ${y-4} v5 M95 ${y-4} v3 M106 ${y-4} v5 M109 ${y-4} v4" stroke="#7a6a5a" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+    ${[86,116].map(x=>`<rect x="${x-2.4}" y="${y-11}" width="4.8" height="18" rx="2.4" fill="#a6774a" stroke="${L}" stroke-width="1.3"/><path d="M${x-1} ${y-9} v13" stroke="#c99a6a" stroke-width="1" stroke-linecap="round"/>`).join("")}
+    <path d="M98 ${y-8} v12 M102 ${y-8} v12" stroke="#b8403a" stroke-width="1.8"/><path d="M100 ${y+4} l-3 7 M100 ${y+4} l3 7" stroke="#b8403a" stroke-width="1.6" stroke-linecap="round"/><circle cx="100" cy="${y-2}" r="3" fill="#b8403a" stroke="${L}" stroke-width="1"/>` + maPaw(94, y+6, c, L); }},
+  potion: {lock:true, n:"冒煙藥水瓶", f:(s,L,c)=>{ const y = s.my + 6; return `
+    <path d="M99 ${y-28} V${y-20} L91 ${y-7} Q89 ${y+1} 96 ${y+1} H108 Q115 ${y+1} 113 ${y-7} L105 ${y-20} V${y-28} Z" fill="#e8f7ff" fill-opacity=".85" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M94.4 ${y-12} Q102 ${y-9} 109.6 ${y-12} L112 ${y-7} Q114 ${y} 108 ${y} H96 Q90 ${y} 92 ${y-7} Z" fill="#7fe07a"/>
+    <path d="M95 ${y-11} Q102 ${y-8} 109 ${y-11}" stroke="#bdf5b5" stroke-width="1.4" fill="none"/>
+    ${[[98,y-5,1.6],[104,y-3,1.2],[106,y-7,1]].map(([x,yy,r])=>`<circle cx="${x}" cy="${yy}" r="${r}" fill="#d8ffd0"/>`).join("")}
+    <path d="M100.5 ${y-24} V${y-19} L94 ${y-9}" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <rect x="97" y="${y-33}" width="10" height="6" rx="2" fill="#a6774a" stroke="${L}" stroke-width="1.4"/><path d="M98.6 ${y-31} h6.8" stroke="#c99a6a" stroke-width="1"/>
+    <rect x="96" y="${y-18}" width="6" height="5" rx="1" fill="#fff3d0" stroke="${L}" stroke-width=".8" transform="rotate(-20 99 ${y-15})"/>
+    ${[[102,y-39,3.2],[98,y-45,2.6],[105,y-50,2.2],[100,y-55,1.6]].map(([x,yy,r])=>`<circle cx="${x}" cy="${yy}" r="${r}" fill="#e2f7da" stroke="#a8d88e" stroke-width=".9"/>`).join("")}` + maPaw(96, y+2, c, L); }},
+  skateboard: {lock:true, n:"塗鴉滑板", f:(s,L,c)=>{ const y = s.my; return `
+    <g transform="rotate(8 102 ${y-8})">
+      ${[[96,y-26],[108,y-26],[96,y+10],[108,y+10]].map(([x,yy])=>`<rect x="${x<102?x-5:x+1}" y="${yy-3}" width="4" height="6" rx="2" fill="#3f3540"/><circle cx="${x<102?x-3:x+3}" cy="${yy}" r="1" fill="#9aa3bd"/>`).join("")}
+      <rect x="95" y="${y-35}" width="14" height="54" rx="7" fill="#ff8a3d" stroke="${L}" stroke-width="2"/>
+      <rect x="97" y="${y-33}" width="3" height="50" rx="1.5" fill="#ffb27a"/>
+      <path d="M98 ${y-24} q4 5 8 0" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><path transform="translate(102 ${y-12}) scale(.34)" d="${STAR5}" fill="#ffd66b" stroke="${L}" stroke-width="2"/>
+      <path d="M98 ${y+4} l2 -3 l2 3 l2 -3 l2 3" stroke="#5aa2ef" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="103" cy="${y+10}" r="1.8" fill="#fff"/>
+    </g>` + maPaw(97, y+6, c, L); }},
+  blaster: {lock:true, n:"光束槍", f:(s,L,c)=>{ const y = s.my + 4; return `
+    <circle cx="120" cy="${y-8}" r="5" fill="#ff9f43" opacity=".25"/><path d="M115 ${y-8} H121" stroke="#ffcf6b" stroke-width="3" stroke-linecap="round"/>
+    <path d="M89 ${y-13} H107 L114 ${y-9.5} V${y-6.5} L107 ${y-3} H101 L99 ${y+5} H91 L92 ${y-3} Q88 ${y-4} 89 ${y-13} Z" fill="#dfe3ee" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M91 ${y-11} H106" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M90 ${y-5} H106" stroke="#aab2c8" stroke-width="1.4"/>
+    <path d="M103 ${y-13} v10 M106 ${y-12} v8" stroke="#9aa3bd" stroke-width="1"/>
+    <rect x="93" y="${y-17}" width="9" height="4" rx="1.6" fill="#5a5f78" stroke="${L}" stroke-width="1"/><circle cx="96" cy="${y-8}" r="2.6" fill="#ff9f43" stroke="${L}" stroke-width=".8"/><circle cx="95.4" cy="${y-8.6}" r=".9" fill="#fff"/>` + maPaw(95, y+4, c, L); }},
+  straw: {lock:true, n:"粗吸管", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y} L108 ${y-40}" stroke="${L}" stroke-width="9.4" stroke-linecap="round"/><path d="M98 ${y} L108 ${y-40}" stroke="#ff7aa8" stroke-width="7" stroke-linecap="round"/>
+    ${[0,1,2,3,4,5].map(i=>{ const t=i/6+.04, x1=98+10*t, y1=y-40*t; return `<path d="M${(x1-3).toFixed(1)} ${(y1-1.6).toFixed(1)} l6 ${(-3).toFixed(1)}" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>`; }).join("")}
+    <path d="M100.6 ${y-8} L106.6 ${y-34}" stroke="#ffd0e0" stroke-width="1.2" stroke-linecap="round" opacity=".7"/>
+    <ellipse cx="108.4" cy="${y-41.4}" rx="3.4" ry="1.6" fill="#c9476e" transform="rotate(14 108.4 ${y-41.4})"/>
+    <circle cx="111" cy="${y-48}" r="3" fill="#4a3434"/><circle cx="110" cy="${y-49}" r="1" fill="#fff" opacity=".7"/>` + maPaw(98, y, c, L); }},
+  coffee: {lock:true, n:"特大杯黑咖啡", f:(s,L,c)=>{ const y = s.my + 6; return `
+    <path d="M90 ${y-26} H112 L109 ${y+2} Q109 ${y+3} 107 ${y+3} H95 Q93 ${y+3} 93 ${y+2} Z" fill="#fff" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M91.6 ${y-18} H110.4 L109.6 ${y-7} H92.4 Z" fill="#a8774f" stroke="${L}" stroke-width="1.2"/><path d="M95 ${y-13} q3 -3 6 0 q3 3 6 0" stroke="#e8cfa8" stroke-width="1.4" fill="none"/>
+    <path d="M93 ${y-24} L95 ${y}" stroke="#eceaf2" stroke-width="2" stroke-linecap="round"/>
+    <path d="M88 ${y-27} Q88 ${y-31} 92 ${y-31} H110 Q114 ${y-31} 114 ${y-27} Z" fill="#5a3a2a" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/><rect x="99" y="${y-33.4}" width="5" height="2.6" rx="1" fill="#5a3a2a" stroke="${L}" stroke-width="1"/>
+    <path d="M96 ${y-37} q-2.4 -4 .6 -7.4 M104 ${y-37} q-2.4 -4 .6 -7.4 M100 ${y-40} q-2 -3 .4 -6" stroke="#cfc6d8" stroke-width="1.8" fill="none" stroke-linecap="round"/>` + maPaw(95, y+2, c, L); }},
+  broomSaber: {lock:true, n:"掃把雷射劍", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y} L106 ${y-46}" stroke="#4ff0ff" stroke-width="10" stroke-linecap="round" opacity=".22"/><path d="M98 ${y} L106 ${y-46}" stroke="#4ff0ff" stroke-width="6" stroke-linecap="round" opacity=".35"/>
+    <path d="M98 ${y} L106 ${y-46}" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M98 ${y} L106 ${y-46}" stroke="#c49564" stroke-width="3.2" stroke-linecap="round"/>
+    ${[12,20].map(d=>`<path d="M${(96.4+d*8/46).toFixed(1)} ${y-d} l4 .8" stroke="#ff4fd8" stroke-width="2.4" stroke-linecap="round"/>`).join("")}
+    <path d="M103.6 ${y-44} L97 ${y-58} Q103 ${y-61} 108 ${y-60} Q113 ${y-60} 115 ${y-57} L108.6 ${y-43} Z" fill="#ecc77e" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M100 ${y-56} L104.4 ${y-45} M104 ${y-59} L106 ${y-44} M108 ${y-59} L107.4 ${y-44} M112 ${y-58} L108.4 ${y-45}" stroke="#c99a4a" stroke-width="1"/>
+    <path d="M102.6 ${y-47} H109.6" stroke="#b8403a" stroke-width="2.6" stroke-linecap="round"/>
+    ${[[116,y-40],[92,y-30]].map(([x,yy])=>`<path d="M${x} ${yy-3} v6 M${x-3} ${yy} h6" stroke="#bdfcff" stroke-width="1.2" stroke-linecap="round"/>`).join("")}` + maPaw(98, y, c, L); }},
+  bigCoin: {lock:true, n:"大金幣", f:(s,L,c)=>{ const y = s.my - 4; return `
+    <circle cx="105" cy="${y-17}" r="12.4" fill="#e9a93a" stroke="#a8741c" stroke-width="2.2"/><circle cx="104" cy="${y-18}" r="12" fill="#ffd66b" stroke="#a8741c" stroke-width="2"/>
+    <circle cx="104" cy="${y-18}" r="8.4" fill="none" stroke="#e9a93a" stroke-width="1.4" stroke-dasharray="1.6 1.4"/>
+    <text x="104" y="${y-13.8}" text-anchor="middle" font-size="11" font-weight="700" fill="#a8741c" font-family="Huninn,sans-serif">福</text>
+    <path d="M96 ${y-24} q3 -4 8 -4" stroke="#fff6c8" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${[[117,y-32],[90,y-30]].map(([x,yy])=>`<path d="M${x} ${yy-3.4} q.6 2.8 3.4 3.4 q-2.8 .6 -3.4 3.4 q-.6 -2.8 -3.4 -3.4 q2.8 -.6 3.4 -3.4 Z" fill="#fff3a8"/>`).join("")}` + maPaw(98, y-4, c, L); }}
+};
+/* 身旁：飄在左上方的小東西 */
+const MA_FLOAT = {
+  none: {n:"沒有", f:()=>""},
+  bread: {lock:true, n:"剛出爐的麵包", f:(L)=>`
+    <ellipse cx="21" cy="49" rx="15" ry="2.6" fill="${PSH}"/>
+    <path d="M7 44 Q5 30 20 28 Q35 28 35 42 Q35 48 29 48 H13 Q7 48 7 44 Z" fill="#e8b878" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M9 44 Q10 46 13 46.4 H29 Q33 46 33 43" stroke="#c98e4e" stroke-width="2" fill="none"/>
+    <path d="M10 36 Q12 30 20 30" stroke="#f6d8a8" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M13 38 q3 -4 7 -1 M21 36 q3 -4 7 -1 M17 42 q3 -3 6 0" stroke="#b37a3c" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    ${[[25,33],[15,33],[29,40]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="1" ry=".6" fill="#fff6dc"/>`).join("")}
+    <path d="M14 24 q-2.4 -4 .6 -7.4 M21 22 q-2.4 -4 .6 -7.4 M28 24 q-2.4 -4 .6 -7.4" stroke="#cfc6d8" stroke-width="1.8" fill="none" stroke-linecap="round"/>`},
+  siren: {lock:true, n:"小警笛", f:(L)=>`
+    <circle cx="22" cy="36" r="15" fill="#ff5a5a" opacity=".14"/>
+    <path d="M12 42 Q12 27 22 27 Q32 27 32 42 Z" fill="#ff5a5a" stroke="${L}" stroke-width="2"/>
+    <path d="M26 30 Q30 34 30 41 H26 Q27 35 24 30 Z" fill="#d93a3a"/><path d="M16 39 Q16 32 20 30" stroke="#ffc2c2" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <rect x="9" y="41" width="26" height="7" rx="2.4" fill="#c9cfe0" stroke="${L}" stroke-width="1.6"/><path d="M11 43.4 H33" stroke="#fff" stroke-width="1.2"/>${[14,22,30].map(x=>`<circle cx="${x}" cy="46" r=".9" fill="#7a8198"/>`).join("")}
+    <path d="M6 26 l-4 -4 M22 21 v-6 M38 26 l4 -4 M10 34 l-6 -1 M34 34 l6 -1" stroke="#ffd66b" stroke-width="2.4" stroke-linecap="round"/>`},
+  guitar: {lock:true, n:"電吉他", f:(L)=>`<g transform="rotate(-35 22 36)">
+    <rect x="19.4" y="10" width="5.2" height="22" rx="1.6" fill="#8a5a3c" stroke="${L}" stroke-width="1.3"/>${[15,20,25].map(y=>`<path d="M19.6 ${y} h4.8" stroke="#ffd66b" stroke-width=".8"/>`).join("")}
+    <path d="M16.6 4 H27.4 L26 13 H18 Z" fill="#3f3540" stroke="${L}" stroke-width="1"/>${[6,9].map(y=>`<circle cx="16" cy="${y}" r="1.3" fill="#c9cfe0"/><circle cx="28" cy="${y}" r="1.3" fill="#c9cfe0"/>`).join("")}
+    <path d="M12 34 Q9 27 16 29.6 Q18 25.4 22 27.6 Q26 25.4 28 29.6 Q35 27 32 34 Q37 44 28.6 48.4 Q22 50.6 15.4 48.4 Q7 44 12 34 Z" fill="#e2463f" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M14 36 Q12 42 16 46" stroke="#ff9a8f" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M19 31 L25 31 L27 44 Q22 46 17 44 Z" fill="#fff" stroke="${L}" stroke-width="1"/>
+    <rect x="18" y="35" width="8" height="2.6" rx="1" fill="#3f3540"/><rect x="18.4" y="40" width="7.2" height="2.2" rx="1" fill="#c9cfe0" stroke="${L}" stroke-width=".6"/>
+    <path d="M20.6 12 V40 M23.4 12 V40" stroke="#eceaf2" stroke-width=".6"/>
+    <circle cx="29" cy="42" r="1.4" fill="#ffd66b" stroke="${L}" stroke-width=".6"/><circle cx="28" cy="45.4" r="1.4" fill="#ffd66b" stroke="${L}" stroke-width=".6"/></g>
+    <path transform="translate(38 20) scale(.32)" d="M0 -10 V6 a4 4 0 1 1 -3 -4 V-10 h12 v4 h-9" fill="#ff6fae"/>`},
+  parrot: {lock:true, n:"小鸚鵡", f:(L)=>`
+    <path d="M14 46 Q6 54 10 62 M18 48 Q14 58 20 62 M16 47 Q12 58 15 63" stroke="${L}" stroke-width="4.4" fill="none" stroke-linecap="round"/><path d="M14 46 Q6 54 10 62 M18 48 Q14 58 20 62" stroke="#5aa2ef" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M16 47 Q12 58 15 63" stroke="#ffd23f" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M14 50 Q9 40 13 30 Q18 21 26 23 Q33 25 31 34 Q31 44 22 50 Z" fill="#6fd36b" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M13 30 Q20 19 28 24 Q24 21 18 24 Q14 26 13 30 Z" fill="#e2463f" stroke="${L}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M14 38 Q18 46 26 44 Q22 36 14 34 Z" fill="#4fae4b" stroke="${L}" stroke-width="1.1"/><path d="M17 40 q3 2 6 2 M18 43 q2 1 4 1" stroke="#9de89a" stroke-width=".9" fill="none"/>
+    <path d="M28.6 28 Q35 27.4 33.4 33.6 Q31.6 33 29 32 Z" fill="#ffd23f" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/><path d="M29 31 Q31 31.4 33 33" stroke="#e0a51e" stroke-width=".8" fill="none"/>
+    <circle cx="25.4" cy="29" r="2.8" fill="#fff" stroke="${L}" stroke-width=".8"/><circle cx="26" cy="29" r="1.6" fill="${DK}"/><circle cx="26.5" cy="28.4" r=".5" fill="#fff"/>
+    <path d="M16 26 Q20 24 24 25" stroke="#ff9a8f" stroke-width="1.2" fill="none" stroke-linecap="round"/>`},
+  lantern: {lock:true, n:"小提燈", f:(L)=>`
+    <path d="M22 11 V20" stroke="${L}" stroke-width="1.6"/><circle cx="22" cy="10" r="2" fill="none" stroke="${L}" stroke-width="1.4"/>
+    <path d="M15 21 Q22 13 29 21" fill="none" stroke="${L}" stroke-width="1.8"/>
+    <circle cx="22" cy="33" r="14" fill="#ffe27a" opacity=".22"/><circle cx="22" cy="33" r="9" fill="#ffe27a" opacity=".3"/>
+    <path d="M15 23 Q13 32 15 41 H29 Q31 32 29 23 Z" fill="#fff3b8" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M18 24 Q17 32 18 40 M26 24 Q27 32 26 40" stroke="#e8d38a" stroke-width="1"/>
+    <path d="M22 37 Q18 33 21 28 Q22 31 24 31 Q26 34 22 37 Z" fill="#ffb92e"/><path d="M22 36 Q20.4 34 22 31.6 Q23.6 34 22 36 Z" fill="#fff"/>
+    <path d="M12 20 Q22 17 32 20 V24 Q22 21 12 24 Z" fill="#8fc27a" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 40 Q22 43 32 40 V44 Q22 47 12 44 Z" fill="#8fc27a" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M16.4 26 V36" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>
+    ${[[6,28],[38,36],[34,16]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#fff3a8"/>`).join("")}`},
+  starfish: {lock:true, n:"小海星", f:(L)=>`
+    <path transform="translate(22.6 34.6) scale(1.26)" d="${STAR5}" fill="${PSH}"/>
+    <path transform="translate(22 34) scale(1.26) rotate(4)" d="${STAR5}" fill="#ff9f6e" stroke="${L}" stroke-width="1.5" stroke-linejoin="round"/>
+    <path transform="translate(22 34) scale(.7) rotate(4)" d="${STAR5}" fill="#ffb98e"/>
+    ${[[22,28],[22,31],[16.6,32.4],[27.4,32.4],[18.6,38.6],[25.4,38.6],[16,41],[28,41],[13,31],[31,31]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".9" fill="#fff0e4"/>`).join("")}
+    <path d="M19.6 32.4 q.6 1 1.4 0 M23 32.4 q.6 1 1.4 0" stroke="${L}" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M20.6 35 q1.4 1.4 2.8 0" stroke="${L}" stroke-width="1" fill="none" stroke-linecap="round"/>
+    ${[[8,20,2.2],[35,22,1.6],[11,15,1.3]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#8fd1ff" stroke-width="1"/>`).join("")}`},
+  sunflower: {lock:true, n:"向日葵", f:(L)=>`
+    <path d="M22 44 Q20 54 22 62" stroke="#6a9c56" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M21 54 Q12 48 8 54 Q14 59 21 54 Z" fill="#8fc27a" stroke="#5f8f4c" stroke-width="1"/><path d="M10 54 Q15 54 20 54" stroke="#5f8f4c" stroke-width=".8"/>
+    <path d="M22 50 Q30 46 34 50 Q29 55 22 50 Z" fill="#8fc27a" stroke="#5f8f4c" stroke-width="1"/>
+    <g transform="translate(22 32)">${Array.from({length:12},(_,i)=>`<ellipse cx="0" cy="-10.4" rx="3.4" ry="6.2" transform="rotate(${i*30+15})" fill="#f2b51e" stroke="${L}" stroke-width=".9"/>`).join("")}${Array.from({length:12},(_,i)=>`<path d="M0 -6 Q-3 -12 0 -16 Q3 -12 0 -6 Z" transform="rotate(${i*30})" fill="#ffd94a" stroke="${L}" stroke-width=".9"/><path d="M0 -8 V-13" transform="rotate(${i*30})" stroke="#fff3a8" stroke-width=".8"/>`).join("")}
+      <circle r="6.6" fill="#8a5a3c" stroke="${L}" stroke-width="1.4"/><circle r="4.4" fill="#6b4029"/>${[[-2,-2],[2,-2],[0,1],[-3,2],[3,2],[0,-4]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".7" fill="#c9905a"/>`).join("")}</g>`},
+  drone: {lock:true, n:"浮空無人機", f:(L)=>`
+    <path d="M17 39 L10 54 H34 L27 39 Z" fill="#4ff0ff" opacity=".14"/>
+    <path d="M10 31 L15 31 M29 31 L34 31" stroke="${L}" stroke-width="2.4" stroke-linecap="round"/><path d="M10 31 V27 M34 31 V27" stroke="${L}" stroke-width="1.6"/>
+    ${[10,34].map(x=>`<ellipse cx="${x}" cy="26" rx="8" ry="2.2" fill="#4ff0ff" opacity=".45"/><path d="M${x-6} 26 H${x+6}" stroke="#bdfcff" stroke-width="1" stroke-linecap="round"/><circle cx="${x}" cy="26" r="1.4" fill="#5a5f78"/>`).join("")}
+    <path d="M14 30 Q14 27 18 27 H26 Q30 27 30 30 V36 Q30 39 26 39 H18 Q14 39 14 36 Z" fill="#2a2d3e" stroke="${L}" stroke-width="1.8"/>
+    <path d="M16 30 Q17 28.6 20 28.6" stroke="#5a6080" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <circle cx="22" cy="34" r="3.2" fill="#14161f" stroke="#4ff0ff" stroke-width="1"/><circle cx="22" cy="34" r="1.6" fill="#ff4fd8"/><circle cx="21.4" cy="33.4" r=".6" fill="#fff"/>
+    <circle cx="16.6" cy="37" r=".8" fill="#6fff8f"/><circle cx="27.4" cy="37" r=".8" fill="#ff5a5a"/>`},
+  energyCore: {lock:true, n:"能量核心", f:(L)=>`
+    <circle cx="22" cy="32" r="16" fill="#ff9f43" opacity=".14"/><circle cx="22" cy="32" r="12" fill="#ff9f43" opacity=".2"/>
+    <ellipse cx="22" cy="32" rx="17" ry="5" fill="none" stroke="#ffcf6b" stroke-width="1.2" transform="rotate(-20 22 32)" opacity=".8"/>
+    <path d="M22 19 L33 25.5 V38.5 L22 45 L11 38.5 V25.5 Z" fill="#ffcf6b" stroke="#c96a1c" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M22 19 L33 25.5 L22 32 L11 25.5 Z" fill="#ffe08f"/><path d="M22 32 L33 25.5 V38.5 L22 45 Z" fill="#f2a43a"/>
+    <path d="M22 25.6 L27.6 28.8 V35.2 L22 38.4 L16.4 35.2 V28.8 Z" fill="#fff6c8" stroke="#ffb54a" stroke-width=".8"/><circle cx="22" cy="32" r="2.2" fill="#fff"/>
+    <path d="M13 26.6 L19 23" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    ${[[6,20],[38,42],[36,18]].map(([x,y])=>`<path d="M${x} ${y-2.6} v5.2 M${x-2.6} ${y} h5.2" stroke="#ffcf6b" stroke-width="1.2" stroke-linecap="round"/>`).join("")}`},
+  pearls: {lock:true, n:"漂浮的小珍珠", f:(L)=>[[14,24,5.2],[29,31,6.2],[12,42,4.6],[27,48,4.2],[36,20,3]].map(([x,y,r])=>`
+    <circle cx="${x+.8}" cy="${y+.8}" r="${r}" fill="${PSH}"/><circle cx="${x}" cy="${y}" r="${r}" fill="#4a3434" stroke="#2e1f1f" stroke-width=".8"/>
+    <circle cx="${x}" cy="${y}" r="${(r*.7).toFixed(1)}" fill="#5e4444"/><ellipse cx="${(x-r/3).toFixed(1)}" cy="${(y-r/3).toFixed(1)}" rx="${(r/3).toFixed(1)}" ry="${(r/4.4).toFixed(1)}" fill="#fff" opacity=".75" transform="rotate(-35 ${(x-r/3).toFixed(1)} ${(y-r/3).toFixed(1)})"/><circle cx="${(x+r/2.6).toFixed(1)}" cy="${(y+r/2.6).toFixed(1)}" r="${(r/9).toFixed(1)}" fill="#fff" opacity=".5"/>`).join("")},
+  book: {lock:true, n:"厚重參考書", f:(L)=>`
+    <ellipse cx="22" cy="49" rx="17" ry="2.4" fill="${PSH}"/>
+    <path d="M6 38 H36 Q38 38 38 40 V46 Q38 48 36 48 H6 Z" fill="#5aa2ef" stroke="${L}" stroke-width="1.8"/><path d="M8 40 H36 V46 H8" fill="#fff" stroke="#c9cfe0" stroke-width=".8"/><path d="M10 42 H35 M10 44 H35" stroke="#e3e6ee" stroke-width=".7"/>
+    <path d="M9 28 H35 Q37 28 37 30 V36 Q37 38 35 38 H9 Z" fill="#e2463f" stroke="${L}" stroke-width="1.8" transform="rotate(-3 23 33)"/><path d="M14 31 H26 M14 34 H22" stroke="#ffd66b" stroke-width="1.4" transform="rotate(-3 23 33)"/>
+    <path d="M7 18 H35 Q37 18 37 20 V26 Q37 28 35 28 H7 Z" fill="#8fc27a" stroke="${L}" stroke-width="1.8" transform="rotate(4 22 23)"/><path d="M11 21 H29" stroke="#fff" stroke-width="1.6" transform="rotate(4 22 23)"/><text x="22" y="26.6" text-anchor="middle" font-size="5" font-weight="700" fill="#fff" font-family="sans-serif" transform="rotate(4 22 23)">ABC</text>
+    <path d="M30 18 V12 L32 14 L34 12 V19" fill="#ff6f9c" stroke="${L}" stroke-width=".9" stroke-linejoin="round" transform="rotate(4 22 23)"/>`},
+  tape: {lock:true, n:"膠帶捲", f:(L)=>`
+    <path d="M30 40 L42 47 L37 50.4 L28 43 Z" fill="#e8dcb8" fill-opacity=".9" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/><path d="M37 50.4 l1.4 -2 l1.4 1 l1.4 -2" stroke="${L}" stroke-width=".9" fill="none"/>
+    <circle cx="22" cy="32" r="12.4" fill="#e8dcb8" stroke="${L}" stroke-width="2"/>
+    <circle cx="22" cy="32" r="10" fill="none" stroke="#d6c69a" stroke-width="1"/><circle cx="22" cy="32" r="8" fill="none" stroke="#d6c69a" stroke-width=".8"/>
+    <circle cx="22" cy="32" r="6" fill="#c9a77c" stroke="${L}" stroke-width="1.4"/><circle cx="22" cy="32" r="4.2" fill="#fff6f1" stroke="#a6855a" stroke-width=".8"/>
+    <path d="M13 26 Q16 22 21 21" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>`},
+  koban: {lock:true, n:"小判金", f:(L)=>`
+    <ellipse cx="23" cy="33" rx="11.4" ry="15.4" fill="#e9a93a" stroke="#a8741c" stroke-width="2"/>
+    <ellipse cx="22" cy="32" rx="11" ry="15" fill="#ffd66b" stroke="#a8741c" stroke-width="2"/>
+    <ellipse cx="22" cy="32" rx="8" ry="12" fill="none" stroke="#e9a93a" stroke-width="1.2"/>
+    ${[22,26,30,34,38,42].map(y=>`<path d="M15.6 ${y} q6.4 1 12.8 0" stroke="#e9a93a" stroke-width="1" fill="none"/>`).join("")}
+    <ellipse cx="22" cy="21" rx="2" ry="1.6" fill="#a8741c"/><ellipse cx="22" cy="43" rx="2" ry="1.6" fill="#a8741c"/>
+    <path d="M15 24 Q16 19 20 18" stroke="#fff6c8" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M11 17 l-3 -3 M33 17 l3 -3 M22 13.4 v-4" stroke="#ffd66b" stroke-width="2" stroke-linecap="round"/>`}
+};
+/* 身後 */
+Object.assign(MA_BACK, {
+  starCape: {lock:true, n:"閃亮披風", f:(L)=>`
+    <path d="M30 60 Q12 92 16 114 Q40 104 60 114 Q80 104 104 114 Q108 92 90 60 Z" fill="#8c7bd6" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M20 112 Q22 92 34 66 M100 112 Q98 92 86 66" stroke="#6f5fc0" stroke-width="2" fill="none"/>
+    <path d="M17 110 Q40 101 60 111 Q80 101 103 110" fill="none" stroke="#ffd66b" stroke-width="2"/>
+    <path d="M26 74 Q20 90 22 104" stroke="#b3a6ee" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${[[22,98,.42],[98,94,.4],[30,80,.3],[92,78,.32],[16,88,.22],[104,104,.24]].map(([x,y,k])=>`<path transform="translate(${x} ${y}) scale(${k})" d="${STAR5}" fill="#ffd66b" stroke="#e9a93a" stroke-width="1.4"/>`).join("")}
+    ${[[36,92],[86,90],[26,108]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#fff"/>`).join("")}`},
+  fairyWings: {lock:true, n:"精靈翅膀", f:(L)=>[-1,1].map(k=>`<g transform="translate(60 72) scale(${k} 1)">
+    <path d="M20 -8 Q34 -46 55 -32 Q59 -8 26 0 Z" fill="#c8f0dc" fill-opacity=".85" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M24 -8 Q34 -34 50 -28 Q50 -12 28 -3 Z" fill="#e6fbf0" fill-opacity=".8"/>
+    <path d="M20 4 Q45 5 47 24 Q35 31 22 14 Z" fill="#c9e4ff" fill-opacity=".85" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M22 -5 Q34 -20 50 -29 M24 -4 Q38 -10 54 -16 M22 6 Q34 12 44 22 M22 8 Q28 18 32 24" stroke="#8fd6b4" stroke-width="1" fill="none"/>
+    <circle cx="44" cy="-22" r="2.4" fill="#ff9fc8" opacity=".8"/><circle cx="38" cy="16" r="1.8" fill="#ffd66b" opacity=".8"/><circle cx="48" cy="-30" r="1" fill="#fff"/></g>`).join("")},
+  oxygenTank: {lock:true, n:"氧氣瓶", f:(L)=>[-1,1].map(k=>`<g transform="translate(${60+k*38} 68)">
+    <rect x="-7.4" y="-20" width="14.8" height="40" rx="7.4" fill="#ffd23f" stroke="${L}" stroke-width="2"/>
+    <path d="M-4.6 -15 V14" stroke="#fff3a8" stroke-width="2.4" stroke-linecap="round"/><path d="M3.6 -14 V15" stroke="#e9a93a" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M-7.4 -6 H7.4 M-7.4 8 H7.4" stroke="#3f3540" stroke-width="2.6"/><rect x="-2" y="-8" width="4" height="4" rx="1" fill="#c9cfe0" stroke="${L}" stroke-width=".8"/>
+    <rect x="-3.4" y="-26" width="6.8" height="7" rx="1.6" fill="#c9cfe0" stroke="${L}" stroke-width="1.4"/><circle cx="0" cy="-27" r="2.4" fill="#e2463f" stroke="${L}" stroke-width="1"/></g>`).join("")
+    + `<path d="M98 42 Q101 28 84 32" fill="none" stroke="${L}" stroke-width="4"/><path d="M98 42 Q101 28 84 32" fill="none" stroke="#5a5f78" stroke-width="2.4" stroke-dasharray="2 1.4"/>`},
+  katana: {lock:true, n:"武士刀", f:(L)=>`
+    <path d="M24 37 L100 108" stroke="${L}" stroke-width="6.6" stroke-linecap="round"/><path d="M24 37 L100 108" stroke="#2e2a48" stroke-width="4.6" stroke-linecap="round"/>
+    <path d="M30 43 L94 102" stroke="#5a5383" stroke-width="1.2" stroke-linecap="round"/>${[[60,71],[80,90]].map(([x,y])=>`<path d="M${x-3} ${y+3} l6 -6" stroke="#b8403a" stroke-width="2"/>`).join("")}
+    <ellipse cx="22" cy="35" rx="6" ry="3" fill="#ffd66b" stroke="${L}" stroke-width="1.4" transform="rotate(-48 22 35)"/>
+    <path d="M7 21 L20 33" stroke="${L}" stroke-width="7.4" stroke-linecap="round"/><path d="M7 21 L20 33" stroke="#f3eadb" stroke-width="5.4" stroke-linecap="round"/>
+    ${[0,1,2,3].map(i=>`<path d="M${8+i*3.2} ${19.6+i*3} l-2.6 3 M${8+i*3.2} ${19.6+i*3} l3 2.4" stroke="#3a3348" stroke-width="1.4" stroke-linecap="round"/>`).join("")}
+    <circle cx="6" cy="20" r="2.2" fill="#ffd66b" stroke="${L}" stroke-width="1"/>`},
+  mechArm: {lock:true, n:"機械手臂", f:(L)=>`
+    <path d="M28 70 L14 50 L20 30" fill="none" stroke="${L}" stroke-width="9.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M28 70 L14 50 L20 30" fill="none" stroke="#9aa3bd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M26 67 L13.4 49 M15 47 L19 32" stroke="#d6dbe8" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M22 60 L18 56 M17 42 L20 40" stroke="#ff9f43" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="14" cy="50" r="5" fill="#c9cfe0" stroke="${L}" stroke-width="1.8"/><circle cx="14" cy="50" r="1.8" fill="#5a5f78"/>
+    <path d="M20 30 Q24 24 28 23 M20 30 Q14 25 13 22 M20 30 V20" stroke="${L}" stroke-width="4.4" fill="none" stroke-linecap="round"/><path d="M20 30 Q24 24 28 23 M20 30 Q14 25 13 22 M20 30 V20" stroke="#6b7290" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <circle cx="20" cy="30" r="3.6" fill="#ff9f43" stroke="${L}" stroke-width="1.2"/><circle cx="19" cy="29" r="1" fill="#fff"/>
+    ${[[10,18],[30,18]].map(([x,y])=>`<path d="M${x} ${y} l2 -2 M${x+1} ${y+3} l3 -1" stroke="#ffd66b" stroke-width="1.2" stroke-linecap="round"/>`).join("")}`},   /* 放左邊，右邊留給手上的東西 */
+  tacticalCape: {lock:true, n:"戰術披風", f:(L)=>`
+    <path d="M30 60 Q14 90 18 114 L28 108 L36 114 Q48 106 60 114 Q72 106 84 114 L92 108 L102 114 Q106 90 90 60 Z" fill="#4f5d4a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M24 108 Q26 88 36 66 M96 108 Q94 88 84 66" stroke="#3e4a3a" stroke-width="2" fill="none"/>
+    ${[[30,86,8,4],[84,92,9,4],[44,100,7,3],[74,78,6,3]].map(([x,y,rx,ry])=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#64735c" transform="rotate(-20 ${x} ${y})"/>`).join("")}
+    <path d="M22 104 Q40 98 60 104 Q80 98 98 104" fill="none" stroke="#ff9f43" stroke-width="2.4"/>${pStitch("M22 100 Q40 94 60 100 Q80 94 98 100", "#8a9a80")}
+    <path d="M26 76 Q20 90 22 100" stroke="#6f7f66" stroke-width="1.8" fill="none" stroke-linecap="round"/>`}
+});
+/* ---------- 公主系列套裝的部件 ---------- */
+const HEART = "M0 4 C-7 -1 -5 -7 0 -3.5 C5 -7 7 -1 0 4 Z";   // 寬約 12、高約 10，中心在 (0,0)
+/** 愛心 */
+function pHeart(x, y, k, fill, st, sw){ return `<path transform="translate(${x} ${y}) scale(${k})" d="${HEART}" fill="${fill}"${st ? ` stroke="${st}" stroke-width="${(sw || 1.4) / k}" stroke-linejoin="round"` : ""}/>`; }
+/** 四角閃光 */
+function pSpark(x, y, r, fill){ const a = (r * .18).toFixed(2), b = (r * .82).toFixed(2); return `<path d="M${x} ${y - r} q${a} ${b} ${r} ${r} q-${b} ${a} -${r} ${r} q-${a} -${b} -${r} -${r} q${b} -${a} ${r} -${r} Z" fill="${fill || "#fff3a8"}"/>`; }
+/** 雪花 */
+function pFlake(x, y, r, col, w){ return `<g transform="translate(${x} ${y})" stroke="${col}" stroke-width="${w || 1.6}" stroke-linecap="round" fill="none">${[0,60,120,180,240,300].map(a=>`<g transform="rotate(${a})"><path d="M0 0 V-${r}"/><path d="M-${(r*.3).toFixed(1)} -${(r*.75).toFixed(1)} L0 -${(r*.5).toFixed(1)} L${(r*.3).toFixed(1)} -${(r*.75).toFixed(1)}"/></g>`).join("")}</g>`; }
+/** 一排波浪花邊（往下凸），x1 到 x2 分 n 段 */
+function pScallop(x1, y, x2, n, h, col, w){ const d = (x2 - x1) / n; return `<path d="M${x1} ${y} ${Array.from({length:n},()=>`q${(d/2).toFixed(2)} ${h} ${d.toFixed(2)} 0`).join(" ")}" fill="none" stroke="${col}" stroke-width="${w || 1.6}" stroke-linecap="round"/>`; }
+
+/* 頭飾（以頭頂 y=40、中心 x=60 繪製） */
+Object.assign(MA_TOPS, {
+  tiaraPink: {lock:true, n:"粉紅寶石后冠", f:(L)=>`
+    <path d="M39 46 L35 30 L46 37 L52 25 L60 15 L68 25 L74 37 L85 30 L81 46 Q60 40 39 46 Z" fill="#f6cd5a" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M66 24 L68 25 L74 37 L85 30 L81 46 Q76 44.6 70 44 Z" fill="#e0a93a" opacity=".55"/>
+    <path d="M44 40 Q47 34 52 34 Q56 34 56 38 M76 40 Q73 34 68 34 Q64 34 64 38" stroke="#fff3c4" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M40 44 Q60 38.4 80 44" stroke="#c98f2a" stroke-width="1.2" fill="none"/>
+    ${[[35,30,2.6],[52,25,2.4],[60,15,3],[68,25,2.4],[85,30,2.6]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${L}" stroke-width="1.2"/><circle cx="${x-r/3}" cy="${y-r/3}" r="${r/3}" fill="#fff" stroke="#e6e0ee" stroke-width=".4"/>`).join("")}
+    ${pHeart(60, 33, 1.15, "#ff6fa5", L, 1.4)}<path d="M56.6 30.4 q1.4 -1.6 3 -.6" stroke="#ffd0e2" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    ${[[47,40],[73,40]].map(([x,y])=>`<path d="M${x} ${y-3} L${x+2.4} ${y} L${x} ${y+3} L${x-2.4} ${y} Z" fill="#8fd1ff" stroke="${L}" stroke-width="1"/>`).join("")}
+    ${pSpark(30, 22, 3.4)}${pSpark(90, 20, 2.6)}`},
+  snowTiara: {lock:true, n:"雪花冠", f:(L)=>`
+    <path d="M38 46 Q60 39 82 46 L81 49 Q60 43 39 49 Z" fill="#cfe6fb" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+    ${[[42,44,10],[50,42,16],[70,42,16],[78,44,10]].map(([x,y,h])=>`<path d="M${x-3} ${y} L${x} ${y-h} L${x+3} ${y} Z" fill="#e6f4ff" stroke="#7fb3e0" stroke-width="1.2" stroke-linejoin="round"/><path d="M${x} ${y-h+3} V${y-1}" stroke="#fff" stroke-width=".9"/>`).join("")}
+    <circle cx="60" cy="27" r="13" fill="#bfe3ff" opacity=".35"/>
+    ${pFlake(60, 27, 11, L, 4.2)}${pFlake(60, 27, 11, "#9fd0ff", 2.6)}${pFlake(60, 27, 11, "#fff", 1)}
+    <circle cx="60" cy="27" r="3" fill="#fff" stroke="#7fb3e0" stroke-width="1"/>
+    ${[46,54,66,74].map(x=>`<circle cx="${x}" cy="${44.4 - Math.abs(60-x)*.08}" r="1.3" fill="#fff"/>`).join("")}
+    ${pSpark(36, 30, 2.8, "#fff")}${pSpark(86, 26, 3.2, "#fff")}`},
+  shellBand: {lock:true, n:"貝殼髮飾", f:(L)=>`
+    <path d="M26 58 Q28 37 60 36 Q92 37 94 58" fill="none" stroke="${L}" stroke-width="5.4" stroke-linecap="round"/><path d="M26 58 Q28 37 60 36 Q92 37 94 58" fill="none" stroke="#b39ce8" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M32 48 Q38 39 52 37.4" fill="none" stroke="#dccff8" stroke-width="1.2" stroke-linecap="round"/>
+    <g transform="translate(73 33) rotate(14)">
+      <path d="M-11 7 Q-15 -6 0 -12 Q15 -6 11 7 Q0 11 -11 7 Z" fill="#ffc3d4" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+      ${[-8,-4,0,4,8].map(x=>`<path d="M0 8 L${x*1.1} -${10 - Math.abs(x)*.5}" stroke="#ff93b3" stroke-width="1.2"/>`).join("")}
+      <path d="M-4 7 L-2 11 H2 L4 7 Z" fill="#ffa8c2" stroke="${L}" stroke-width="1.1"/>
+      <path d="M-8 -2 Q-6 -8 -1 -10" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    </g>
+    <circle cx="84" cy="44" r="3.4" fill="#fff" stroke="${L}" stroke-width="1.1"/><circle cx="83" cy="43" r="1" fill="#fff" stroke="#ddd" stroke-width=".3"/>
+    <path transform="translate(48 37) scale(.55) rotate(-12)" d="${STAR5}" fill="#ffb347" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+    <circle cx="48" cy="36.4" r=".9" fill="#ffe2b8"/>
+    ${[[90,26,2],[96,32,1.4],[86,20,1.2]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#8fd1ff" stroke-width="1"/>`).join("")}`},
+  rainbowHorn: {lock:true, n:"彩虹獨角獸角", f:(L)=>`
+    ${[[43,1],[77,-1]].map(([x,k])=>`<path d="M${x-6*k} 44 Q${x-4*k} 32 ${x+2*k} 30 Q${x+6*k} 38 ${x+5*k} 45 Z" fill="#fff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><path d="M${x-2*k} 42 Q${x-1*k} 36 ${x+2*k} 34 Q${x+3*k} 39 ${x+2.6*k} 43 Z" fill="#ffc3d4"/>`).join("")}
+    <path d="M54.6 41 L60 8 L65.4 41 Z" fill="#fff1b8" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    ${[[14,"#ff8fb6"],[20,"#ffc36b"],[26,"#8fd6b4"],[32,"#9fb8ff"]].map(([y,col])=>`<path d="M${60-(y-8)*.165} ${y+2} L${60+(y-8)*.165} ${y-2}" stroke="${col}" stroke-width="2.2" stroke-linecap="round"/>`).join("")}
+    <path d="M58.4 14 L56.6 36" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+    ${[[52,41,"#ff8fb6"],[68,41,"#c9a6ff"],[60,44,"#8fd1ff"]].map(([x,y,col])=>`<g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a=>`<ellipse cy="-2.6" rx="2" ry="2.8" transform="rotate(${a})" fill="${col}" stroke="${L}" stroke-width=".7"/>`).join("")}<circle r="1.4" fill="#ffd66b"/></g>`).join("")}
+    ${pSpark(46, 18, 3)}${pSpark(76, 14, 2.4, "#ffd0e2")}`},
+  swanFeather: {lock:true, n:"天鵝羽毛頭飾", f:(L)=>`
+    ${[-56,-36,-16,4,24,44].map((a,i)=>`<g transform="translate(64 42) rotate(${a})"><path d="M0 0 Q-5 -9 0 -19 Q5 -9 0 0 Z" fill="${i%2?"#fff":"#f6f1fb"}" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/><path d="M0 -1 V-16" stroke="#d9cfe6" stroke-width=".9"/><path d="M0 -6 l-2.6 -2 M0 -10 l2.4 -2 M0 -13 l-2 -1.6" stroke="#e6def0" stroke-width=".8"/></g>`).join("")}
+    <path d="M40 47 Q60 40 84 46" stroke="${L}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M40 47 Q60 40 84 46" stroke="#e8e4f2" stroke-width="3" fill="none" stroke-linecap="round"/>
+    ${[46,52,58,70,76].map(x=>`<circle cx="${x}" cy="${45.6 - (x<64?(x-40)*.2:(84-x)*.16)}" r="1.5" fill="#fff" stroke="#bfb3d0" stroke-width=".6"/>`).join("")}
+    <circle cx="64" cy="42" r="4.4" fill="#c9b8ea" stroke="${L}" stroke-width="1.4"/><circle cx="62.8" cy="40.8" r="1.4" fill="#fff"/>
+    ${pSpark(44, 26, 2.6, "#fff")}`},
+  strawberryCap: {lock:true, n:"草莓帽", f:(L)=>`
+    <path d="M30 46 Q27 17 60 12 Q93 17 90 46 Z" fill="#ff5f7e" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M74 16 Q91 24 90 46 H80 Q82 28 70 16 Z" fill="#e0405f" opacity=".7"/>
+    ${[[42,24],[52,20],[66,20],[76,26],[38,34],[48,30],[60,27],[72,32],[82,36],[44,40],[56,36],[68,38]].map(([x,y])=>`<path d="M${x} ${y-1.4} q1.2 1.4 0 2.8 q-1.2 -1.4 0 -2.8 Z" fill="#ffe27a"/>`).join("")}
+    <path d="M60 13 L52 8 L56 13 L49 15 L57 15.4 L54 20 L60 16 L66 20 L63 15.4 L71 15 L64 13 L68 8 Z" fill="#6fc46a" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M60 10 Q60 4 64 2" stroke="#4f9a4a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M26 42 Q60 35 94 42 L94 48 Q60 41 26 48 Z" fill="#fff6f0" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    ${pScallop(26, 48, 94, 12, 3.4, "#ffc3d4", 1.6)}
+    ${pHi(38, 34, 38, 24, 48, 18, 2.4)}`},
+  petalHat: {lock:true, n:"花瓣帽", f:(L)=>`
+    ${[-1,1].map(k=>[0,1,2].map(i=>`<ellipse cx="${60+k*(14+i*9)}" cy="${45+i*1.4}" rx="6.4" ry="4.6" transform="rotate(${k*(18+i*14)} ${60+k*(14+i*9)} ${45+i*1.4})" fill="${i%2?"#ffb3cf":"#ff9cc0"}" stroke="${L}" stroke-width="1.3"/>`).join("")).join("")}
+    <path d="M38 45 Q35 24 48 14 Q54 24 60 18 Q66 24 72 14 Q85 24 82 45 Q60 39 38 45 Z" fill="#ffc3d9" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M60 18 Q57 30 60 41 M48 14 Q47 28 50 42 M72 14 Q73 28 70 42" stroke="#ff9cc0" stroke-width="1.3" fill="none"/>
+    <path d="M72 14 Q85 24 82 45 Q77 43 72 42.4 Q74 28 72 14 Z" fill="#ff9cc0" opacity=".6"/>
+    <path d="M60 18 Q62 8 70 7 Q75 8 73 12 Q71 14 69 12" stroke="#6fae5a" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M62 11 Q54 4 50 9 Q56 13 62 11 Z" fill="#8fc27a" stroke="${L}" stroke-width="1"/>
+    <circle cx="41" cy="20" r="1.8" fill="#bfe3ff" stroke="#fff" stroke-width=".6"/>
+    ${pHi(42, 38, 41, 26, 47, 19, 2)}`},
+  heartBow: {lock:true, n:"大愛心蝴蝶結", f:(L)=>`
+    <g transform="translate(73 36) rotate(12)">
+      <path d="M0 2 Q-2 12 -6 18 L-2 17 L0 20 Q2 12 2 2 Z M0 2 Q4 12 9 17 L10 13 L13 13 Q6 10 2 2 Z" fill="#ff5f97" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+      <path d="M-2 0 C-10 -12 -24 -8 -20 2 C-17 9 -8 6 -2 2 Z" fill="#ff7aab" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M2 0 C10 -12 24 -8 20 2 C17 9 8 6 2 2 Z" fill="#ff7aab" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M-4 0 C-9 -6 -15 -6 -16 -1 M4 0 C9 -6 15 -6 16 -1" stroke="#ff4f8a" stroke-width="1.2" fill="none"/>
+      ${[[-14,-3],[-9,2],[13,-4],[9,2],[17,1]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.4" fill="#fff" opacity=".9"/>`).join("")}
+      ${pHeart(0, 1.6, .72, "#ff4f8a", L, 1.4)}
+      <path d="M-17 -3 Q-15 -7 -11 -7" stroke="#ffd0e2" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    </g>
+    ${pSpark(48, 30, 2.6, "#ffd0e2")}`},
+  laceHat: {lock:true, n:"蕾絲小禮帽", f:(L)=>`
+    <g transform="rotate(-10 72 40)">
+      <path d="M56 41 Q50 50 56 56 M60 42 Q57 50 60 56 M52 46 Q57 48 62 46 M51 51 Q56 53 61 51" stroke="#c9b8ea" stroke-width=".9" fill="none" opacity=".9"/>
+      <ellipse cx="72" cy="41" rx="19" ry="4.6" fill="#f3eefb" stroke="${L}" stroke-width="1.8"/>
+      ${pScallop(53, 42, 91, 10, 2.6, "#fff", 1.6)}
+      <path d="M61 40 L62 23 Q72 20 82 23 L83 40 Q72 43 61 40 Z" fill="#c9b8ea" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+      <ellipse cx="72" cy="23" rx="10" ry="2.6" fill="#d9cdf2" stroke="${L}" stroke-width="1.4"/>
+      <path d="M77 24 L78 40 Q81 39.6 83 40 L82 23.6 Z" fill="${PSH}"/>
+      <path d="M61.6 34 Q72 37 82.6 34 L82.8 38 Q72 41 61.4 38 Z" fill="#ff9cc0" stroke="${L}" stroke-width="1.1"/>
+      <g transform="translate(64 34)">${[0,72,144,216,288].map(a=>`<circle cx="0" cy="-3" r="2.6" transform="rotate(${a})" fill="#ff7aab" stroke="${L}" stroke-width=".8"/>`).join("")}<circle r="2.2" fill="#ff4f8a"/><path d="M-1 -1 q1 -1 2 0 q0 2 -2 1" stroke="#ffd0e2" stroke-width=".7" fill="none"/></g>
+      <path d="M58 36 Q53 33 52 37 Q55 39 58 36 Z" fill="#8fc27a" stroke="${L}" stroke-width=".8"/>
+      <path d="M65 26 V36" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>
+    </g>`},
+  moonTiara: {lock:true, n:"月亮頭冠", f:(L)=>`
+    <path d="M30 56 Q32 41 60 40 Q88 41 90 56" fill="none" stroke="${L}" stroke-width="3.6" stroke-linecap="round"/><path d="M30 56 Q32 41 60 40 Q88 41 90 56" fill="none" stroke="#f6cd5a" stroke-width="2" stroke-linecap="round"/>
+    ${[[40,45],[80,45]].map(([x,y])=>`<path transform="translate(${x} ${y}) scale(.3)" d="${STAR5}" fill="#fff3a8" stroke="${L}" stroke-width="3"/>`).join("")}
+    <circle cx="60" cy="30" r="13" fill="#fff3a8" opacity=".3"/>
+    <path d="M49 30 A11 11 0 0 0 71 30 A11 6.4 0 0 1 49 30 Z" fill="#ffd66b" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M52 32 Q60 39 68 32" stroke="#fff3c4" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M60 35 V40" stroke="${L}" stroke-width="1.4"/>
+    <path transform="translate(60 25) scale(.5)" d="${STAR5}" fill="#c9a6ff" stroke="${L}" stroke-width="2.6" stroke-linejoin="round"/>
+    <circle cx="59" cy="24" r=".9" fill="#fff"/>
+    ${[[48,42,46],[72,42,46]].map(([x,y1,y2])=>`<path d="M${x} ${y1} V${y2}" stroke="#f6cd5a" stroke-width="1"/><path d="M${x} ${y2} l1.6 2 l-1.6 2 l-1.6 -2 Z" fill="#8fd1ff" stroke="${L}" stroke-width=".7"/>`).join("")}
+    ${pSpark(44, 22, 2.6)}${pSpark(78, 20, 3)}`},
+  bigSunHat: {lock:true, n:"淑女寬邊帽", f:(L)=>`
+    <g transform="rotate(-6 64 42)">
+      <ellipse cx="64" cy="43" rx="38" ry="9" fill="#ffe0ea" stroke="${L}" stroke-width="2.2"/>
+      <path d="M28 45 Q64 56 100 45" stroke="#f5bccf" stroke-width="2" fill="none"/>${pStitch("M32 42 Q64 50 96 42", "#fff")}
+      <path d="M44 43 Q42 22 64 20 Q86 22 84 43 Q64 47 44 43 Z" fill="#fff0f5" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M74 22 Q86 26 84 43 Q79 44.4 76 44.6 Q78 30 70 21.4 Z" fill="${PSH}"/>
+      <path d="M44 36 Q64 41 84 36 L84 41.6 Q64 46 44 41.6 Z" fill="#ff8fb6" stroke="${L}" stroke-width="1.2"/>
+      <g transform="translate(48 38)"><path d="M0 0 C-6 -8 -16 -4 -12 2 C-10 6 -4 4 0 0 Z M0 0 C4 -8 14 -6 11 1 C9 5 3 4 0 0 Z" fill="#ff8fb6" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/><path d="M0 1 L-4 12 M1 1 L5 11" stroke="#ff8fb6" stroke-width="2.4" stroke-linecap="round"/><circle r="2.4" fill="#ff6fa5" stroke="${L}" stroke-width="1"/></g>
+      <g transform="translate(80 36)">${[0,72,144,216,288].map(a=>`<ellipse cy="-3.4" rx="2.6" ry="3.6" transform="rotate(${a})" fill="#fff" stroke="${L}" stroke-width=".8"/>`).join("")}<circle r="2" fill="#ffd66b"/></g>
+      ${pHi(48, 34, 49, 26, 56, 23, 2)}
+    </g>`},
+  candleCrown: {lock:true, n:"生日蠟燭皇冠", f:(L)=>`
+    ${[[39,30],[60,27],[81,30]].map(([x,y],i)=>`<circle cx="${x}" cy="${y-16}" r="6" fill="#ffd66b" opacity=".25"/><rect x="${x-2}" y="${y-11}" width="4" height="12" rx="1" fill="${["#8fd1ff","#ff8fb6","#a8e6a1"][i]}" stroke="${L}" stroke-width="1.1"/><path d="M${x-2} ${y-7} l4 -2 M${x-2} ${y-3} l4 -2" stroke="#fff" stroke-width="1"/><path d="M${x} ${y-11} V${y-13}" stroke="${L}" stroke-width="1"/><path d="M${x} ${y-20} Q${x+3.4} ${y-15} ${x} ${y-13} Q${x-3.4} ${y-15} ${x} ${y-20} Z" fill="#ffb92e" stroke="#e07a1c" stroke-width=".8"/><path d="M${x} ${y-17} Q${x+1.2} ${y-15} ${x} ${y-14} Q${x-1.2} ${y-15} ${x} ${y-17} Z" fill="#fff6c8"/>`).join("")}
+    <path d="M38 47 V30 L49 37 L60 27 L71 37 L82 30 V47 Q60 41 38 47 Z" fill="#f6cd5a" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M71 37 L82 30 V47 Q77 45.6 72 45 Z" fill="#e0a93a" opacity=".55"/>
+    <path d="M38 41 Q60 35.6 82 41" stroke="#ff8fb6" stroke-width="3" fill="none"/>
+    ${[[44,40.4,"#8fd1ff"],[52,38.8,"#a8e6a1"],[68,38.8,"#c9a6ff"],[76,40.4,"#8fd1ff"]].map(([x,y,col])=>`<circle cx="${x}" cy="${y}" r="1.4" fill="${col}"/>`).join("")}
+    ${pHeart(60, 38.4, .5, "#fff", L, 1)}
+    ${pHi(41, 38, 41, 33, 44, 33, 1.6)}
+    ${[[34,22,"#ff8fb6"],[88,24,"#8fd1ff"],[70,16,"#ffd66b"]].map(([x,y,col],i)=>`<rect x="${x}" y="${y}" width="3.4" height="1.6" rx=".8" fill="${col}" transform="rotate(${i*50-30} ${x} ${y})"/>`).join("")}`}
+});
+
+/* 臉上 */
+Object.assign(MA_ACC, {
+  starCheek: {lock:true, n:"閃亮臉貼", f:(s,L)=>`
+    ${[[60-s.dx-7, s.ey+9, -14],[60+s.dx+7, s.ey+9, 14]].map(([x,y,r])=>`<path transform="translate(${x} ${y}) scale(.36) rotate(${r})" d="${STAR5}" fill="#ffd66b" stroke="#e0a93a" stroke-width="2.4" stroke-linejoin="round"/>`).join("")}
+    ${pHeart(60-s.dx-12, s.ey+3, .34, "#ff7aab")}${pHeart(60+s.dx+12, s.ey+3, .34, "#ff7aab")}
+    ${[[60-s.dx-3, s.ey+13],[60+s.dx+3, s.ey+13],[60-s.dx-12, s.ey+12],[60+s.dx+12, s.ey+12]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".9" fill="#c9a6ff"/>`).join("")}
+    ${pSpark(60+s.dx+9, s.ey-6, 2.2, "#fff")}`},
+  catEyeShades: {lock:true, n:"貓眼太陽眼鏡", f:(s,L)=>`
+    ${[-1,1].map(k=>{ const x = 60 + k*s.dx, y = s.ey; return `
+      <path d="M${x-k*5} ${y-6} L${x+k*13} ${y-11} L${x+k*9} ${y-1} Z" fill="#ff6fa5" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/>
+      <ellipse cx="${x}" cy="${y+.6}" rx="9" ry="7" fill="#ff6fa5" stroke="${L}" stroke-width="1.6"/>
+      <ellipse cx="${x}" cy="${y+.8}" rx="6.8" ry="5" fill="#5a3a6e" opacity=".86"/>
+      <path d="M${x-6.6} ${y+1.4} Q${x} ${y+6.4} ${x+6.6} ${y+1.4} Q${x} ${y+4.6} ${x-6.6} ${y+1.4} Z" fill="#c97ab8" opacity=".6"/>
+      <path d="M${x-4} ${y-1.6} q2 -2 4.4 -1.8" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <circle cx="${x+k*10.4}" cy="${y-8}" r="1.3" fill="#fff" stroke="#bfe3ff" stroke-width=".6"/><circle cx="${x+k*7.6}" cy="${y-6.6}" r=".9" fill="#fff"/>`; }).join("")}
+    <path d="M${60-s.dx+8.6} ${s.ey} Q60 ${s.ey-4} ${60+s.dx-8.6} ${s.ey}" fill="none" stroke="${L}" stroke-width="3"/><path d="M${60-s.dx+8.6} ${s.ey} Q60 ${s.ey-4} ${60+s.dx-8.6} ${s.ey}" fill="none" stroke="#ff6fa5" stroke-width="1.6"/>`}
+});
+
+/* 脖子 */
+Object.assign(MA_NECK, {
+  satinRibbon: {lock:true, n:"緞帶頸鍊", f:(s,L)=>{ const y = s.my + 7; return `
+    <path d="M36 ${y} Q60 ${y+8} 84 ${y}" fill="none" stroke="${L}" stroke-width="4.6" stroke-linecap="round"/><path d="M36 ${y} Q60 ${y+8} 84 ${y}" fill="none" stroke="#ffb3cf" stroke-width="3" stroke-linecap="round"/>
+    <path d="M40 ${y+.6} Q60 ${y+7} 80 ${y+.6}" fill="none" stroke="#ffe0ea" stroke-width=".9"/>
+    <path d="M60 ${y+4} L55 ${y+13} L57.6 ${y+12.4} L58.4 ${y+15} L61 ${y+5} M60 ${y+4} L65 ${y+13} L62.4 ${y+12.4} L61.6 ${y+15}" fill="#ff8fb6" stroke="${L}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M60 ${y+4} C54 ${y-2} 49 ${y+1} 51 ${y+5} C53 ${y+8} 57 ${y+6} 60 ${y+4} Z M60 ${y+4} C66 ${y-2} 71 ${y+1} 69 ${y+5} C67 ${y+8} 63 ${y+6} 60 ${y+4} Z" fill="#ff9cc0" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M53 ${y+2.4} q2 -1.2 4 .4 M67 ${y+2.4} q-2 -1.2 -4 .4" stroke="#ffe0ea" stroke-width=".9" fill="none"/>
+    <circle cx="60" cy="${y+4}" r="2.2" fill="#ff6fa5" stroke="${L}" stroke-width="1"/>
+    <circle cx="60" cy="${y+9}" r="2.4" fill="#fff" stroke="${L}" stroke-width="1"/><circle cx="59.3" cy="${y+8.3}" r=".7" fill="#fff" stroke="#ddd" stroke-width=".3"/>`; }},
+  heartBrooch: {lock:true, n:"愛心胸針", f:(s,L)=>{ const y = s.my + 12; return `
+    <path d="M57 ${y+2} L53 ${y+12} L56 ${y+11} L57 ${y+14} L60 ${y+3} M63 ${y+2} L67 ${y+12} L64 ${y+11} L63 ${y+14} L60 ${y+3}" fill="#8fd1ff" stroke="${L}" stroke-width="1" stroke-linejoin="round"/>
+    ${[-1,1].map(k=>`<path d="M${60+k*6} ${y-1} Q${60+k*14} ${y-9} ${60+k*18} ${y-4} Q${60+k*16} ${y-1} ${60+k*18} ${y+1} Q${60+k*13} ${y+4} ${60+k*6} ${y+2} Z" fill="#fff" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/><path d="M${60+k*8} ${y} Q${60+k*12} ${y-3} ${60+k*15} ${y-3}" stroke="#d9e8ff" stroke-width=".9" fill="none"/>`).join("")}
+    ${pHeart(60, y, 1.3, "#f6cd5a", L, 1.6)}${pHeart(60, y-.4, 1, "#ff4f8a")}
+    <path d="M56 ${y-3} q1.6 -1.6 3.4 -.6" stroke="#ffd0e2" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    ${pSpark(60, y-.6, 1.8, "#fff")}`; }},
+  bigRosette: {lock:true, n:"壽星徽章", f:(s,L)=>{ const y = s.my + 13, x = 76; return `
+    <path d="M${x-3} ${y+4} L${x-7} ${y+16} L${x-4} ${y+14.6} L${x-2.4} ${y+17} L${x} ${y+6} Z M${x+3} ${y+4} L${x+7} ${y+16} L${x+4} ${y+14.6} L${x+2.4} ${y+17} L${x} ${y+6} Z" fill="#8fd1ff" stroke="${L}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="${Array.from({length:16},(_,i)=>{ const a=i*Math.PI/8, r=i%2?7.4:9.4; return (i?"L":"M") + (x+Math.cos(a)*r).toFixed(1) + " " + (y+Math.sin(a)*r).toFixed(1); }).join(" ")} Z" fill="#ff8fb6" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    <circle cx="${x}" cy="${y}" r="6" fill="#fff" stroke="${L}" stroke-width="1.1"/>
+    <text x="${x}" y="${y+2.2}" text-anchor="middle" font-size="5.6" font-weight="700" fill="#e5507a" font-family="Huninn,sans-serif">壽星</text>
+    <path d="M${x-4} ${y-3} q2 -2 4 -2" stroke="#ffd0e2" stroke-width="1" fill="none"/>`; }}
+});
+
+/* 衣服（會依身體形狀裁切；y＝嘴巴下方） */
+Object.assign(MA_OUTFIT, {
+  ballGown: {lock:true, n:"蓬蓬公主裙", f:(s,L)=>{ const y = s.my + 5; return `
+    <path d="M-4 ${y+2} Q30 ${y+3} 44 ${y+1} Q52 ${y-3} 60 ${y+4} Q68 ${y-3} 76 ${y+1} Q90 ${y+3} 124 ${y+2} V130 H-4 Z" fill="#ffb3cf" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M44 ${y+1} Q52 ${y-3} 60 ${y+4} Q68 ${y-3} 76 ${y+1}" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="1.6 1.6"/>
+    ${[-1,1].map(k=>`<path d="M${60+k*44} ${y-4} Q${60+k*34} ${y-2} ${60+k*34} ${y+8} Q${60+k*44} ${y+12} ${60+k*66} ${y+6} V${y-4} Z" fill="#ffc8dc" stroke="${L}" stroke-width="1.4"/><path d="M${60+k*36} ${y+2} Q${60+k*40} ${y} ${60+k*44} ${y+1}" stroke="#ff9cc0" stroke-width="1" fill="none"/>`).join("")}
+    <path d="M-4 ${y+12} Q60 ${y+20} 124 ${y+12} V${y+17} Q60 ${y+25} -4 ${y+17} Z" fill="#ff7aab" stroke="${L}" stroke-width="1.3"/>
+    <path d="M60 ${y+18} C54 ${y+12} 48 ${y+15} 50 ${y+19} C52 ${y+22} 57 ${y+20} 60 ${y+18} Z M60 ${y+18} C66 ${y+12} 72 ${y+15} 70 ${y+19} C68 ${y+22} 63 ${y+20} 60 ${y+18} Z" fill="#ff5f97" stroke="${L}" stroke-width="1.2"/><circle cx="60" cy="${y+18}" r="2" fill="#ffd66b" stroke="${L}" stroke-width=".9"/>
+    <path d="M-4 ${y+17} Q60 ${y+25} 124 ${y+17} V130 H-4 Z" fill="#ff9cc0"/>
+    ${pScallop(-4, y+28, 124, 14, 4, "#fff", 1.8)}${pScallop(-4, y+36, 124, 12, 4, "#ffe0ea", 1.6)}
+    ${[[24,y+24],[44,y+30],[78,y+26],[98,y+32],[36,y+38],[86,y+38]].map(([x,yy])=>pSpark(x, yy, 2.2, "#fff")).join("")}
+    ${pShade(y)}${pHi(34, y+6, 30, y+14, 32, y+22, 1.8)}`; }},
+  mermaidScales: {lock:true, n:"人魚鱗片裝", f:(s,L)=>{ const y = s.my + 4, cols = ["#8fe3d6","#7fd0e8","#9fb8ff","#b9a6f0","#d3a6f0"]; return `
+    ${pBody(y, cols[0], L, 10)}
+    ${cols.map((col,r)=>Array.from({length:17},(_,i)=>{ const x = -4 + i*8 + (r%2)*4, yy = y + 8 + r*6 + Math.abs(x-60)*-.06; return `<path d="M${x-4} ${yy} Q${x-4} ${yy+6} ${x} ${yy+6} Q${x+4} ${yy+6} ${x+4} ${yy}" fill="${col}" stroke="${r>2?"#8a76c8":"#4fb0a8"}" stroke-width=".9"/><path d="M${x-2} ${yy+2} q1 2 2.4 2.4" stroke="#fff" stroke-width=".7" fill="none" opacity=".7"/>`; }).join("")).join("")}
+    <path d="M30 ${y+1} Q60 ${y+15} 90 ${y+1}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray=".1 4.6" stroke-linecap="round"/>
+    <g transform="translate(60 ${y+9})"><path d="M-5 3 Q-7 -3 0 -6 Q7 -3 5 3 Q0 5 -5 3 Z" fill="#ffc3d4" stroke="${L}" stroke-width="1.1"/>${[-3,0,3].map(x=>`<path d="M0 4 L${x} -4" stroke="#ff93b3" stroke-width=".8"/>`).join("")}</g>
+    ${pShade(y)}`; }},
+  tutu: {lock:true, n:"芭蕾紗裙", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#ffd6e5", L, 10)}
+    <path d="M40 ${y+3} L44 ${y-6} M80 ${y+3} L76 ${y-6}" stroke="#ffb3cf" stroke-width="2.4" stroke-linecap="round"/>
+    ${pStitch(`M10 ${y+4} Q60 ${y+14} 110 ${y+4}`, "#ffb3cf")}
+    <path d="M-4 ${y+14} Q60 ${y+20} 124 ${y+14} V${y+20} ${Array.from({length:16},(_,i)=>`l-4 ${i%2?-4:4}`).join(" ")} V${y+20} Z" fill="#fff" fill-opacity=".85" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M-4 ${y+16} Q60 ${y+22} 124 ${y+16} V${y+28} ${Array.from({length:20},(_,i)=>`l-6.4 ${i%2?-5:5}`).join(" ")} Z" fill="#ffc8dc" fill-opacity=".8" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>
+    ${[8,24,40,56,72,88,104].map(x=>`<path d="M${x} ${y+20} Q${x+1} ${y+26} ${x+2} ${y+32}" stroke="#fff" stroke-width=".9" fill="none" opacity=".9"/>`).join("")}
+    <path d="M-4 ${y+13} Q60 ${y+19} 124 ${y+13}" fill="none" stroke="#ff8fb6" stroke-width="2.4"/>
+    <g transform="translate(46 ${y+14})">${[0,90,180,270].map(a=>`<circle cy="-2.2" r="2.2" transform="rotate(${a})" fill="#ff7aab" stroke="${L}" stroke-width=".7"/>`).join("")}<circle r="1.6" fill="#ff4f8a"/></g>
+    ${[[20,y+28],[60,y+34],[96,y+28]].map(([x,yy])=>pSpark(x, yy, 2, "#fff")).join("")}
+    ${pShade(y)}${pHi(30, y+6, 28, y+10, 30, y+12, 1.6)}`; }},
+  cakeDress: {lock:true, n:"奶油蛋糕裙", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#fff8ef", L, 10)}
+    <path d="M-4 ${y+10} Q60 ${y+18} 124 ${y+10} V130 H-4 Z" fill="#ffc3d4"/>
+    <path d="M-4 ${y+8} ${Array.from({length:16},(_,i)=>`q4 ${i%3===1?10:5} 8 0`).join(" ")} V${y+4} H-4 Z" fill="#fff8ef" stroke="${L}" stroke-width="1.2" stroke-linejoin="round" transform="translate(0 ${2})"/>
+    ${[12,28,44,60,76,92,108].map((x,i)=>`<g transform="translate(${x} ${y+22 + Math.abs(x-60)*-.04})"><path d="M-5 2 Q-5 -5 0 -5 Q5 -5 5 2 Z" fill="#ff5f7e" stroke="${L}" stroke-width="1"/><path d="M-3 1 Q-3 -3 0 -3 Q3 -3 3 1 Z" fill="#ffd0da"/><path d="M0 1 V-3" stroke="#ff8fa8" stroke-width=".7"/></g>`).join("")}
+    <path d="M-4 ${y+26} Q60 ${y+33} 124 ${y+26} V${y+30} Q60 ${y+37} -4 ${y+30} Z" fill="#fff8ef" stroke="${L}" stroke-width="1"/>
+    ${[[30,y+5,"#8fd1ff",30],[52,y+8,"#ffd66b",-20],[70,y+8,"#a8e6a1",60],[88,y+5,"#c9a6ff",10],[40,y+38,"#fff",0],[80,y+40,"#fff",40]].map(([x,yy,col,r])=>`<rect x="${x}" y="${yy}" width="3.4" height="1.4" rx=".7" fill="${col}" transform="rotate(${r} ${x} ${yy})"/>`).join("")}
+    ${pShade(y)}`; }},
+  laceDress: {lock:true, n:"蕾絲洋裝", f:(s,L)=>{ const y = s.my + 4; return `
+    ${pBody(y, "#d9cdf2", L, 10)}
+    ${[[-1],[1]].map(([k])=>`<path d="M60 ${y+6} Q${60+k*4} ${y+16} ${60+k*14} ${y+14} Q${60+k*24} ${y+11} ${60+k*22} ${y+2} Q${60+k*12} ${y+6} 60 ${y+6} Z" fill="#fff" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/><path d="M${60+k*3} ${y+9} Q${60+k*6} ${y+13} ${60+k*14} ${y+12} Q${60+k*20} ${y+10} ${60+k*20} ${y+5}" stroke="#d9cdf2" stroke-width=".9" fill="none" stroke-dasharray="1.4 1.4"/>`).join("")}
+    ${[y+18,y+25,y+32].map(yy=>`<circle cx="60" cy="${yy}" r="1.8" fill="#fff" stroke="${L}" stroke-width=".8"/>`).join("")}
+    ${[[22,y+16],[96,y+18],[34,y+30],[86,y+30],[14,y+26],[106,y+28]].map(([x,yy])=>`<g transform="translate(${x} ${yy})">${[0,72,144,216,288].map(a=>`<circle cy="-1.6" r="1.3" transform="rotate(${a})" fill="#fff"/>`).join("")}<circle r=".9" fill="#ffd66b"/></g>`).join("")}
+    <path d="M-4 ${y+38} Q60 ${y+46} 124 ${y+38} V130 H-4 Z" fill="#fff" stroke="${L}" stroke-width="1.2"/>
+    ${pScallop(-4, y+38, 124, 16, 3.4, "#fff", 2)}
+    ${Array.from({length:15},(_,i)=>`<circle cx="${4+i*8}" cy="${y+41.6 + Math.abs(4+i*8-60)*-.07 + 3.4}" r="1" fill="#d9cdf2"/>`).join("")}
+    ${pShade(y)}${pHi(32, y+16, 28, y+24, 30, y+32, 1.8)}`; }}
+});
+
+/* 手上（右下方，小圓手握著） */
+Object.assign(MA_HAND, {
+  scepter: {lock:true, n:"寶石權杖", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y+2} L105 ${y-30}" stroke="${L}" stroke-width="5.4" stroke-linecap="round"/><path d="M98 ${y+2} L105 ${y-30}" stroke="#f6cd5a" stroke-width="3.6" stroke-linecap="round"/>
+    ${[0,1,2,3].map(i=>`<path d="M${98.6+i*1.6} ${y-4-i*7} l3.4 -1.4" stroke="#ff8fb6" stroke-width="1.6" stroke-linecap="round"/>`).join("")}
+    <circle cx="106" cy="${y-39}" r="9.4" fill="#fff3c4" opacity=".5"/>
+    <circle cx="106" cy="${y-39}" r="8" fill="none" stroke="${L}" stroke-width="4"/><circle cx="106" cy="${y-39}" r="8" fill="none" stroke="#f6cd5a" stroke-width="2.4"/>
+    ${pHeart(106, y-38.4, .95, "#ff6fa5", L, 1.2)}<path d="M102.6 ${y-41} q1.2 -1.4 2.6 -.6" stroke="#ffd0e2" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <path d="M100 ${y-47} L99 ${y-53} L103 ${y-50} L106 ${y-55} L109 ${y-50} L113 ${y-53} L112 ${y-47} Z" fill="#f6cd5a" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle cx="106" cy="${y-55.6}" r="1.4" fill="#fff" stroke="${L}" stroke-width=".7"/>
+    <circle cx="104.6" cy="${y-30}" r="2" fill="#8fd1ff" stroke="${L}" stroke-width=".8"/>
+    ${pSpark(117, y-46, 2.6)}${pSpark(94, y-50, 2)}` + maPaw(98, y, c, L); }},
+  snowWand: {lock:true, n:"雪花魔杖", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y+2} L104 ${y-30}" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M98 ${y+2} L104 ${y-30}" stroke="#cfe6fb" stroke-width="3.2" stroke-linecap="round"/><path d="M99.6 ${y-4} L103 ${y-26}" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
+    <path d="M102 ${y-22} Q96 ${y-18} 98 ${y-12} M104 ${y-22} Q110 ${y-16} 106 ${y-10}" stroke="#9fd0ff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <circle cx="105" cy="${y-40}" r="11" fill="#bfe3ff" opacity=".35"/>
+    ${pFlake(105, y-40, 10, L, 4)}${pFlake(105, y-40, 10, "#9fd0ff", 2.4)}${pFlake(105, y-40, 10, "#fff", .9)}
+    <circle cx="105" cy="${y-40}" r="2.6" fill="#fff" stroke="#7fb3e0" stroke-width=".9"/>
+    ${pFlake(90, y-52, 3, "#bfe3ff", 1)}${pFlake(118, y-28, 2.6, "#bfe3ff", 1)}${pSpark(118, y-52, 2.4, "#fff")}` + maPaw(98, y, c, L); }},
+  trident: {lock:true, n:"小三叉戟", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y+2} L105 ${y-36}" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M98 ${y+2} L105 ${y-36}" stroke="#f6cd5a" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M96.6 ${y-37} Q105.6 ${y-34} 114 ${y-40}" stroke="${L}" stroke-width="4.4" fill="none" stroke-linecap="round"/><path d="M96.6 ${y-37} Q105.6 ${y-34} 114 ${y-40}" stroke="#f6cd5a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    ${[[97,y-37,95,y-49],[105.4,y-36,107,y-53],[114,y-40,117,y-51]].map(([x1,y1,x2,y2])=>`<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${L}" stroke-width="4" stroke-linecap="round"/><path d="M${x1} ${y1} L${x2} ${y2}" stroke="#ffe08a" stroke-width="2.2" stroke-linecap="round"/><path d="M${x2-2.6} ${y2+3} L${x2+.4} ${y2-3} L${x2+3} ${y2+3.4} Z" fill="#ffe08a" stroke="${L}" stroke-width="1" stroke-linejoin="round"/>`).join("")}
+    <circle cx="105.6" cy="${y-33.6}" r="2.6" fill="#fff" stroke="${L}" stroke-width="1"/><circle cx="104.8" cy="${y-34.4}" r=".8" fill="#fff" stroke="#ddd" stroke-width=".3"/>
+    <path d="M101 ${y-20} q-6 2 -6 7 q4 -4 7 -3" fill="#8fe3d6" stroke="${L}" stroke-width=".9"/>
+    ${[[92,y-58,1.8],[88,y-50,1.2],[120,y-58,1.4]].map(([x,yy,r])=>`<circle cx="${x}" cy="${yy}" r="${r}" fill="none" stroke="#8fd1ff" stroke-width="1"/>`).join("")}` + maPaw(98, y, c, L); }},
+  rainbowLolly: {lock:true, n:"彩虹棒棒糖", f:(s,L,c)=>{ const y = s.my + 8, cx = 105, cy = y - 34, cols = ["#ff8fb6","#ffc36b","#ffe27a","#8fd6b4","#8fd1ff","#c9a6ff"]; return `
+    <path d="M98 ${y+2} L104 ${y-24}" stroke="${L}" stroke-width="4.4" stroke-linecap="round"/><path d="M98 ${y+2} L104 ${y-24}" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="12.4" fill="#fff" stroke="${L}" stroke-width="2"/>
+    ${cols.map((col,i)=>{ const a1 = i*Math.PI/3, a2 = a1 + Math.PI/3, r = 11.4; return `<path d="M${cx} ${cy} L${(cx+Math.cos(a1)*r).toFixed(1)} ${(cy+Math.sin(a1)*r).toFixed(1)} A${r} ${r} 0 0 1 ${(cx+Math.cos(a2)*r).toFixed(1)} ${(cy+Math.sin(a2)*r).toFixed(1)} Z" fill="${col}"/>`; }).join("")}
+    <path d="M${Array.from({length:40},(_,i)=>{ const t = i/39, a = t*Math.PI*4.4, r = 1 + t*10; return (cx+Math.cos(a)*r).toFixed(1) + " " + (cy+Math.sin(a)*r).toFixed(1); }).join(" L")}" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="12.4" fill="none" stroke="${L}" stroke-width="2"/>
+    <path d="M${cx-8} ${cy-5} Q${cx-6} ${cy-9} ${cx-2} ${cy-10}" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9"/>
+    <path d="M102 ${y-14} C96 ${y-20} 92 ${y-14} 96 ${y-11} C98 ${y-10} 100 ${y-12} 102 ${y-14} Z M102 ${y-14} C106 ${y-22} 112 ${y-18} 109 ${y-13} C107 ${y-11} 104 ${y-12} 102 ${y-14} Z" fill="#ff8fb6" stroke="${L}" stroke-width="1.1"/><circle cx="102" cy="${y-14}" r="1.6" fill="#ff5f97" stroke="${L}" stroke-width=".7"/>` + maPaw(98, y, c, L); }},
+  icecream: {lock:true, n:"雙球冰淇淋", f:(s,L,c)=>{ const y = s.my + 6; return `
+    <path d="M100 ${y+5} L91 ${y-15} H109 Z" fill="#e8b878" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <clipPath id="ic${(MA_UID+1)}"><path d="M100 ${y+5} L91 ${y-15} H109 Z"/></clipPath><g clip-path="url(#ic${(++MA_UID)})" stroke="#c98e4e" stroke-width="1">${[-8,-2,4,10].map(d=>`<path d="M${88+d} ${y-18} L${104+d} ${y+6} M${112-d} ${y-18} L${96-d} ${y+6}"/>`).join("")}</g>
+    <circle cx="100" cy="${y-20}" r="9" fill="#a8e6c8" stroke="${L}" stroke-width="1.8"/>
+    <path d="M91 ${y-17} q2 4 4 0 q2 5 4 1 q3 4 5 0 q2 3 4 0" fill="#a8e6c8" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/>
+    ${[[96,y-22],[103,y-24],[99,y-18]].map(([x,yy])=>`<circle cx="${x}" cy="${yy}" r=".9" fill="#6b4029"/>`).join("")}
+    <circle cx="100" cy="${y-32}" r="8" fill="#ffb3cf" stroke="${L}" stroke-width="1.8"/>
+    <path d="M92.4 ${y-29} q2 3.4 3.4 0 q2 4 4 .6 q2.4 3 4 0 q1.6 2.6 3.4 0" fill="#ffb3cf" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    ${[[96,y-35,"#8fd1ff",20],[102,y-37,"#ffe27a",-30],[104,y-31,"#a8e6a1",60],[97,y-30,"#fff",-10]].map(([x,yy,col,r])=>`<rect x="${x}" y="${yy}" width="3" height="1.2" rx=".6" fill="${col}" transform="rotate(${r} ${x} ${yy})"/>`).join("")}
+    <circle cx="101" cy="${y-42}" r="3.4" fill="#e2463f" stroke="${L}" stroke-width="1.2"/><path d="M101 ${y-45} Q102 ${y-50} 106 ${y-50}" stroke="#4f9a4a" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="100" cy="${y-43}" r="1" fill="#fff" opacity=".8"/>
+    ${pHi(94, y-24, 94, y-26, 96, y-27, 1.6)}${pHi(95, y-35, 95.4, y-37, 97.4, y-38, 1.4)}` + maPaw(100, y+4, c, L); }},
+  bouquet: {lock:true, n:"小花束", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M90 ${y-28} Q86 ${y-38} 94 ${y-40} M112 ${y-30} Q120 ${y-36} 116 ${y-42}" stroke="#6fae5a" stroke-width="1.6" fill="none"/>
+    <path d="M88 ${y-32} Q84 ${y-40} 90 ${y-42} Q92 ${y-36} 88 ${y-32} Z M114 ${y-34} Q122 ${y-38} 120 ${y-44} Q114 ${y-40} 114 ${y-34} Z" fill="#8fc27a" stroke="${L}" stroke-width="1"/>
+    ${[[96,y-34,"#ff7aab"],[108,y-36,"#ff9cc0"],[102,y-44,"#ff5f97"]].map(([x,yy,col])=>`<circle cx="${x}" cy="${yy}" r="6.2" fill="${col}" stroke="${L}" stroke-width="1.4"/><path d="M${x-3} ${yy} Q${x-3} ${yy-3.4} ${x} ${yy-3.4} Q${x+3} ${yy-3.4} ${x+3} ${yy} Q${x+3} ${yy+2.4} ${x} ${yy+2.4} Q${x-1.6} ${yy+2.4} ${x-1.6} ${yy}" fill="none" stroke="#fff" stroke-width="1.1" opacity=".75"/>`).join("")}
+    ${[[89,y-38],[114,y-46],[100,y-27]].map(([x,yy])=>`<g transform="translate(${x} ${yy})">${[0,72,144,216,288].map(a=>`<ellipse cy="-2.4" rx="1.6" ry="2.4" transform="rotate(${a})" fill="#fff" stroke="${L}" stroke-width=".6"/>`).join("")}<circle r="1.3" fill="#ffd66b"/></g>`).join("")}
+    <path d="M90 ${y-26} L112 ${y-28} L102 ${y+4} Z" fill="#c9e4ff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M94 ${y-24} L102 ${y+1}" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M106 ${y-27} L102 ${y+2}" stroke="#a8ccf0" stroke-width="1.2"/>
+    ${pScallop(90, y-26, 112, 6, 2.4, "#fff", 1.4)}
+    <path d="M101 ${y-6} C95 ${y-12} 91 ${y-7} 94 ${y-4} C96 ${y-2} 99 ${y-4} 101 ${y-6} Z M101 ${y-6} C107 ${y-12} 111 ${y-7} 108 ${y-4} C106 ${y-2} 103 ${y-4} 101 ${y-6} Z" fill="#ff8fb6" stroke="${L}" stroke-width="1.1"/><path d="M101 ${y-6} L97 ${y+2} M101 ${y-6} L105 ${y+1}" stroke="#ff8fb6" stroke-width="1.8" stroke-linecap="round"/><circle cx="101" cy="${y-6}" r="1.6" fill="#ff5f97" stroke="${L}" stroke-width=".7"/>` + maPaw(100, y+2, c, L); }},
+  heartWand: {lock:true, n:"愛心魔法棒", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y+2} L104 ${y-30}" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M98 ${y+2} L104 ${y-30}" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+    ${[0,1,2,3].map(i=>`<path d="M${98.4+i*1.5} ${y-3-i*7} l3.2 -1.6" stroke="#ff7aab" stroke-width="1.8" stroke-linecap="round"/>`).join("")}
+    <path d="M103 ${y-30} Q94 ${y-30} 92 ${y-20} M104 ${y-30} Q114 ${y-28} 114 ${y-18}" stroke="#c9a6ff" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M103 ${y-30} Q98 ${y-24} 98 ${y-16}" stroke="#8fd1ff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${[-1,1].map(k=>`<path d="M${105+k*8} ${y-41} Q${105+k*18} ${y-50} ${105+k*20} ${y-42} Q${105+k*16} ${y-38} ${105+k*19} ${y-35} Q${105+k*12} ${y-33} ${105+k*8} ${y-37} Z" fill="#fff" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>`).join("")}
+    <circle cx="105" cy="${y-40}" r="11" fill="#ffd0e2" opacity=".35"/>
+    ${pHeart(105, y-39, 1.55, "#ff5f97", L, 2)}<path d="M99.4 ${y-43} q1.8 -2.6 4.2 -1.2" stroke="#ffd0e2" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${pSpark(105, y-40, 2.6, "#fff")}${pSpark(92, y-52, 2.6)}${pSpark(119, y-52, 2, "#ffd0e2")}` + maPaw(98, y, c, L); }},
+  teacup: {lock:true, n:"玫瑰茶杯", f:(s,L,c)=>{ const y = s.my + 2; return `
+    <ellipse cx="102" cy="${y+2}" rx="14" ry="3.6" fill="#fff" stroke="${L}" stroke-width="1.6"/><ellipse cx="102" cy="${y+1.4}" rx="8" ry="1.8" fill="#f3eefb"/>
+    <path d="M91 ${y-14} H113 Q113 ${y+1} 102 ${y+1} Q91 ${y+1} 91 ${y-14} Z" fill="#fff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M113 ${y-11} Q119 ${y-11} 118 ${y-6} Q117 ${y-2} 111 ${y-3}" fill="none" stroke="${L}" stroke-width="3.4"/><path d="M113 ${y-11} Q119 ${y-11} 118 ${y-6} Q117 ${y-2} 111 ${y-3}" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <ellipse cx="102" cy="${y-14}" rx="11" ry="2.6" fill="#e8a87c" stroke="${L}" stroke-width="1.4"/><path d="M96 ${y-14.4} q3 -1 6 0" stroke="#f6d0b0" stroke-width="1" fill="none"/>
+    <path d="M91.6 ${y-11} Q102 ${y-8.6} 112.4 ${y-11}" stroke="#f6cd5a" stroke-width="1.4" fill="none"/>
+    <circle cx="102" cy="${y-5}" r="3" fill="#ff7aab" stroke="${L}" stroke-width=".8"/><path d="M100.6 ${y-5.4} q1.4 -1.6 2.8 0 q-1.4 1.6 -2.8 0" stroke="#ffd0e2" stroke-width=".8" fill="none"/>
+    <path d="M98 ${y-4} q-3 -1 -4 1 q2 1 4 -1 Z M106 ${y-4} q3 -1 4 1 q-2 1 -4 -1 Z" fill="#8fc27a"/>
+    <path d="M93.4 ${y-10} Q94 ${y-4} 98 ${y-1.4}" stroke="#f3eefb" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M98 ${y-20} q-2.4 -4 .6 -7 M106 ${y-20} q-2.4 -4 .6 -7" stroke="#cfc6d8" stroke-width="1.6" fill="none" stroke-linecap="round"/>${pHeart(102, y-30, .45, "#ffb3cf")}` + maPaw(96, y+5, c, L); }},
+  moonWand: {lock:true, n:"月亮權杖", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y+2} L104 ${y-30}" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M98 ${y+2} L104 ${y-30}" stroke="#c9a6ff" stroke-width="3.2" stroke-linecap="round"/><path d="M99.4 ${y-4} L102.6 ${y-25}" stroke="#e6dafc" stroke-width="1" stroke-linecap="round"/>
+    <ellipse cx="103.6" cy="${y-28}" rx="4" ry="2.4" fill="#f6cd5a" stroke="${L}" stroke-width="1.1"/><circle cx="100.6" cy="${y-12}" r="2.2" fill="#f6cd5a" stroke="${L}" stroke-width=".9"/>
+    <circle cx="105" cy="${y-42}" r="12" fill="#fff3a8" opacity=".25"/>
+    <path transform="translate(105 ${y-42}) rotate(-30)" d="M0 -11 A11 11 0 1 0 8 7.6 A8.6 8.6 0 1 1 0 -11 Z" fill="#ffd66b" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path transform="translate(105 ${y-42}) rotate(-30)" d="M-3 -8 A8.4 8.4 0 0 0 -2 6" stroke="#fff3c4" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path transform="translate(109 ${y-43}) scale(.42)" d="${STAR5}" fill="#c9a6ff" stroke="${L}" stroke-width="2.6" stroke-linejoin="round"/>
+    ${pSpark(92, y-54, 2.6)}${pSpark(120, y-50, 2, "#fff")}<circle cx="118" cy="${y-36}" r="1" fill="#fff3a8"/>` + maPaw(98, y, c, L); }},
+  handbag: {lock:true, n:"小提包", f:(s,L,c)=>{ const y = s.my + 6; return `
+    <path d="M95 ${y-20} Q102 ${y-34} 109 ${y-20}" fill="none" stroke="${L}" stroke-width="4"/><path d="M95 ${y-20} Q102 ${y-34} 109 ${y-20}" fill="none" stroke="#f6cd5a" stroke-width="2.2"/>
+    <path d="M90 ${y-20} H114 L116 ${y-2} Q116 ${y+1} 113 ${y+1} H91 Q88 ${y+1} 88 ${y-2} Z" fill="#ff9cc0" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <clipPath id="hb${(MA_UID+1)}"><path d="M90 ${y-20} H114 L116 ${y-2} Q116 ${y+1} 113 ${y+1} H91 Q88 ${y+1} 88 ${y-2} Z"/></clipPath><g clip-path="url(#hb${(++MA_UID)})" stroke="#ff7aab" stroke-width="1">${[-12,-6,0,6,12,18].map(d=>`<path d="M${88+d} ${y-20} l20 22 M${116-d} ${y-20} l-20 22"/>`).join("")}</g>
+    <path d="M90 ${y-20} H114 L114.6 ${y-14} Q102 ${y-10} 89.4 ${y-14} Z" fill="#ff7aab" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/>
+    <circle cx="102" cy="${y-12.4}" r="2.2" fill="#f6cd5a" stroke="${L}" stroke-width="1"/>
+    <path d="M110 ${y-16} C106 ${y-21} 103 ${y-17} 105 ${y-15} C107 ${y-14} 108 ${y-15} 110 ${y-16} Z M110 ${y-16} C114 ${y-21} 117 ${y-17} 115 ${y-15} C113 ${y-14} 112 ${y-15} 110 ${y-16} Z" fill="#fff" stroke="${L}" stroke-width="1"/>
+    <path d="M91 ${y-8} V${y-2}" stroke="#ffd0e2" stroke-width="1.6" stroke-linecap="round"/>
+    ${pSpark(118, y-26, 2.2)}` + maPaw(96, y+2, c, L); }},
+  heartBalloon: {lock:true, n:"愛心氣球", f:(s,L,c)=>{ const y = s.my + 8; return `
+    <path d="M98 ${y} Q94 ${y-8} 100 ${y-14} Q106 ${y-20} 102 ${y-26} Q99 ${y-30} 104 ${y-34}" fill="none" stroke="${L}" stroke-width="1.1"/>
+    ${pHeart(106, y-46, 2.3, "#ff5f97", L, 2)}
+    <path d="M104 ${y-34} l-1.6 2.6 h3.4 Z" fill="#ff5f97" stroke="${L}" stroke-width=".9" stroke-linejoin="round"/>
+    <path d="M97 ${y-51} Q98 ${y-56} 103 ${y-55}" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".85"/><circle cx="97" cy="${y-47}" r="1.2" fill="#fff" opacity=".8"/>
+    <path d="M110 ${y-44} Q113 ${y-48} 112 ${y-52}" stroke="#ff3f80" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".6"/>
+    ${pSpark(92, y-36, 2.2, "#ffd0e2")}` + maPaw(98, y, c, L); }}
+});
+
+/* 身旁（左上方） */
+Object.assign(MA_FLOAT, {
+  glassSlipper: {lock:true, n:"水晶鞋", f:(L)=>`
+    <path d="M4 48 Q4 44 9 44 H37 Q42 44 42 48 V50 Q42 55 37 55 H9 Q4 55 4 50 Z" fill="#c9a6ff" stroke="${L}" stroke-width="1.6"/>
+    <path d="M7 47 H39" stroke="#e6dafc" stroke-width="1.2" stroke-linecap="round"/>${pStitch("M8 52 H38", "#e6dafc")}
+    ${[4,42].map(x=>`<path d="M${x} 55 l-2 4 M${x} 55 l1 4.4" stroke="#f6cd5a" stroke-width="1.4" stroke-linecap="round"/><circle cx="${x}" cy="55" r="1.6" fill="#f6cd5a"/>`).join("")}
+    <path d="M9 23 Q7.6 29 11 32.6 L10.4 44 H13.8 L15 35 Q20.6 37.4 26.4 40.4 Q32 43.4 37 43.4 Q41 43.4 41 40 Q41 36.6 35.6 35 Q28 32.6 22 29.6 Q16 27 13.4 22.4 Z" fill="#cfeeff" fill-opacity=".92" stroke="${L}" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M11.4 24 Q16 30.4 24.6 32 Q20 32.6 15.4 30 Q12 27.6 11.4 24 Z" fill="#9fd0f5"/>
+    <path d="M16 37.6 Q26 42 36 41.6" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M11.4 34 L11.8 42" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
+    <path d="M28 33 L33 38 M24 34 L30 39" stroke="#fff" stroke-width=".8" opacity=".8"/>
+    <path d="M32 34.6 C28.6 31.4 26.4 33.6 28.4 35.6 C29.6 36.6 31 35.6 32 34.6 Z M32 34.6 C35.4 31.4 37.6 33.6 35.6 35.6 C34.4 36.6 33 35.6 32 34.6 Z" fill="#ff9cc0" stroke="${L}" stroke-width=".8"/><circle cx="32" cy="34.6" r="1.1" fill="#ff5f97"/>
+    ${pSpark(26, 22, 3, "#fff")}${pSpark(6, 16, 2.2)}${pSpark(38, 28, 1.8, "#fff")}`},
+  snowGlobe: {lock:true, n:"雪花水晶球", f:(L)=>`
+    <path d="M10 44 H34 L37 53 H7 Z" fill="#ff9cc0" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 50 H36" stroke="#f6cd5a" stroke-width="2"/>
+    <circle cx="22" cy="30" r="14" fill="#dff2ff" fill-opacity=".85" stroke="${L}" stroke-width="1.8"/>
+    <path d="M9 34 Q22 30 35 34 Q34 40 22 44 Q10 40 9 34 Z" fill="#fff"/>
+    <path d="M15 35 V27 L17 24 L19 27 V35 Z M25 35 V25 L27.4 21 L29.6 25 V35 Z M18.6 35 V29 H25.4 V35 Z" fill="#c9b8ea" stroke="${L}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M21 35 V32 Q22 30.6 23 32 V35 Z" fill="#8a76c8"/><path d="M27.4 21 V17 l3 1 l-3 1" stroke="#ff7aab" stroke-width=".9" fill="#ff7aab"/>
+    ${[[13,22],[19,18],[29,30],[31,26],[14,30],[24,22],[33,20]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".9" fill="#fff"/>`).join("")}
+    <path d="M12 22 Q14 17 20 16" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`},
+  pearlShell: {lock:true, n:"珍珠貝殼", f:(L)=>`
+    <path d="M6 32 Q4 14 22 12 Q40 14 38 32 Q22 26 6 32 Z" fill="#ffc3d4" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    ${[10,16,22,28,34].map(x=>`<path d="M22 30 L${x} ${16 + Math.abs(x-22)*.3}" stroke="#ff93b3" stroke-width="1.1"/>`).join("")}
+    <path d="M6 34 Q22 28 38 34 Q36 48 22 48 Q8 48 6 34 Z" fill="#ffd6e2" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M10 36 Q22 32 34 36 Q32 44 22 44 Q12 44 10 36 Z" fill="#ffe8ef"/>
+    <circle cx="22" cy="37" r="6" fill="#fff" stroke="${L}" stroke-width="1.3"/><circle cx="22" cy="37" r="4.4" fill="#f6f1fb"/><circle cx="20" cy="35" r="1.8" fill="#fff"/><circle cx="24" cy="39.6" r=".7" fill="#e6dafc"/>
+    <path d="M10 22 Q12 17 18 16" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${[[36,8,2.4],[32,4,1.4],[8,8,1.6]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#8fd1ff" stroke-width="1"/>`).join("")}`},
+  rainbowCloud: {lock:true, n:"彩虹小雲", f:(L)=>`
+    ${["#ff8fb6","#ffc36b","#ffe27a","#8fd6b4","#8fd1ff"].map((col,i)=>`<path d="M${7+i*2.6} 40 A${15-i*2.6} ${15-i*2.6} 0 0 1 ${37-i*2.6} 40" fill="none" stroke="${col}" stroke-width="2.8"/>`).join("")}
+    ${[[8,42],[36,42]].map(([x,y])=>`<path d="M${x-7} ${y+5} Q${x-9} ${y} ${x-4} ${y-1} Q${x-3} ${y-6} ${x+2} ${y-4} Q${x+7} ${y-5} ${x+7} ${y+1} Q${x+10} ${y+5} ${x+5} ${y+6} H${x-5} Z" fill="#fff" stroke="${L}" stroke-width="1.5" stroke-linejoin="round"/>`).join("")}
+    <circle cx="34" cy="42" r=".9" fill="${DK}"/><circle cx="39" cy="42" r=".9" fill="${DK}"/><path d="M35.4 44 q1.1 1 2.2 0" stroke="${DK}" stroke-width=".8" fill="none" stroke-linecap="round"/>
+    <circle cx="32.6" cy="44.2" r="1.1" fill="#ffb3cf" opacity=".8"/><circle cx="40.6" cy="44.2" r="1.1" fill="#ffb3cf" opacity=".8"/>
+    ${pSpark(22, 18, 2.6)}${pSpark(6, 28, 1.8, "#fff")}`},
+  musicBox: {lock:true, n:"旋轉音樂盒", f:(L)=>`
+    <path d="M7 34 L9 20 H35 L37 34 Z" fill="#c9b8ea" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/><path d="M11 32 L12.4 22 H31.6 L33 32 Z" fill="#e6f4ff" stroke="#f6cd5a" stroke-width="1"/><path d="M14 30 L18 23" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="6" y="34" width="32" height="16" rx="2" fill="#ffb3cf" stroke="${L}" stroke-width="1.8"/>
+    <path d="M6 38 H38 M6 46 H38" stroke="#f6cd5a" stroke-width="1.6"/>${pHeart(22, 42, .6, "#ff5f97")}
+    <rect x="38" y="40" width="3" height="4" rx="1" fill="#f6cd5a" stroke="${L}" stroke-width=".8"/>
+    <ellipse cx="22" cy="34" rx="5" ry="1.4" fill="#f6cd5a" stroke="${L}" stroke-width=".8"/>
+    <circle cx="22" cy="20" r="2.2" fill="#ffe0ea" stroke="${L}" stroke-width=".8"/><path d="M22 22 V28" stroke="#ffb3cf" stroke-width="2.4" stroke-linecap="round"/><path d="M22 23 L17 20 M22 23 L27 20" stroke="#ffe0ea" stroke-width="1" stroke-linecap="round"/>
+    <path d="M16 28 Q22 25 28 28 L26 30 Q22 28.6 18 30 Z" fill="#fff" stroke="#ff9cc0" stroke-width=".8"/><path d="M22 30 V33.4" stroke="#ffe0ea" stroke-width="1.2"/>
+    <path transform="translate(38 16) scale(.32)" d="M0 -10 V6 a4 4 0 1 1 -3 -4 V-10 h12 v4 h-9" fill="#c9a6ff"/><path transform="translate(5 12) scale(.26)" d="M0 -10 V6 a4 4 0 1 1 -3 -4 V-10 h12 v4 h-9" fill="#ff8fb6"/>`},
+  cupcake: {lock:true, n:"杯子蛋糕", f:(L)=>`
+    <path d="M10 36 H34 L31 52 H13 Z" fill="#8fd1ff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    ${[14,18,22,26,30].map(x=>`<path d="M${x} 37 L${x+(22-x)*.12} 51" stroke="#5aa2ef" stroke-width="1"/>`).join("")}
+    <path d="M13 38 L15 50" stroke="#d6ecff" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M8 37 Q6 30 12 29 Q11 22 18 22 Q20 16 26 19 Q33 19 32 26 Q38 28 36 36 Q22 40 8 37 Z" fill="#ffb3cf" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M12 31 Q20 33 30 29 M16 25 Q22 27 28 24" stroke="#ff8fb6" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M11 28 Q12 24 16 24" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    ${[[14,34,"#ffe27a",20],[20,30,"#8fd6b4",-30],[28,33,"#c9a6ff",50],[24,25,"#fff",10],[31,30,"#8fd1ff",-10]].map(([x,y,col,r])=>`<rect x="${x}" y="${y}" width="3" height="1.2" rx=".6" fill="${col}" transform="rotate(${r} ${x} ${y})"/>`).join("")}
+    <circle cx="23" cy="16" r="3.6" fill="#e2463f" stroke="${L}" stroke-width="1.2"/><path d="M23 13 Q24 8 28 7" stroke="#4f9a4a" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="22" cy="15" r="1" fill="#fff" opacity=".8"/>`},
+  butterflyPal: {lock:true, n:"小蝴蝶", f:(L)=>`
+    <path d="M36 50 Q30 56 24 52 Q20 48 26 46" stroke="#c9a6ff" stroke-width="1" fill="none" stroke-dasharray="1.6 2" stroke-linecap="round"/>
+    <g transform="translate(22 30) rotate(-12)">
+      <path d="M0 0 Q-6 -16 -16 -12 Q-20 -4 -10 0 Z M0 0 Q6 -16 16 -12 Q20 -4 10 0 Z" fill="#ffb3cf" stroke="${L}" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M0 0 Q-12 2 -12 10 Q-4 12 0 2 Z M0 0 Q12 2 12 10 Q4 12 0 2 Z" fill="#c9b8ea" stroke="${L}" stroke-width="1.5" stroke-linejoin="round"/>
+      ${[[-10,-7,2.4,"#fff"],[10,-7,2.4,"#fff"],[-7,6,1.6,"#ffd66b"],[7,6,1.6,"#ffd66b"],[-14,-10,1,"#ff7aab"],[14,-10,1,"#ff7aab"]].map(([x,y,r,col])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${col}"/>`).join("")}
+      <ellipse cx="0" cy="1" rx="2.4" ry="7" fill="#8a76c8" stroke="${L}" stroke-width="1.2"/>
+      <circle cx="0" cy="-7" r="3.6" fill="#8a76c8" stroke="${L}" stroke-width="1.2"/><circle cx="-1.3" cy="-7.4" r=".7" fill="#fff"/><circle cx="1.3" cy="-7.4" r=".7" fill="#fff"/>
+      <path d="M-1 -10 Q-4 -16 -6 -15 M1 -10 Q4 -16 6 -15" stroke="${L}" stroke-width="1" fill="none"/><circle cx="-6" cy="-15" r="1.1" fill="#ff7aab"/><circle cx="6" cy="-15" r="1.1" fill="#ff7aab"/>
+    </g>`},
+  magicStar: {lock:true, n:"星星小精靈", f:(L)=>`
+    <path d="M38 50 Q32 44 34 38 M40 44 Q36 40 38 34" stroke="#ffe27a" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".8"/>
+    ${pSpark(36, 52, 2.4)}${pSpark(40, 40, 1.6, "#fff")}
+    <circle cx="22" cy="30" r="15" fill="#fff3a8" opacity=".25"/>
+    <path transform="translate(22 30) scale(1.4) rotate(-8)" d="${STAR5}" fill="#ffd66b" stroke="${L}" stroke-width="1.3" stroke-linejoin="round"/>
+    <path transform="translate(22 30) scale(.8) rotate(-8)" d="${STAR5}" fill="#ffe89a"/>
+    <circle cx="18.6" cy="30" r="1.4" fill="${DK}"/><circle cx="25" cy="29" r="1.4" fill="${DK}"/><circle cx="19" cy="29.4" r=".5" fill="#fff"/><circle cx="25.4" cy="28.4" r=".5" fill="#fff"/>
+    <path d="M20.4 33 q1.6 1.6 3.2 -.2" stroke="${DK}" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <circle cx="16.4" cy="32.6" r="1.4" fill="#ff9cc0" opacity=".8"/><circle cx="27.4" cy="31.6" r="1.4" fill="#ff9cc0" opacity=".8"/>
+    <path d="M17 13 L18 9 L20.4 12 L22.6 8 L24.4 12 L27 9.6 L27 14 Q22 15 17 13 Z" fill="#ff8fb6" stroke="${L}" stroke-width=".9" stroke-linejoin="round" transform="rotate(-8 22 12)"/>`},
+  teapot: {lock:true, n:"小茶壺", f:(L)=>`
+    <path d="M8 34 Q4 30 2 26 Q6 25 9 29" fill="none" stroke="${L}" stroke-width="3.8" stroke-linecap="round"/><path d="M8 34 Q4 30 2 26 Q6 25 9 29" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M34 30 Q42 30 40 38 Q38 44 32 42" fill="none" stroke="${L}" stroke-width="3.6"/><path d="M34 30 Q42 30 40 38 Q38 44 32 42" fill="none" stroke="#fff" stroke-width="2"/>
+    <path d="M8 38 Q8 26 21 26 Q34 26 34 38 Q34 48 21 48 Q8 48 8 38 Z" fill="#fff" stroke="${L}" stroke-width="1.8"/>
+    <path d="M11 46 H31 L29 50 H13 Z" fill="#f6cd5a" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M13 26 Q21 20 29 26 Z" fill="#c9b8ea" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/><circle cx="21" cy="20.6" r="2.4" fill="#f6cd5a" stroke="${L}" stroke-width="1"/>
+    <path d="M8.6 34 Q21 36.6 33.4 34" stroke="#f6cd5a" stroke-width="1.4" fill="none"/>
+    ${[[16,40],[26,40]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.6" fill="#ff7aab" stroke="${L}" stroke-width=".7"/><path d="M${x-1.2} ${y-.4} q1.2 -1.4 2.4 0 q-1.2 1.4 -2.4 0" stroke="#ffd0e2" stroke-width=".7" fill="none"/><path d="M${x+2} ${y+1} q3 0 3 2 q-3 0 -3 -2 Z" fill="#8fc27a"/>`).join("")}
+    <path d="M11 32 Q12 29 15 28" stroke="#f3eefb" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M3 22 q-2 -3 .4 -6 M7 20 q-2 -3 .4 -6" stroke="#cfc6d8" stroke-width="1.4" fill="none" stroke-linecap="round"/>`},
+  moonLamp: {lock:true, n:"月亮寶寶", f:(L)=>`
+    <path d="M24 4 V12" stroke="${L}" stroke-width="1"/>
+    <circle cx="20" cy="30" r="16" fill="#fff3a8" opacity=".22"/>
+    <path transform="translate(20 30) rotate(20)" d="M0 -14 A14 14 0 1 0 11 8.6 A11 11 0 1 1 0 -14 Z" fill="#ffd66b" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M11 30 q1.6 1.4 3.2 0 M8.6 37 q1 .6 2 0" stroke="${DK}" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <circle cx="12.6" cy="35" r="1.6" fill="#ff9cc0" opacity=".8"/>
+    <path d="M14 18 Q10 22 10 28" stroke="#fff3c4" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path transform="translate(24 15) scale(.42)" d="${STAR5}" fill="#fff3a8" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M28 46 q-1 -4 3 -4 q1 -3 4 -2 q4 -1 4 3 q3 1 1 4 Z" fill="#fff" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>
+    <text x="30" y="24" font-size="6" font-weight="700" fill="#c9a6ff" font-family="sans-serif">z</text><text x="34" y="19" font-size="4.6" font-weight="700" fill="#c9a6ff" font-family="sans-serif">z</text>`},
+  mirror: {lock:true, n:"公主魔鏡", f:(L)=>`
+    <path d="M22 40 L21 54" stroke="${L}" stroke-width="5" stroke-linecap="round"/><path d="M22 40 L21 54" stroke="#f6cd5a" stroke-width="3.2" stroke-linecap="round"/>
+    <circle cx="21.2" cy="49" r="2" fill="#ff7aab" stroke="${L}" stroke-width=".8"/>
+    <ellipse cx="22" cy="26" rx="12" ry="14.4" fill="#f6cd5a" stroke="${L}" stroke-width="1.8"/>
+    ${Array.from({length:12},(_,i)=>{ const a = i*Math.PI/6; return `<circle cx="${(22+Math.cos(a)*12).toFixed(1)}" cy="${(26+Math.sin(a)*14.4).toFixed(1)}" r="1.5" fill="#ffe89a" stroke="#c98f2a" stroke-width=".6"/>`; }).join("")}
+    <ellipse cx="22" cy="26" rx="8.6" ry="11" fill="#dff2ff" stroke="#c98f2a" stroke-width="1"/>
+    <path d="M17 20 L22 15 M17 26 L25 18" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    ${pHeart(22, 10, .7, "#ff5f97", L, 1)}
+    ${pSpark(36, 18, 2.6, "#fff")}${pSpark(6, 36, 2)}`},
+  giftBox: {lock:true, n:"生日禮物盒", f:(L)=>`
+    <rect x="8" y="32" width="28" height="20" rx="2" fill="#8fd1ff" stroke="${L}" stroke-width="1.8"/>
+    ${[[13,37],[29,37],[13,47],[29,47],[21,43]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.6" fill="#fff" opacity=".85"/>`).join("")}
+    <rect x="6" y="26" width="32" height="7" rx="2" fill="#a8d8ff" stroke="${L}" stroke-width="1.8"/>
+    <path d="M30 33 H36 V52 Q33 52 30 50 Z" fill="${PSH}"/>
+    <rect x="19" y="26" width="6" height="26" fill="#ff7aab" stroke="${L}" stroke-width="1.2"/>
+    <path d="M22 26 C14 16 6 22 12 26 Z M22 26 C30 16 38 22 32 26 Z" fill="#ff7aab" stroke="${L}" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M20 25 C16 21 12 21 12 24 M24 25 C28 21 32 21 32 24" stroke="#ffd0e2" stroke-width="1" fill="none"/>
+    <circle cx="22" cy="26" r="2.6" fill="#ff5f97" stroke="${L}" stroke-width="1"/>
+    <path d="M36 36 L42 40 L40 46 L34 42 Z" fill="#fff6c8" stroke="${L}" stroke-width="1" stroke-linejoin="round"/><circle cx="37.6" cy="39.6" r=".8" fill="${L}"/>
+    <path d="M9 28 H18" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".8"/>
+    ${[[4,20,"#ffd66b",20],[40,22,"#ff8fb6",-30],[34,12,"#a8e6a1",60]].map(([x,y,col,r])=>`<rect x="${x}" y="${y}" width="3.4" height="1.4" rx=".7" fill="${col}" transform="rotate(${r} ${x} ${y})"/>`).join("")}`}
+});
+
+/* 身後 */
+Object.assign(MA_BACK, {
+  snowCape: {lock:true, n:"雪花披風", f:(L)=>`
+    <path d="M30 60 Q12 92 14 114 Q26 108 37 114 Q48 108 60 114 Q72 108 83 114 Q94 108 106 114 Q108 92 90 60 Z" fill="#a8d0f5" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M20 110 Q22 90 34 66 M100 110 Q98 90 86 66" stroke="#86b8e6" stroke-width="2" fill="none"/>
+    <path d="M26 76 Q19 92 20 104" stroke="#d6ecff" stroke-width="2" fill="none" stroke-linecap="round"/>
+    ${[14,22,30,38,46,54,62,70,78,86,94,102].map((x,i)=>`<circle cx="${x+2}" cy="${112 + (i%2?-1:1)}" r="4.4" fill="#fff" stroke="${L}" stroke-width="1"/>`).join("")}
+    ${pFlake(20, 94, 4.6, "#fff", 1.3)}${pFlake(100, 90, 5, "#fff", 1.3)}${pFlake(27, 78, 3, "#eaf6ff", 1)}${pFlake(94, 74, 3.2, "#eaf6ff", 1)}
+    ${pSpark(108, 98, 2.4, "#fff")}${pSpark(12, 84, 2, "#fff")}`},
+  uniWings: {lock:true, n:"彩虹羽翼", f:(L)=>[-1,1].map(k=>`<g transform="translate(60 70) scale(${k} 1)">
+    <path d="M22 -4 Q34 -38 56 -36 Q60 -20 52 -8 Q56 -2 50 4 Q52 10 44 14 Q36 16 24 8 Z" fill="#fff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    ${[["#ffb3cf",0],["#ffd98f",1],["#a8e6c8",2],["#a8d0ff",3]].map(([col,i])=>`<path d="M${26+i*2} ${-2+i*2} Q${40+i*2} ${-24+i*9} ${55-i*2} ${-30+i*10} Q${52-i*2} ${-20+i*8} ${48-i*3} ${-14+i*8} Q${38} ${-8+i*6} ${26+i*2} ${2+i*2} Z" fill="${col}" opacity=".9"/>`).join("")}
+    <path d="M50 -8 Q42 -6 30 0 M50 4 Q40 4 28 4 M44 14 Q36 10 26 7" stroke="#fff" stroke-width="1.2" fill="none"/>
+    <path d="M24 -4 Q34 -32 54 -34" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${pSpark(52, -40, 2.4)}</g>`).join("")},
+  petalWings: {lock:true, n:"花瓣翅膀", f:(L)=>[-1,1].map(k=>`<g transform="translate(60 72) scale(${k} 1)">
+    <path d="M20 -6 Q22 -34 44 -40 Q58 -40 56 -26 Q54 -10 22 0 Z" fill="#ffc3d9" fill-opacity=".92" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M24 -6 Q34 -22 50 -34 M30 -12 Q40 -14 52 -20 M28 -16 Q30 -28 38 -36" stroke="#ff9cc0" stroke-width="1" fill="none"/>
+    <path d="M26 -10 Q30 -30 44 -36" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8"/>
+    <path d="M20 4 Q38 2 46 14 Q46 26 34 24 Q24 20 20 6 Z" fill="#ffe0ea" fill-opacity=".92" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M22 6 Q32 10 40 20" stroke="#ffb3cf" stroke-width="1" fill="none"/>
+    <path d="M48 -30 q1.6 2.4 0 3.6 q-1.6 -1.2 0 -3.6 Z" fill="#dff2ff" stroke="#8fd1ff" stroke-width=".6"/>
+    <g transform="translate(40 18)">${[0,72,144,216,288].map(a=>`<circle cy="-1.8" r="1.6" transform="rotate(${a})" fill="#fff"/>`).join("")}<circle r="1" fill="#ffd66b"/></g></g>`).join("")}
+});
+
 /* 動作（不是畫在身上的部件，播放時套用 CSS 動畫 .mv-代號） */
 const MA_MOVES = {
   bounce: {n:"跳跳"},
@@ -8122,15 +9055,16 @@ const MA_MOVES = {
 };
 const MA_CATS = [
   ["b","身體",MA_SHAPES],["c","顏色",MA_COLORS],["e","眼睛",MA_EYES],["m","嘴巴",MA_MOUTHS],
-  ["t","頭頂",MA_TOPS],["a","臉上",MA_ACC],["n","脖子",MA_NECK],["k","身後",MA_BACK],["p","花紋",MA_PAT],["g","背景",MA_BG],["s","場景",MA_SCENE],["x","動作",MA_MOVES]
+  ["t","頭頂",MA_TOPS],["a","臉上",MA_ACC],["n","脖子",MA_NECK],["o","衣服",MA_OUTFIT],["w","手上",MA_HAND],["f","身旁",MA_FLOAT],["k","身後",MA_BACK],["p","花紋",MA_PAT],["g","背景",MA_BG],["s","場景",MA_SCENE],["x","動作",MA_MOVES]
 ];
-const MA_DEF = {b:"round",c:"mint",e:"dots",m:"cat",t:"horns",a:"none",n:"none",k:"none",p:"belly",g:"cream",s:"none",x:"bounce"};
+const MA_DEF = {b:"round",c:"mint",e:"dots",m:"cat",t:"horns",a:"none",n:"none",o:"none",w:"none",f:"none",k:"none",p:"belly",g:"cream",s:"none",x:"bounce"};
+let MA_UID = 0;   // 每張頭像的衣服裁切 clipPath 要有不同的 id
 function maRandom(canUse){
   canUse = canUse || ((k, v, o) => !o[v].lock);
   const pk = (k, o) => { const ks = Object.keys(o).filter(v=>v!=="none" && canUse(k, v, o)); return ks.length ? ks[Math.floor(Math.random()*ks.length)] : "none"; };
   const pkMaybe = (k, o, chanceNone) => Math.random() < chanceNone ? "none" : pk(k, o);
   const g = pk("g", MA_BG);
-  return {b:pk("b",MA_SHAPES), c:pk("c",MA_COLORS), e:pk("e",MA_EYES), m:pk("m",MA_MOUTHS), t:pkMaybe("t",MA_TOPS,.15), a:pkMaybe("a",MA_ACC,.6), n:pkMaybe("n",MA_NECK,.6), k:"none", p:pkMaybe("p",MA_PAT,.3), g:g==="none"?"cream":g, s:"none", x:"bounce"};
+  return {b:pk("b",MA_SHAPES), c:pk("c",MA_COLORS), e:pk("e",MA_EYES), m:pk("m",MA_MOUTHS), t:pkMaybe("t",MA_TOPS,.15), a:pkMaybe("a",MA_ACC,.6), n:pkMaybe("n",MA_NECK,.6), k:"none", p:pkMaybe("p",MA_PAT,.3), g:g==="none"?"cream":g, s:"none", x:"bounce", o:"none", w:"none", f:"none"};
 }
 function maFix(cfg){
   cfg = Object.assign({}, MA_DEF, cfg||{});
@@ -8154,12 +9088,15 @@ function maSvg(cfg, size, opts){
     ${MA_TOPS[cfg.t].f && ["catears","bunny","roundears","horns"].includes(cfg.t) ? `<g transform="translate(0 ${ty})">${MA_TOPS[cfg.t].f(L,c)}</g>` : ""}
     <path d="${s.d}" fill="${c[1]}" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
     ${MA_PAT[cfg.p].f(s,c)}
+    ${cfg.o !== "none" ? (()=>{ const id = "mac" + (++MA_UID); return `<clipPath id="${id}"><path d="${s.d}"/></clipPath><g clip-path="url(#${id})">${MA_OUTFIT[cfg.o].f(s,L,c)}</g><path d="${s.d}" fill="none" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>`; })() : ""}
     <ellipse cx="${60-blushOff}" cy="${s.ey+8}" rx="5" ry="3" fill="#f4a7a3" opacity=".7"/><ellipse cx="${60+blushOff}" cy="${s.ey+8}" rx="5" ry="3" fill="#f4a7a3" opacity=".7"/>
     ${eyes}
     ${MA_MOUTHS[cfg.m].f(60, s.my, L)}
     ${MA_NECK[cfg.n].f(s,L)}
     ${MA_ACC[cfg.a].f(s,L)}
-    ${!["catears","bunny","roundears","horns"].includes(cfg.t) ? `<g transform="translate(0 ${ty})">${MA_TOPS[cfg.t].f(L,c)}</g>` : ""}`;
+    ${!["catears","bunny","roundears","horns"].includes(cfg.t) ? `<g transform="translate(0 ${ty})">${MA_TOPS[cfg.t].f(L,c)}</g>` : ""}
+    ${MA_HAND[cfg.w].f(s,L,c)}
+    ${MA_FLOAT[cfg.f].f(L)}`;
   const vb = opts.full ? "0 -4 120 120" : "1 -5 118 118";
   return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${body}</svg>`;
 }
@@ -9208,7 +10145,7 @@ function spBanner(){
    - 當天賺的金幣：前 150 全額、150～300 減半、300 以上剩四分之一（earn 的 fixed＝成就獎勵不打折）。
    - 完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
    - 寶箱只當獎勵送（連續練習每 7 天），開出沒有的寶箱寶物，全部都有就給 50 金幣。 */
-const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE], x:["動作",MA_MOVES], h:["隱藏版",HIDDEN]};
+const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], o:["衣服",MA_OUTFIT], w:["手上",MA_HAND], f:["身旁",MA_FLOAT], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE], x:["動作",MA_MOVES], h:["隱藏版",HIDDEN]};
 const RW_SRC = {streak30:"連續練習 30 天", spm30:"拼字熟練 30 個字", art20:"聽完 20 篇文章", lvall:"完成一個難度的全部主題", task5:"完成 5 天的每日任務", speed20:"60 秒快問快答答對 20 題", shadow90:"跟讀 90 分以上 10 次", night7:"晚上 8 點後練習 7 天", egg:"神秘蛋",
   ci3:"簽到滿 3 天", streak3:"連續練習 3 天", streak7:"連續練習 7 天", streak14:"連續練習 14 天", perfect5:"拼字複習全對 5 次", task:"完成每日任務", task10:"完成 10 次每日任務", chest:"寶箱"};
 const REWARDS = [
@@ -9230,6 +10167,37 @@ const REWARDS = [
   ["t","helmet",200,2],["k","jetpack",150,2],["s","space",120,2],["n","spacebadge",80,1],
   ["t","ninjaband",100,1],["a","ninjamask",80,1],["k","shuriken",80,1],["s","bamboo",120,2],
   ["k","wand",150,2],["t","alien",80,1],
+  /* 第二批主題套裝 */
+  ["t","chefTall",120,1],["o","apron",100,1],["w","pan",100,1],["f","bread",80,1],
+  ["t","fireHelmet",150,2],["o","fireVest",120,1],["w","waterGun",100,1],["f","siren",80,1],
+  ["t","sunHat",120,1],["o","exploreVest",120,1],["n","telescope",100,1],["w","bugNet",100,1],
+  ["a","starShades",100,1],["k","starCape",200,2],["w","mic",100,1],["f","guitar",120,2],
+  ["t","captain",150,2],["a","eyePatch",80,1],["w","hook",100,1],["f","parrot",120,2],
+  ["t","leafHat",100,1],["k","fairyWings",200,2],["w","dandelion",100,1],["f","lantern",100,1],
+  ["a","diveMask",100,1],["o","wetsuit",120,1],["k","oxygenTank",150,2],["f","starfish",80,1],
+  ["t","beeBand",100,1],["o","beeOveralls",120,1],["w","wateringCan",100,1],["f","sunflower",80,1],
+  ["a","cyberVisor",150,2],["o","techHoodie",150,2],["w","holoKey",120,2],["f","drone",150,3],
+  ["t","kabuto",150,2],["o","nightSuit",120,1],["k","katana",150,2],["w","scroll",100,1],
+  ["a","labGoggles",100,1],["o","labCoat",120,1],["w","potion",100,1],["k","mechArm",200,3],
+  ["t","capBack",100,1],["o","bigHoodie",120,1],["n","neckPhones",100,1],["w","skateboard",120,2],
+  ["a","hunterVisor",150,2],["k","tacticalCape",200,2],["w","blaster",150,2],["f","energyCore",150,3],
+  ["t","bobaHat",120,2],["o","teaApron",100,1],["w","straw",80,1],["f","pearls",80,1],
+  ["a","tiredGlasses",80,1],["o","pajamas",100,1],["w","coffee",80,1],["f","book",80,1],
+  ["t","boxHead",100,1],["o","boxArmor",100,1],["w","broomSaber",120,2],["f","tape",60,1],
+  ["t","luckyEars",100,1],["o","luckyBib",100,1],["w","bigCoin",120,2],["f","koban",100,2],
+  /* 公主系列 */
+  ["t","tiaraPink",150,2],["o","ballGown",150,2],["w","scepter",120,2],["f","glassSlipper",120,2],
+  ["t","snowTiara",120,2],["k","snowCape",200,2],["w","snowWand",120,1],["f","snowGlobe",120,2],
+  ["t","shellBand",100,1],["o","mermaidScales",150,2],["w","trident",120,2],["f","pearlShell",100,1],
+  ["t","rainbowHorn",150,2],["k","uniWings",200,3],["w","rainbowLolly",80,1],["f","rainbowCloud",100,1],
+  ["t","swanFeather",120,1],["o","tutu",120,1],["n","satinRibbon",80,1],["f","musicBox",150,2],
+  ["t","strawberryCap",100,1],["o","cakeDress",120,1],["w","icecream",80,1],["f","cupcake",80,1],
+  ["t","petalHat",100,1],["k","petalWings",200,2],["w","bouquet",100,1],["f","butterflyPal",100,1],
+  ["t","heartBow",100,1],["n","heartBrooch",120,2],["w","heartWand",120,2],["f","magicStar",120,2],
+  ["t","laceHat",120,1],["o","laceDress",120,1],["w","teacup",100,1],["f","teapot",100,1],
+  ["t","moonTiara",150,2],["a","starCheek",80,1],["w","moonWand",120,2],["f","moonLamp",120,2],
+  ["t","bigSunHat",120,1],["a","catEyeShades",100,1],["w","handbag",100,1],["f","mirror",120,2],
+  ["t","candleCrown",120,1],["n","bigRosette",80,1],["w","heartBalloon",100,1],["f","giftBox",80,1],
   /* 節慶限定：只在節日期間的商店出現（價格見 FEST_PRICE） */
   ["t","zongzi","fest:duanwu",2],["k","lantern","fest:cny",2],["n","knot","fest:cny",2],["s","cny","fest:cny",2],
   ["k","rabbitlamp","fest:midautumn",2],["s","moonnight","fest:midautumn",2],
@@ -9244,7 +10212,36 @@ const SETS = [
   {id:"magic",  n:"魔法學院", title:"小小魔法師", items:["a:roundglass","n:stripescarf","k:broom","s:castle"]},
   {id:"detect", n:"小偵探",   title:"名偵探",     items:["t:deerstalker","n:redbow","a:bigglass","k:magnifier"]},
   {id:"space",  n:"太空探險", title:"太空小隊長", items:["t:helmet","k:jetpack","s:space","n:spacebadge"]},
-  {id:"ninja",  n:"忍者",     title:"影子忍者",   items:["t:ninjaband","a:ninjamask","k:shuriken","s:bamboo"]}
+  {id:"ninja",  n:"忍者",     title:"影子忍者",   items:["t:ninjaband","a:ninjamask","k:shuriken","s:bamboo"]},
+  {id:"chef", n:"五星小主廚", title:"五星小主廚", items:["t:chefTall","o:apron","w:pan","f:bread"]},
+  {id:"fire", n:"小小消防員", title:"小小消防員", items:["t:fireHelmet","o:fireVest","w:waterGun","f:siren"]},
+  {id:"explore", n:"森林探險家", title:"森林探險家", items:["t:sunHat","o:exploreVest","n:telescope","w:bugNet"]},
+  {id:"star", n:"超級巨星", title:"超級巨星", items:["a:starShades","k:starCape","w:mic","f:guitar"]},
+  {id:"pirate", n:"小小海盜", title:"海盜船長", items:["t:captain","a:eyePatch","w:hook","f:parrot"]},
+  {id:"fairy", n:"森林小精靈", title:"森林小精靈", items:["t:leafHat","k:fairyWings","w:dandelion","f:lantern"]},
+  {id:"diver", n:"深海潛水員", title:"深海潛水員", items:["a:diveMask","o:wetsuit","k:oxygenTank","f:starfish"]},
+  {id:"bee", n:"蜜蜂小園丁", title:"蜜蜂小園丁", items:["t:beeBand","o:beeOveralls","w:wateringCan","f:sunflower"]},
+  {id:"cyber", n:"賽博龐克駭客", title:"賽博駭客", items:["a:cyberVisor","o:techHoodie","w:holoKey","f:drone"]},
+  {id:"samurai", n:"暗影武士", title:"暗影武士", items:["t:kabuto","o:nightSuit","k:katana","w:scroll"]},
+  {id:"science", n:"瘋狂科學家", title:"瘋狂科學家", items:["a:labGoggles","o:labCoat","w:potion","k:mechArm"]},
+  {id:"skate", n:"街頭滑板玩家", title:"滑板高手", items:["t:capBack","o:bigHoodie","n:neckPhones","w:skateboard"]},
+  {id:"hunter", n:"星際賞金獵人", title:"星際賞金獵人", items:["a:hunterVisor","k:tacticalCape","w:blaster","f:energyCore"]},
+  {id:"boba", n:"珍珠奶茶大師", title:"珍奶大師", items:["t:bobaHat","o:teaApron","w:straw","f:pearls"]},
+  {id:"study", n:"熬夜學霸", title:"熬夜學霸", items:["a:tiredGlasses","o:pajamas","w:coffee","f:book"]},
+  {id:"robot", n:"紙箱機器人", title:"紙箱機器人", items:["t:boxHead","o:boxArmor","w:broomSaber","f:tape"]},
+  {id:"lucky", n:"招財貓", title:"招財小貓", items:["t:luckyEars","o:luckyBib","w:bigCoin","f:koban"]},
+  {id:"pinkPrincess", n:"粉紅小公主", title:"粉紅小公主", items:["t:tiaraPink","o:ballGown","w:scepter","f:glassSlipper"]},
+  {id:"snowPrincess", n:"雪花公主", title:"雪花公主", items:["t:snowTiara","k:snowCape","w:snowWand","f:snowGlobe"]},
+  {id:"mermaid", n:"美人魚公主", title:"人魚公主", items:["t:shellBand","o:mermaidScales","w:trident","f:pearlShell"]},
+  {id:"unicorn", n:"彩虹獨角獸", title:"彩虹獨角獸", items:["t:rainbowHorn","k:uniWings","w:rainbowLolly","f:rainbowCloud"]},
+  {id:"ballet", n:"芭蕾小天鵝", title:"芭蕾小天鵝", items:["t:swanFeather","o:tutu","n:satinRibbon","f:musicBox"]},
+  {id:"berry", n:"草莓甜心", title:"草莓甜心", items:["t:strawberryCap","o:cakeDress","w:icecream","f:cupcake"]},
+  {id:"flowerFairy", n:"花仙子", title:"花仙子", items:["t:petalHat","k:petalWings","w:bouquet","f:butterflyPal"]},
+  {id:"heartMagic", n:"愛心魔法少女", title:"魔法少女", items:["t:heartBow","n:heartBrooch","w:heartWand","f:magicStar"]},
+  {id:"teaParty", n:"下午茶公主", title:"下午茶公主", items:["t:laceHat","o:laceDress","w:teacup","f:teapot"]},
+  {id:"moonPrincess", n:"月亮公主", title:"月亮公主", items:["t:moonTiara","a:starCheek","w:moonWand","f:moonLamp"]},
+  {id:"fashion", n:"時尚小公主", title:"時尚小公主", items:["t:bigSunHat","a:catEyeShades","w:handbag","f:mirror"]},
+  {id:"birthday", n:"生日派對公主", title:"今天的壽星", items:["t:candleCrown","n:bigRosette","w:heartBalloon","f:giftBox"]}
 ];
 const SET_BONUS = 100;
 const GAME_COIN = 5;   // 每種遊戲每天第一次玩完

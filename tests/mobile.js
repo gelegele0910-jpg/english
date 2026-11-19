@@ -48,6 +48,8 @@ const SCENES = {
   '收藏冊 動作': `U.shopTab='book'; U.shopCat='x'; U.view='shop'`,
   '星空圖': `U.view='sky'`,
   '頭像工作室 頭頂': `U.view='settings'; render(); ACT['ab-open']({dataset:{from:'settings'}}); U.abTab='t'`,
+  '頭像工作室 衣服': `U.view='settings'; render(); ACT['ab-open']({dataset:{from:'settings'}}); U.abTab='o'`,
+  '商店 衣服': `U.shopTab='shop'; U.shopCat='o'; U.view='shop'`,
   '頭像工作室 動作': `U.view='settings'; render(); ACT['ab-open']({dataset:{from:'settings'}}); U.abTab='x'`,
   '彈出：練習情境': `U.view='home'; U.sheet='mode'`,
   '彈出：得到寶物': `U.view='home'; U.rwq=['t:wizard']; U.sheet='reward'`,
