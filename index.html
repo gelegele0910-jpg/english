@@ -300,6 +300,11 @@ body[data-skin=minimal] .opt,body[data-skin=minimaldark] .opt{border-color:var(-
 .mv-hfx svg{position:absolute;bottom:20%;width:22%;height:auto;opacity:0;animation:mvHeart 1.6s ease-out infinite}
 @keyframes mvHeart{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-220%) scale(1.1)}}
 .rwme{background:none;border:0;padding:0;cursor:pointer;display:flex}
+.hmon{display:inline-flex;flex:none}
+.sil{color:var(--muted);opacity:.7}
+.pk.locked{opacity:.85}
+.egg-ready svg{animation:mvShake .6s ease-in-out infinite;transform-origin:50% 90%}
+@media (prefers-reduced-motion: reduce){ .egg-ready svg{animation:none} }
 .duo{display:flex;align-items:flex-end;justify-content:center;gap:6px}
 @media (prefers-reduced-motion: reduce){ .mv,.mv-zz,.mv-hfx svg{animation:none!important} .mv-hfx svg{opacity:1} }
 /* 獎勵：今天的任務、商店、收藏冊 */
@@ -7634,6 +7639,7 @@ function propsFor(id, m, e) {
 }
 function monster(id, e, size) {
   const m = MON[id], c = m;
+  if (m.hidden) return hiddenMon(id, size || 120, false, HM_EXPR[e] || "normal");
   e = e || "normal"; size = size || 120;
   const blushY = m.eyes ? 83 : m.eyeY + 7;
   const bx = m.eyes ? 26 : (m.cyclops ? 18 : m.dx + 9);
@@ -7762,8 +7768,133 @@ const MA_PAT = {
   star:   {n:"星星", f:(s,c)=>`<path transform="translate(38 96) scale(.7)" d="M0 -10 L3 -3 L10 -3 L4 2 L6 9 L0 5 L-6 9 L-4 2 L-10 -3 L-3 -3 Z" fill="#ffe08a"/>`},
   freckle:{n:"雀斑", f:(s,c)=>[[-1,0],[1,0]].map(([k])=>`<circle cx="${60+k*(s.dx+7)}" cy="${s.ey+8}" r="1" fill="${c[3]}"/><circle cx="${60+k*(s.dx+10)}" cy="${s.ey+10}" r="1" fill="${c[3]}"/><circle cx="${60+k*(s.dx+5)}" cy="${s.ey+11}" r="1" fill="${c[3]}"/>`).join("")}
 };
-/* ---------- 獎勵部件（lock:true＝要收集才能用；取得方式見主程式 REWARDS） ---------- */
 const STAR5 = "M0 -10 L3 -3 L10 -3 L4 2 L6 9 L0 5 L-6 9 L-4 2 L-10 -3 L-3 -3 Z";
+/* ---------- 隱藏版小怪獸（獨立造型，頭像工作室組不出來；可以當學習夥伴） ---------- */
+let HM_E = "normal";   // 目前要畫的表情：normal / cheer / oops / think
+function hmEyes(x, y, dx, L, big){
+  return [x-dx, x+dx].map((ex,i)=>{
+    if(HM_E === "cheer") return `<path d="M${ex-4.5} ${y+1.5} Q${ex} ${y-4.5} ${ex+4.5} ${y+1.5}" fill="none" stroke="${L}" stroke-width="2.6" stroke-linecap="round"/>`;
+    if(HM_E === "oops"){ const k = i ? -1 : 1; return `<path d="M${ex-3.6*k} ${y-3.6} L${ex+3*k} ${y} L${ex-3.6*k} ${y+3.6}" fill="none" stroke="${DK}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`; }
+    const oy = HM_E === "think" ? -1.8 : 0, ox = HM_E === "think" ? 1.4 : 0;
+    return `<ellipse cx="${ex+ox}" cy="${y+oy}" rx="${big?4.2:3.2}" ry="${big?4.8:3.9}" fill="${DK}"/><circle cx="${ex+ox+1.3}" cy="${y+oy-1.6}" r="${big?1.7:1.3}" fill="#fff"/>`;
+  }).join("");
+}
+function hmMouth(x, y, L, open){
+  if(HM_E === "cheer") return `<path d="M${x-6} ${y+6} Q${x} ${y+16} ${x+6} ${y+6} Z" fill="${MOUTH}" stroke="${L}" stroke-width="1.9" stroke-linejoin="round"/><path d="M${x-3} ${y+11} Q${x} ${y+9.5} ${x+3} ${y+11}" fill="none" stroke="#ff9eae" stroke-width="2"/>`;
+  if(HM_E === "oops") return `<path d="M${x-6} ${y+9} q1.5 -2.4 3 0 t3 0 t3 0 t3 0" fill="none" stroke="${L}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if(HM_E === "think") return `<path d="M${x-1} ${y+9} h5" stroke="${L}" stroke-width="2" stroke-linecap="round"/>`;
+  return open ? `<path d="M${x-4.5} ${y+7} Q${x} ${y+14} ${x+4.5} ${y+7} Z" fill="${MOUTH}" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`
+    : `<path d="M${x-3.5} ${y+8} q1.75 2.2 3.5 0 q1.75 2.2 3.5 0" fill="none" stroke="${L}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+function hmExtra(x, y){
+  if(HM_E === "think") return `<g transform="translate(${x+30} ${y-30})"><circle r="9" fill="#fff" stroke="#b7a7c9" stroke-width="1.6"/><text y="4.5" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="13" font-weight="700" fill="#7d68b0">?</text></g>`;
+  if(HM_E === "oops") return `<path d="M${x+26} ${y-14} q4 6 0 8 q-4 -2 0 -8 Z" fill="#8fd1ff" stroke="#5aa2ef" stroke-width="1.2"/>`;
+  if(HM_E === "cheer") return [[x-34,y-26,.5],[x+32,y-30,.4]].map(([sx,sy,k])=>`<path transform="translate(${sx} ${sy}) scale(${k})" d="${STAR5}" fill="#ffd66b"/>`).join("");
+  return "";
+}
+function hmFace(x, y, dx, L, opt){
+  opt = opt || {};
+  const b = [x-dx-7, x+dx+7].map(bx=>`<ellipse cx="${bx}" cy="${y+7}" rx="5" ry="3" fill="${BLUSH}" opacity="${HM_E==="oops"?.35:.75}"/>`).join("");
+  return b + hmEyes(x, y, dx, L, opt.big) + hmMouth(x, y, L, opt.mouth === "open") + hmExtra(x, y);
+}
+const HM_SHADOW = `<ellipse cx="60" cy="112" rx="34" ry="4.5" fill="#3f3540" opacity=".1"/>`;
+const HIDDEN = {
+  luna: {n:"星光獨角獸", en:"Luna", get:"streak30", rare:3, f:()=>{ const L = "#7d68b0";
+    return `${HM_SHADOW}
+      <path d="M30 50 Q22 40 28 30 Q34 40 40 44 Z M90 50 Q98 40 92 30 Q86 40 80 44 Z" fill="#f6f0ff" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M53 40 L60 8 L67 40 Z" fill="#ffe08a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M55 32 l10 -3 M57 23 l6 -2 M58.5 15 l3 -1" stroke="${L}" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M20 84 Q18 42 60 40 Q102 42 100 84 Q100 108 60 108 Q20 108 20 84 Z" fill="#f6f0ff" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M36 46 Q24 50 22 64 Q30 58 34 60 Q26 68 28 80 Q36 70 42 70 Q38 60 46 50 Z" fill="#ffc6d6" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M44 44 Q34 52 36 62 Q42 54 50 52 Z" fill="#c9e4ff" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M52 41 Q46 46 46 52 Q52 46 58 45 Z" fill="#fff3b8" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+      <ellipse cx="45" cy="106" rx="9" ry="5" fill="#f6f0ff" stroke="${L}" stroke-width="2.2"/><ellipse cx="75" cy="106" rx="9" ry="5" fill="#f6f0ff" stroke="${L}" stroke-width="2.2"/>
+      ${hmFace(64, 74, 12, L, {big:true})}
+      <path transform="translate(92 96) scale(.5)" d="${STAR5}" fill="#ffd66b"/><path transform="translate(104 60) scale(.36)" d="${STAR5}" fill="#ffc6d6"/><path transform="translate(14 96) scale(.3)" d="${STAR5}" fill="#c9e4ff"/>`; }},
+  rex: {n:"小恐龍", en:"Rex", get:"spm30", rare:2, f:()=>{ const L = "#55804a", F = "#b9e4a0";
+    return `${HM_SHADOW}
+      <path d="M86 90 Q108 92 116 78 Q112 100 88 104 Z" fill="${F}" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+      ${[[40,42],[54,36],[68,36],[82,42],[94,54]].map(([x,y],i)=>`<path d="M${x-7} ${y+5} L${x} ${y-8} L${x+7} ${y+5} Z" fill="${["#ffd66b","#ffb36b"][i%2]}" stroke="${L}" stroke-width="2" stroke-linejoin="round" transform="rotate(${-20+i*12} ${x} ${y})"/>`).join("")}
+      <path d="M22 84 Q20 42 60 40 Q100 42 98 84 Q98 108 60 108 Q22 108 22 84 Z" fill="${F}" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <ellipse cx="58" cy="94" rx="22" ry="11" fill="#e6f5d6"/><path d="M42 90 h32 M44 97 h28" stroke="#cfe8bc" stroke-width="2" stroke-linecap="round"/>
+      <path d="M32 82 q-6 2 -6 8 M88 82 q6 2 6 8" fill="none" stroke="${L}" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="45" cy="106" rx="9" ry="5" fill="${F}" stroke="${L}" stroke-width="2.2"/><ellipse cx="75" cy="106" rx="9" ry="5" fill="${F}" stroke="${L}" stroke-width="2.2"/>
+      ${hmFace(58, 64, 13, L, {mouth:"open"})}
+      <path d="M50 76 l2 3 l2 -3 M62 76 l2 3 l2 -3" fill="#fff" stroke="${L}" stroke-width="1.2" stroke-linejoin="round"/>`; }},
+  octo: {n:"章魚泡泡", en:"Octo", get:"art20", rare:2, f:()=>{ const L = "#ad5f78", F = "#ffc3d3";
+    return `${HM_SHADOW}
+      ${[24,38,52,68,82,96].map((x,i)=>`<path d="M${x} 82 Q${x+(i<3?-8:8)} 100 ${x+(i<3?-2:2)} 108 Q${x+(i<3?6:-6)} 108 ${x+(i<3?6:-6)} 98 Q${x+(i<3?6:-6)} 90 ${x+(i<3?8:-8)} 84 Z" fill="${F}" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>`).join("")}
+      <path d="M20 82 Q18 32 60 30 Q102 32 100 82 Q80 90 60 88 Q40 90 20 82 Z" fill="${F}" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <circle cx="40" cy="46" r="5" fill="#ffd9e3"/><circle cx="80" cy="44" r="3.6" fill="#ffd9e3"/><circle cx="88" cy="58" r="2.6" fill="#ffd9e3"/>
+      ${[22,94].map(x=>`<circle cx="${x}" cy="100" r="1.8" fill="#ffe3ea"/>`).join("")}
+      ${hmFace(60, 62, 13, L)}
+      ${[[100,24,5],[108,12,3],[94,10,2.2]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" fill-opacity=".6" stroke="#8fc9d6" stroke-width="1.2"/>`).join("")}`; }},
+  shroom: {n:"蘑菇菇", en:"Shroom", get:"lvall", rare:1, f:()=>{ const L = "#9a5a4a";
+    return `${HM_SHADOW}
+      <path d="M36 70 Q34 108 46 108 H74 Q86 108 84 70 Z" fill="#fff4dc" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M12 66 Q12 18 60 16 Q108 18 108 66 Q108 74 98 74 H22 Q12 74 12 66 Z" fill="#ff8f7f" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <circle cx="36" cy="40" r="7" fill="#fff"/><circle cx="62" cy="30" r="5.6" fill="#fff"/><circle cx="86" cy="44" r="8" fill="#fff"/><circle cx="54" cy="56" r="4" fill="#fff"/><circle cx="24" cy="60" r="3" fill="#fff"/>
+      <path d="M22 74 Q60 82 98 74" fill="none" stroke="#e57063" stroke-width="2"/>
+      <ellipse cx="48" cy="107" rx="8" ry="4.6" fill="#fff4dc" stroke="${L}" stroke-width="2.2"/><ellipse cx="72" cy="107" rx="8" ry="4.6" fill="#fff4dc" stroke="${L}" stroke-width="2.2"/>
+      ${hmFace(60, 86, 10, L)}`; }},
+  scoop: {n:"冰淇淋", en:"Scoop", get:"task5", rare:1, f:()=>{ const L = "#a66a50";
+    return `${HM_SHADOW}
+      <path d="M38 76 L60 112 L82 76 Z" fill="#f0c38a" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M44 82 L70 104 M54 78 L76 96 M66 78 L52 100 M76 80 L58 108" stroke="#c9945a" stroke-width="1.6"/>
+      <path d="M24 72 Q20 34 60 30 Q100 34 96 72 Q96 80 88 78 Q86 86 78 80 Q72 88 64 80 Q58 88 52 80 Q44 88 40 80 Q32 86 30 78 Q24 80 24 72 Z" fill="#c8f0dc" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      ${[[40,44,"#ff9fb6",20],[56,38,"#ffd66b",-30],[74,42,"#8fd1ff",40],[84,54,"#ff9fb6",-10],[34,58,"#ffd66b",60]].map(([x,y,c,r])=>`<rect x="${x-3}" y="${y-1.2}" width="6" height="2.4" rx="1.2" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`).join("")}
+      <path d="M60 30 Q58 20 66 16" fill="none" stroke="#5d8a4a" stroke-width="2" stroke-linecap="round"/><circle cx="60" cy="24" r="7" fill="#ff5a6e" stroke="${L}" stroke-width="2"/><circle cx="57.6" cy="21.6" r="1.8" fill="#fff"/>
+      ${hmFace(60, 58, 12, L, {mouth:"open"})}`; }},
+  ember: {n:"小火龍", en:"Ember", get:"speed20", rare:3, f:()=>{ const L = "#ad5f38", F = "#ffc08a";
+    return `${HM_SHADOW}
+      ${[[-1],[1]].map(([k])=>`<path transform="translate(${60+k*28} 62) scale(${k} 1)" d="M0 0 Q14 -26 30 -20 Q26 -12 30 -6 Q22 -6 24 2 Q14 0 12 8 Z" fill="#ff9f8a" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>`).join("")}
+      <path d="M90 96 Q110 98 108 80" fill="none" stroke="${F}" stroke-width="9" stroke-linecap="round"/><path d="M90 96 Q110 98 108 80" fill="none" stroke="${L}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/>
+      <path d="M108 80 Q100 68 108 58 Q110 66 116 64 Q120 74 108 80 Z" fill="#ffd66b" stroke="#e57a2e" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M44 44 Q42 32 48 28 Q50 36 54 40 Z M76 44 Q78 32 72 28 Q70 36 66 40 Z" fill="#fff6d8" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M22 84 Q20 42 60 40 Q100 42 98 84 Q98 108 60 108 Q22 108 22 84 Z" fill="${F}" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M44 86 Q60 80 76 86 M42 94 Q60 88 78 94 M46 102 Q60 96 74 102" fill="none" stroke="#ffdcb8" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="45" cy="106" rx="9" ry="5" fill="${F}" stroke="${L}" stroke-width="2.2"/><ellipse cx="75" cy="106" rx="9" ry="5" fill="${F}" stroke="${L}" stroke-width="2.2"/>
+      ${hmFace(60, 64, 13, L)}<path d="M54 78 q2 3 4 0" fill="none" stroke="${L}" stroke-width="1.4" stroke-linecap="round"/>`; }},
+  cacti: {n:"仙人掌", en:"Cacti", get:"shadow90", rare:2, f:()=>{ const L = "#4f7f5a", F = "#a8d8a0";
+    return `${HM_SHADOW}
+      <path d="M32 92 H88 L84 110 H36 Z" fill="#e8956a" stroke="#9a5a3a" stroke-width="2.4" stroke-linejoin="round"/><rect x="28" y="86" width="64" height="10" rx="3" fill="#f0a87e" stroke="#9a5a3a" stroke-width="2.2"/>
+      <path d="M34 66 Q22 66 22 54 Q22 46 28 46 Q32 46 32 54 Q32 58 38 58 Z" fill="${F}" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M86 72 Q98 72 98 60 Q98 52 92 52 Q88 52 88 60 Q88 64 82 64 Z" fill="${F}" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M38 88 V44 Q38 24 60 24 Q82 24 82 44 V88 Z" fill="${F}" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M50 30 V84 M70 30 V84" stroke="#93c98b" stroke-width="2"/>
+      ${[[44,40],[76,46],[44,76],[78,80],[28,52],[95,58]].map(([x,y])=>`<path d="M${x-2} ${y} h4 M${x} ${y-2} v4" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>`).join("")}
+      <g transform="translate(60 22)">${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-5" rx="3.6" ry="5.2" transform="rotate(${a})" fill="#ff9fc0" stroke="${L}" stroke-width="1.4"/>`).join("")}<circle r="3" fill="#ffd66b"/></g>
+      ${hmFace(60, 56, 10, L)}`; }},
+  hoot: {n:"月亮貓頭鷹", en:"Hoot", get:"night7", rare:2, f:()=>{ const L = "#5a5290", F = "#c9c2ef";
+    return `${HM_SHADOW}
+      <path d="M28 46 L26 24 L44 38 Z M92 46 L94 24 L76 38 Z" fill="${F}" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M20 80 Q18 38 60 36 Q102 38 100 80 Q100 108 60 108 Q20 108 20 80 Z" fill="${F}" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M22 72 Q12 88 26 100 Q30 86 30 74 Z M98 72 Q108 88 94 100 Q90 86 90 74 Z" fill="#b1a8e6" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+      <ellipse cx="60" cy="90" rx="20" ry="15" fill="#ece8ff"/>${[[52,86],[60,92],[68,86],[56,98],[64,98]].map(([x,y])=>`<path d="M${x-3} ${y} q3 3 6 0" fill="none" stroke="#c9c2ef" stroke-width="1.6" stroke-linecap="round"/>`).join("")}
+      ${[44,76].map(x=>`<circle cx="${x}" cy="62" r="12" fill="#fff" stroke="${L}" stroke-width="2.2"/>` + (HM_E==="cheer" ? `<path d="M${x-6} 64 Q${x} 56 ${x+6} 64" fill="none" stroke="${DK}" stroke-width="2.6" stroke-linecap="round"/>` : `<circle cx="${x+1}" cy="63" r="6" fill="${DK}"/><circle cx="${x+3}" cy="60.6" r="2.2" fill="#fff"/>`)).join("")}
+      <path d="M56 72 L60 80 L64 72 Z" fill="#ffd66b" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>
+      <ellipse cx="45" cy="106" rx="8" ry="4.6" fill="#ffd66b" stroke="${L}" stroke-width="2"/><ellipse cx="75" cy="106" rx="8" ry="4.6" fill="#ffd66b" stroke="${L}" stroke-width="2"/>
+      <path d="M94 18 a9 9 0 1 0 8 12 a7 7 0 1 1 -8 -12 Z" fill="#fff3b8" stroke="#c9a23e" stroke-width="1.4"/>`; }}
+};
+function hiddenMon(id, size, bare, e){
+  HM_E = e || "normal";
+  const body = HIDDEN[id].f(); HM_E = "normal";
+  return bare ? body : `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+}
+function silhouette(id, size){
+  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" aria-hidden="true"><defs><filter id="sil-${id}"><feFlood flood-color="currentColor"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs><g filter="url(#sil-${id})" opacity=".85">${HIDDEN[id].f()}</g><text x="60" y="72" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="30" font-weight="700" fill="#fff">?</text></svg>`;
+}
+
+function eggSvg(stage, size){
+  const shell = `<path d="M60 18 Q92 18 94 66 Q94 104 60 104 Q26 104 26 66 Q28 18 60 18 Z" fill="#fff7e6" stroke="#9a7a3e" stroke-width="2.4"/>`;
+  const spots = `<circle cx="46" cy="50" r="6" fill="#ffc6d6"/><circle cx="74" cy="42" r="4.6" fill="#c9e4ff"/><circle cx="70" cy="78" r="7" fill="#d8f0cc"/><circle cx="44" cy="84" r="4" fill="#ffe08a"/><path transform="translate(58 64) scale(.6)" d="${STAR5}" fill="#ffd66b"/>`;
+  const shadow = `<ellipse cx="60" cy="110" rx="30" ry="4.5" fill="#3f3540" opacity=".1"/>`;
+  const crack = stage === 1 ? `<path d="M50 40 l6 6 l-4 6 l6 5" fill="none" stroke="#9a7a3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+    : stage === 2 ? `<path d="M30 62 l10 -6 l8 8 l9 -9 l8 9 l9 -8 l8 6 l8 -4" fill="none" stroke="#9a7a3e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 40 l6 4 M16 54 l7 0 M102 40 l-6 4 M104 54 l-7 0" stroke="#e9a93a" stroke-width="2.4" stroke-linecap="round"/>` : "";
+  const tilt = stage === 2 ? ` transform="rotate(-6 60 104)"` : "";
+  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" aria-hidden="true">${shadow}<g${tilt}>${shell}${spots}${crack}</g></svg>`;
+}
+
+/* ---------- 獎勵部件（lock:true＝要收集才能用；取得方式見主程式 REWARDS） ---------- */
 function wizardOf(main, dark, star){ return (L)=>`
     <path d="M36 44 Q38 30 52 22 Q62 14 70 4 Q72 18 76 30 Q82 40 86 44 Z" fill="${main}" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
     <path d="M70 4 Q80 2 84 10" fill="none" stroke="${L}" stroke-width="2.2" stroke-linecap="round"/><circle cx="85" cy="12" r="3.4" fill="${star}" stroke="${L}" stroke-width="1.8"/>
@@ -7935,6 +8066,33 @@ const BUDDY_LINES = {
   pupu: {greet:["我、我們一起念念看好嗎…","今天也…一起加油…","小小聲念也沒關係喔"], right:["好、好厲害…你答對了！","答對了…我好開心…"], wrong:["沒關係的…我也常常聽錯…","我們…再聽一次好嗎？"], done:["你今天好棒…","謝謝你陪我一起練習…"]},
   hulu: {greet:["嗯～今天來聽一篇小故事吧。","多聽幾次，耳朵會越來越靈喔。","複習是記住單字的祕訣呢。"], right:["正確！你理解得很好。","很好，就是這個意思。"], wrong:["不要緊，再聽一次就會懂了。","錯了也是學習的一部分喔。"], done:["今天的學習很紮實，做得好。","知識又增加了一點呢。"]}
 };
+/* 隱藏版小怪獸當夥伴：名字、自我介紹、台詞 */
+const HM_EXPR = {normal:"normal", happy:"cheer", cheer:"cheer", think:"think", oops:"oops", sleepy:"normal"};
+const HM_INFO = {
+  luna:  {line:"#7d68b0", color:"星光白", trait:"夢幻的星光獨角獸", say:"今天也一起閃閃發光吧！", role:"隱藏版夥伴", detail:"頭上的角會發光，每學會一個字就多一顆星星。"},
+  rex:   {line:"#55804a", color:"恐龍綠", trait:"精力旺盛的小恐龍", say:"吼～我們來挑戰新單字！", role:"隱藏版夥伴", detail:"背上的刺是軟的，最喜歡大聲把英文念出來。"},
+  octo:  {line:"#ad5f78", color:"泡泡粉", trait:"好奇心滿滿的章魚", say:"八隻手一起翻開新的故事吧！", role:"隱藏版夥伴", detail:"住在海底圖書館，一次可以拿八本書。"},
+  shroom:{line:"#9a5a4a", color:"蘑菇紅", trait:"溫柔慢慢長大的蘑菇", say:"每天長大一點點就好～", role:"隱藏版夥伴", detail:"下過雨之後最有精神，相信慢慢來也會長很高。"},
+  scoop: {line:"#a66a50", color:"薄荷冰淇淋", trait:"甜甜的冰淇淋", say:"學英文跟吃冰一樣開心！", role:"隱藏版夥伴", detail:"頭上的櫻桃是寶貝，最怕太陽太大會融化。"},
+  ember: {line:"#ad5f38", color:"火焰橘", trait:"熱血的小火龍", say:"準備好了嗎？出發！", role:"隱藏版夥伴", detail:"尾巴上的小火苗會隨著心情變大，從來不放棄。"},
+  cacti: {line:"#4f7f5a", color:"仙人掌綠", trait:"堅強的仙人掌", say:"不怕難，我們一起撐過去！", role:"隱藏版夥伴", detail:"頭上開著一朵花，只要一點點鼓勵就能開心一整天。"},
+  hoot:  {line:"#5a5290", color:"月光紫", trait:"愛看書的夜貓子", say:"呼呼～晚上也是學習的好時光。", role:"隱藏版夥伴", detail:"晚上眼睛特別亮，知道好多英文故事。"}
+};
+Object.keys(HIDDEN).forEach(id=>{
+  const H = HIDDEN[id], I = HM_INFO[id];
+  MON[id] = {name:H.n, en:H.en, line:I.line, hidden:true};
+  PROFILE[id] = {color:I.color, trait:I.trait, line:I.say, role:I.role, detail:I.detail};
+});
+Object.assign(BUDDY_LINES, {
+  luna:  {greet:["{name}，今天也一起閃閃發光吧！","星星說今天是學英文的好日子！","準備好了嗎？我們出發去收集星光！"], right:["答對了！星光滿滿！","哇～你比星星還亮！"], wrong:["沒關係，星星也會眨眼睛～","再聽一次，我陪你！"], done:["今天收集了好多星光！","{name}閃閃發光，好棒！"]},
+  rex:   {greet:["吼～{name}，今天要挑戰什麼？","我已經準備好大聲念英文了！","今天也要像恐龍一樣有力氣！"], right:["吼！完全正確！","太強了，我的尾巴都在搖！"], wrong:["吼～沒關係，再來一次！","恐龍也會跌倒，站起來就好！"], done:["今天打敗好多單字了！","{name}是最強的恐龍隊長！"]},
+  octo:  {greet:["{name}，今天要翻開哪個故事？","我的八隻手都準備好了！","海底圖書館開門囉！"], right:["答對了！八隻手一起拍手！","好聰明，我記起來了！"], wrong:["咕嚕咕嚕～我們再聽一次","沒關係，慢慢游就好～"], done:["今天又讀了好多故事！","{name}真是閱讀高手！"]},
+  shroom:{greet:["{name}，今天長大一點點吧～","下過雨的空氣好舒服，一起學英文吧","慢慢來，我陪你"], right:["答對了，我又長高一點了！","好棒好棒～"], wrong:["沒關係，蘑菇也是慢慢長大的","再試一次，不急喔～"], done:["今天又長大了一點點！","{name}好努力，休息一下吧～"]},
+  scoop: {greet:["{name}，今天要吃哪一口英文？","甜甜的一天從學英文開始！","趁還沒融化，快來練習吧！"], right:["答對了！甜到心裡！","好棒，再加一球冰淇淋！"], wrong:["哎呀～再嘗一口看看！","沒關係，冰淇淋還沒融化！"], done:["今天的英文好好吃！","{name}最甜了！"]},
+  ember: {greet:["{name}，準備好了嗎？出發！","今天也要燃燒鬥志！","我的小火苗已經點亮了！"], right:["太厲害了！我的尾巴都熱起來了！","正確！火力全開！"], wrong:["呼～小火苗不會熄滅，再試一次！","沒關係，我們再衝一次！"], done:["今天火力十足！","{name}是最熱血的勇者！"]},
+  cacti: {greet:["{name}，今天也要堅強喔！","一點點努力就能讓我開花！","我們一起撐過難題吧！"], right:["答對了！我的花開了！","好厲害，刺刺都豎起來了！"], wrong:["沒關係，我們不怕難！","再試一次，你可以的！"], done:["今天開了好多花！","{name}真的很堅強！"]},
+  hoot:  {greet:["呼呼～{name}，來聽個故事吧","晚上也是學習的好時光","我的眼睛已經準備好了！"], right:["呼呼！答對了！","好聰明，跟貓頭鷹一樣！"], wrong:["嗯…這個字我們再聽一次？","沒關係，慢慢想～"], done:["今天又學會好多字了，呼呼～","{name}是夜晚最亮的星星！"]}
+});
 
 </script>
 
@@ -7992,7 +8150,8 @@ function ic(name, size){
 }
 function av(x, size){ if(x && typeof x==="object") return maSvg(x, size||44); return avatar(AVATAR_IDS.includes(x) ? x : "bunny", "", size||44); }
 function avCircle(x, size){ return `<span class="avc" style="width:${size}px;height:${size}px">${av(x, size)}</span>`; }
-function partnerId(){ return (cur && PARTNERS.includes(cur.partner)) ? cur.partner : "bobo"; }
+function partnerId(){ return (cur && PARTNERS.includes(cur.partner) && partnerOk(cur.partner)) ? cur.partner : "bobo"; }
+function partnerOk(id){ return !MON[id] || !MON[id].hidden || !!(S && cur && S.rw && S.rw.own && S.rw.own["h:" + id]); }
 function buddy(expr, size){ return monster(partnerId(), expr||"normal", size||72); }
 function bline(kind){ const L = BUDDY_LINES[partnerId()][kind]; return pick(L).replace("{name}", cur ? cur.name : ""); }
 function buddyBox(expr, text){ return `<div class="buddy">${buddy(expr, 70)}<div class="bubble">${h(MON[partnerId()].name)}：${h(text)}</div></div>`; }
@@ -8260,6 +8419,7 @@ let progT = null, progBusy = false, progAgain = false;
 function saveProg(){
   if(!cur || !S) return;
   S.updated = Date.now();
+  if(typeof rwAch === "function") rwAch();
   lsSet("elp-prog-"+cur.id, JSON.stringify(S));
   clearTimeout(progT); progT = setTimeout(pushProg, 1500);
 }
@@ -8336,6 +8496,7 @@ function bump(){
   const t = today();
   if(S.todays.date !== t) S.todays = {date:t, n:0};
   S.todays.n++;
+  if(typeof rwPractice === "function") rwPractice();
   if(S.streak.last === t) return;
   const y = dstr(new Date(Date.now()-DAY));
   S.streak.count = (S.streak.last === y) ? S.streak.count+1 : 1;
@@ -8528,8 +8689,9 @@ function vProfiles(){
   </div>
   ${P.list.length ? `<button class="btn ghost" style="margin-top:14px" data-act="board-open">${li("users",18)} 家長看板：看大家的練習狀況</button>` : ""}`;
 }
-function partnerGrid(sel, act){
-  return `<div class="kgrid">${PARTNERS.map(id=>`<button type="button" class="pk ${id===sel?"on":""}" data-act="${act}" data-p="${id}">${id===sel?'<span class="tag">夥伴</span>':""}${monster(id, id===sel?"cheer":"normal", 86)}<b style="color:${MON[id].line}">${MON[id].name}</b><span>${PROFILE[id].trait}</span></button>`).join("")}</div>`;
+function partnerGrid(sel, act, showLocked){
+  const locked = PARTNERS.filter(id=>!partnerOk(id));
+  return `<div class="kgrid">${PARTNERS.filter(id=>partnerOk(id)).map(id=>`<button type="button" class="pk ${id===sel?"on":""}" data-act="${act}" data-p="${id}">${id===sel?'<span class="tag">夥伴</span>':""}${monster(id, id===sel?"cheer":"normal", 86)}<b style="color:${MON[id].line}">${MON[id].name}</b><span>${PROFILE[id].trait}</span></button>`).join("")}</div>${showLocked && locked.length ? `<p class="muted center" style="margin:12px 0 6px">隱藏版夥伴（收集到才能選）</p><div class="kgrid">${locked.map(id=>`<button type="button" class="pk locked" data-act="p-locked" data-p="${id}"><span class="sil">${silhouette(id, 86)}</span><b>？？？</b><span>${h(RW_SRC[HIDDEN[id].get])}</span></button>`).join("")}</div>` : ""}`;
 }
 function skinGrid(sel, act){
   return `<div class="sgrid">${SKINS.map(s=>`<div class="skin ${s.id===sel?"on":""}" data-act="${act}" data-s="${s.id}"><div class="prev" style="background:${s.prev}">${s.dots.map(c=>`<i style="background:${c}"></i>`).join("")}</div>${s.name}<br><span class="muted" style="font-size:11px">${s.kind==="cute"?"可愛風":"簡約風"}</span></div>`).join("")}</div>`;
@@ -8587,7 +8749,7 @@ function vPartner(){
   return `
   <div class="lhead"><button class="x" data-act="go" data-v="settings" aria-label="返回">✕</button><b>選擇夥伴</b><span style="width:40px"></span></div>
   <p class="center muted" style="margin-top:0">牠會陪你練習，答對時替你歡呼</p>
-  ${partnerGrid(sel, "p-pick")}
+  ${partnerGrid(sel, "p-pick", true)}
   <div class="card" style="margin-top:14px"><div class="buddy">${monster(sel,"happy",70)}<div class="bubble">${h(MON[sel].name)}：${h(PROFILE[sel].line)}</div></div><p class="muted" style="margin:8px 0 0">${h(PROFILE[sel].detail)}</p></div>
   <button class="btn" data-act="p-save">就決定是你了！</button>`;
 }
@@ -8922,8 +9084,9 @@ function spBanner(){
    - 每日任務 3 個，各 +10；三個都領完再送一個任務寶物（送完改 +20 金幣）。
    - 遊戲每天前 3 次給金幣；完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
    - 寶箱只當獎勵送（連續練習每 7 天），開出沒有的寶箱寶物，全部都有就給 50 金幣。 */
-const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE], x:["動作",MA_MOVES]};
-const RW_SRC = {ci3:"簽到滿 3 天", streak3:"連續練習 3 天", streak7:"連續練習 7 天", streak14:"連續練習 14 天", perfect5:"拼字複習全對 5 次", task:"完成每日任務", task10:"完成 10 次每日任務", chest:"寶箱"};
+const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE], x:["動作",MA_MOVES], h:["隱藏版",HIDDEN]};
+const RW_SRC = {streak30:"連續練習 30 天", spm30:"拼字熟練 30 個字", art20:"聽完 20 篇文章", lvall:"完成一個難度的全部主題", task5:"完成 5 天的每日任務", speed20:"60 秒快問快答答對 20 題", shadow90:"跟讀 90 分以上 10 次", night7:"晚上 8 點後練習 7 天", egg:"神秘蛋",
+  ci3:"簽到滿 3 天", streak3:"連續練習 3 天", streak7:"連續練習 7 天", streak14:"連續練習 14 天", perfect5:"拼字複習全對 5 次", task:"完成每日任務", task10:"完成 10 次每日任務", chest:"寶箱"};
 const REWARDS = [
   ["t","wizard",150,3],["t","wizRose",40,1],["t","wizMint",40,1],["t","wizNight",60,1],["t","strawhat","ci3",1],["t","pirate","chest",2],
   ["t","flowercrown","task",1],["t","earmuff",80,1],["t","donut","chest",2],["t","headband","streak3",1],["t","rainbow","streak14",3],
@@ -8932,7 +9095,8 @@ const REWARDS = [
   ["e","teary",30,1],["e","dizzy",30,1],["e","wow",40,1],["e","sparkle",60,2],
   ["m","gum",50,1],["m","drool",30,1],["m","bigo",30,1],["m","heartm","task",1],
   ["s","stars",120,2],["s","meadow","streak7",2],["s","sea","chest",2],["s","board","task10",1],["s","party","chest",3],["s","garden",100,1],
-  ["x","wiggle",50,1],["x","spin",80,2],["x","squish",60,1],["x","sleep",40,1],["x","shake","task",1],["x","hearts","streak7",2],["x","float","streak14",3]
+  ["x","wiggle",50,1],["x","spin",80,2],["x","squish",60,1],["x","sleep",40,1],["x","shake","task",1],["x","hearts","streak7",2],["x","float","streak14",3],
+  ...Object.keys(HIDDEN).map(k=>["h", k, HIDDEN[k].get, HIDDEN[k].rare])
 ].map(([c,k,get,rare])=>({id:c+":"+k, c, k, get, rare, price: typeof get==="number" ? get : null}));
 const RW_BY = {}; REWARDS.forEach(r=>{ RW_BY[r.id] = r; });
 const RW_RARE = {1:["普通","r1"],2:["稀有","r2"],3:["傳說","r3"]};
@@ -8941,7 +9105,7 @@ const TASKS = [
   {id:"g", n:"玩 1 次遊戲", goal:1, v:d=>d.g||0},
   {id:"r", n:"複習 5 個字", goal:5, v:d=>d.r||0}
 ];
-function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}}; }
+function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}, egg:{d:0, last:"", n:0}, night:{n:0, last:""}, hi90:0, speedBest:0}; }
 function RW(){
   if(!S.rw || typeof S.rw !== "object") S.rw = newRw();
   const d = newRw(); for(const k in d) if(S.rw[k] == null) S.rw[k] = d[k];   // 補齊舊資料缺的欄位（原地修改，不換物件）
@@ -8949,7 +9113,7 @@ function RW(){
 }
 function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0}; if(!r.day.claim) r.day.claim = {}; return r.day; }
 function rwName(it){ return RW_CAT[it.c][1][it.k].n; }
-function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : RW_SRC[it.get]; }
+function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : it.c === "h" ? `${RW_SRC[it.get]}，或用神秘蛋孵出來` : RW_SRC[it.get]; }
 function rwOwned(){ return (S && cur) ? RW().own : {}; }
 function canUsePart(own){ return (k, v, o) => !o[v].lock || !!own[k + ":" + v]; }
 function coinSvg(size){ return `<svg class="coin" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><circle cx="24" cy="25.5" r="17" fill="#e9a93a"/><circle cx="24" cy="23" r="17" fill="#ffd66b" stroke="#a8741c" stroke-width="2.4"/><circle cx="24" cy="23" r="12" fill="none" stroke="#e9a93a" stroke-width="2"/><path transform="translate(24 23) scale(.68)" d="${STAR5}" fill="#fff3b8" stroke="#a8741c" stroke-width="2.4" stroke-linejoin="round"/></svg>`; }
@@ -8964,9 +9128,47 @@ function openChest(){
   if(!pool.length){ earn(50, "寶箱"); return null; }
   const it = pick(pool); grant(it.id); return it.id;
 }
+/* ---- 成就：達成就解鎖對應的隱藏版小怪獸 ---- */
+const ACH = {
+  luna:  {goal:30, v:()=>streakNow()},
+  rex:   {goal:30, v:()=>spStats(S.sp).mastered},
+  octo:  {goal:20, v:()=>Object.keys(S.done).filter(k=>k.startsWith("art:")).length},
+  shroom:{goal:1,  v:()=>[1,2,3,4,5].some(lv=>TOPICS.every(t=>!t.sents[lv].length || topicDone(t, lv) >= t.sents[lv].length)) ? 1 : 0},
+  scoop: {goal:5,  v:()=>RW().taskDays},
+  ember: {goal:20, v:()=>RW().speedBest},
+  cacti: {goal:10, v:()=>RW().hi90},
+  hoot:  {goal:7,  v:()=>RW().night.n}
+};
+function achProgress(k){ const a = ACH[k]; return a ? [Math.min(a.goal, a.v() || 0), a.goal] : [0, 1]; }
+let achBusy = false;
+function rwAch(){
+  if(achBusy || !S || !cur) return;
+  achBusy = true;
+  try{ Object.keys(ACH).forEach(k=>{ const [v, g] = achProgress(k); if(v >= g) grant("h:" + k); }); } finally { achBusy = false; }
+}
+/* ---- 神秘蛋：每天第一次練習長大一天（不用連續），滿 5 天可以孵化 ---- */
+const EGG_DAYS = 5;
+/** 每次有練習時呼叫（bump）：蛋長大、晚上練習的天數 */
+function rwPractice(){
+  if(!S) return;
+  const r = RW(), t = today();
+  if(r.egg.last !== t && r.egg.d < EGG_DAYS){ r.egg.d++; r.egg.last = t; }
+  if(new Date().getHours() >= 20 && r.night.last !== t){ r.night.n++; r.night.last = t; }
+}
+function hatchEgg(){
+  const r = RW(); if(r.egg.d < EGG_DAYS) return null;
+  r.egg = {d:0, last:today(), n:(r.egg.n||0) + 1};       // 今天的練習不再算進下一顆蛋
+  const pool = Object.keys(HIDDEN).filter(k=>!r.own["h:" + k]);
+  if(!pool.length){ earn(100, "神秘蛋"); saveProg(); return null; }
+  const k = pick(pool); grant("h:" + k); saveProg(); return k;
+}
+function eggRow(){
+  const e = RW().egg, ready = e.d >= EGG_DAYS, stage = ready ? 2 : e.d >= 3 ? 2 : e.d >= 1 ? 1 : 0;
+  return `<div class="rwrow"><span class="rwi egg ${ready ? "egg-ready" : ""}">${eggSvg(stage, 40)}</span><span class="rwt"><b>神秘蛋</b><span>${ready ? "快孵出來了！" : `再練習 ${EGG_DAYS - e.d} 天就會孵化（不用連續）`}</span><span class="rwbar"><i style="width:${e.d / EGG_DAYS * 100}%"></i></span></span>${ready ? `<button class="btn warm small" data-act="rw-hatch">孵化！</button>` : `<span class="muted rwp">${e.d}/${EGG_DAYS}</span>`}</div>`;
+}
 function previewAv(){ return (cur && cur.avatar && typeof cur.avatar==="object") ? maFix(cur.avatar) : maFix({}); }
 function withPart(it){ return Object.assign(previewAv(), {[it.c]: it.k}); }
-function wearing(it){ return !!(cur && cur.avatar && typeof cur.avatar==="object" && maFix(cur.avatar)[it.c] === it.k); }
+function wearing(it){ if(it.c === "h") return partnerId() === it.k; return !!(cur && cur.avatar && typeof cur.avatar==="object" && maFix(cur.avatar)[it.c] === it.k); }
 
 /* 簽到與任務的狀態 */
 function ciState(){ const r = RW(); return r.ci.last === today() ? "done" : todayN() > 0 ? "ready" : "wait"; }
@@ -8999,6 +9201,7 @@ function rwGame(g){
   if(!S) return;
   const d = rwDay(), r = RW();
   if(d.gc < 3){ d.gc++; earn(Math.min(10, 5 + Math.floor((g.stars||0)/3)), "玩遊戲"); }
+  if(g.id === "speed") r.speedBest = Math.max(r.speedBest || 0, g.score || 0);
   if(g.review){
     const total = g.rt ? g.rt.filter(x=>!x).length : g.qs.length;
     if(total >= 3 && g.score === total){ r.perfect++; if(r.perfect >= 5) grant("n:medal"); }
@@ -9037,19 +9240,27 @@ function dailyCard(){
   return `<div class="card rwcard">
     <div class="rwhead"><button class="rwme" data-act="me-dance" aria-label="讓我的小怪獸動一動">${meDance(52, U.dance)}</button><b style="flex:1">今天的任務</b><button class="coinpill" data-act="shop-open" aria-label="金幣 ${r.coins}，打開寶物商店">${coinSvg(22)}<span>${r.coins}</span><span class="muted">商店 ›</span></button></div>
     ${rows}
+    ${eggRow()}
     <p class="muted rwnote">三個任務都完成，再送一個寶物！</p></div>`;
 }
 
 /* 商店與收藏冊 */
 function vShop(){
-  const r = RW(), tab = U.shopTab || "shop", cat = U.shopCat || "t";
+  const r = RW(), tab = U.shopTab || "shop", cat = (tab === "shop" && U.shopCat === "h") ? "t" : (U.shopCat || "t");
   const own = r.own, have = REWARDS.filter(it=>own[it.id]).length;
   const head = `<div class="lhead"><button class="x" data-act="shop-close" aria-label="返回">✕</button><b>寶物商店</b><span class="coinpill static">${coinSvg(22)}<span>${r.coins}</span></span></div>
     <div class="chips" style="margin:0 0 10px"><button class="chip ${tab==="shop"?"on":""}" data-act="shop-tab" data-t="shop">商店</button><button class="chip ${tab==="book"?"on":""}" data-act="shop-tab" data-t="book">收藏冊（${have}/${REWARDS.length}）</button></div>
-    <div class="chips abtabs" style="margin:0 0 10px">${Object.keys(RW_CAT).map(c=>`<button class="chip ${c===cat?"on":""}" data-act="shop-cat" data-c="${c}">${RW_CAT[c][0]}</button>`).join("")}</div>`;
+    <div class="chips abtabs" style="margin:0 0 10px">${Object.keys(RW_CAT).filter(c=>tab==="book" || c!=="h").map(c=>`<button class="chip ${c===cat?"on":""}" data-act="shop-cat" data-c="${c}">${RW_CAT[c][0]}</button>`).join("")}</div>`;
   const list = REWARDS.filter(it=>it.c===cat && (tab==="book" || it.price != null));
   const cards = list.map(it=>{
     const has = !!own[it.id], rare = RW_RARE[it.rare];
+    if(it.c === "h"){
+      const [v, g] = achProgress(it.k);
+      const art = has ? `<span class="hmon">${monster(it.k, "cheer", 88)}</span>` : `<span class="hmon sil">${silhouette(it.k, 88)}</span>`;
+      const act = has ? (wearing(it) ? `<span class="muted" style="font-size:12px">現在的夥伴</span>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">設成夥伴</button>`)
+        : `<span class="muted" style="font-size:12px">${h(RW_SRC[it.get])}<br>${v} / ${g}</span>`;
+      return `<div class="shopit ${has ? "own" : ""}">${art}${has ? "" : `<span class="lockb">${li("lock",14)}</span>`}<b>${has ? h(rwName(it)) : "？？？"}</b><span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
+    }
     const art = it.c === "x" ? moveHtml(avCircle(withPart(it), 88), it.k, true) : `<span class="avc shopav" style="width:88px;height:88px">${maSvg(withPart(it), 88)}</span>`;
     let act;
     const on = it.c === "x" ? ["使用中・換回跳跳", "使用這個動作"] : ["穿著中・脫下", "穿上"];
@@ -9067,6 +9278,13 @@ function vShop(){
 }
 function vRewardSheet(){
   const id = U.rwq[0], it = RW_BY[id];
+  if(it.c === "h") return `<div class="sheet-bg" data-act="rw-close"></div><div class="sheet center rwpop">
+    <div class="sheet-h"><b>隱藏版小怪獸出現了！</b><button class="x" data-act="rw-close" aria-label="關閉">✕</button></div>
+    <span class="hmon">${monster(it.k, "cheer", 150)}</span>
+    <h3 style="margin:10px 0 2px">${h(rwName(it))} <span class="muted en" style="font-size:14px">${h(HIDDEN[it.k].en)}</span></h3>
+    <p class="muted" style="margin:0 0 4px">${h(PROFILE[it.k].detail)}</p>
+    <p class="muted" style="margin:0 0 12px">${h(RW_RARE[it.rare][0])}・${h(rwHow(it))}</p>
+    <div class="stack"><button class="btn" data-act="rw-wear" data-id="${id}" data-close="1">設成學習夥伴</button><button class="btn sec" data-act="rw-close">收進收藏冊</button></div></div>`;
   return `<div class="sheet-bg" data-act="rw-close"></div><div class="sheet center rwpop">
     <div class="sheet-h"><b>獲得新寶物！</b><button class="x" data-act="rw-close" aria-label="關閉">✕</button></div>
     ${moveHtml(`<span class="avc" style="width:150px;height:150px">${maSvg(withPart(it), 150)}</span>`, it.c === "x" ? it.k : moveOf(), it.c === "x")}
@@ -9077,6 +9295,7 @@ const RW_ACT = {
   "rw-ci"(){ claimCheckin(); U.dance = 1; render(); U.dance = 0; },
   "rw-task"(el){ claimTask(el.dataset.t); U.dance = 1; render(); U.dance = 0; },
   "me-dance"(){ U.dance = 1; render(); U.dance = 0; },
+  "rw-hatch"(){ const k = hatchEgg(); if(!k) toast("蛋裡跑出 100 枚金幣！隱藏版已經全部收集到了"); render(); },
   "shop-open"(){ leaveActivity(); U.shopFrom = U.view; U.shopTab = U.shopTab || "shop"; U.shopCat = U.shopCat || "t"; U.arm = ""; U.view = "shop"; render(); },
   "shop-close"(){ U.arm = ""; U.view = U.shopFrom === "avatar" ? "avatar" : "home"; render(); },
   "shop-tab"(el){ U.shopTab = el.dataset.t; U.arm = ""; render(); },
@@ -9090,6 +9309,11 @@ const RW_ACT = {
   },
   "rw-wear"(el){
     const it = RW_BY[el.dataset.id]; if(!it || !RW().own[it.id]) return;
+    if(it.c === "h"){
+      cur.partner = it.k; saveProfiles(); U.greet = bline("greet");
+      if(el.dataset.close){ U.rwq.shift(); if(!U.rwq.length) U.sheet = null; }
+      toast(`${MON[it.k].name} 成為你的夥伴了！`); render(); return;
+    }
     const av = previewAv();
     if(wearing(it)) av[it.c] = ["e","m","x"].includes(it.c) ? MA_DEF[it.c] : "none"; else av[it.c] = it.k;
     cur.avatar = av; saveProfiles();
@@ -9856,7 +10080,7 @@ setInterval(()=>{
 }, 15000);
 
 /* 跟讀分數：每次結果只記一次 */
-function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); saveProg(); }
+function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); if(score >= 90) RW().hi90++; saveProg(); }
 
 /* 讀取任何一位學習者的進度（家長看板用） */
 function loadProgOf(id){
@@ -10013,8 +10237,9 @@ const ACT = {
     else { cur.avatar = U.ab; saveProfiles(); U.view = "settings"; toast("新頭像好可愛！"); }
     render();
   },
-  "p-pick"(el){ U.ppick = el.dataset.p; render(); },
-  "p-save"(){ cur.partner = U.ppick || partnerId(); saveProfiles(); U.view = "settings"; toast(MON[cur.partner].name + " 成為你的夥伴了！"); render(); },
+  "p-pick"(el){ if(!partnerOk(el.dataset.p)) return; U.ppick = el.dataset.p; render(); },
+  "p-locked"(el){ const H = HIDDEN[el.dataset.p]; if(H) toast(`隱藏版夥伴：${RW_SRC[H.get]}，或用神秘蛋孵出來`); },
+  "p-save"(){ if(U.ppick && !partnerOk(U.ppick)) U.ppick = null; cur.partner = U.ppick || partnerId(); saveProfiles(); U.view = "settings"; toast(MON[cur.partner].name + " 成為你的夥伴了！"); render(); },
   "set-lv"(el){ cur.level = +el.dataset.l; saveProfiles(); render(); },
   "start-topic"(el){ if(el.dataset.t) startTopic(el.dataset.t); else { U.view="topics"; render(); } },
   play(){ speakEn(curSent().en); if(U.step===0){ U.plays++; render(); setSpeaking(true); } },
