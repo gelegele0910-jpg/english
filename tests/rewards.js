@@ -60,7 +60,8 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     const timeline = {};
     for (day = 0; day < 14; day++) { bump(); claimCheckin(); timeline[day + 1] = Object.keys(S.rw.own).sort().join(','); }
     const own = S.rw.own;
-    for (const id of ['t:strawhat', 't:headband', 'k:cape', 's:meadow', 't:rainbow']) if (!own[id]) bad.push('沒拿到 ' + id);
+    for (const id of ['t:strawhat', 't:headband', 'k:cape', 's:meadow', 'x:hearts', 't:rainbow', 'x:float']) if (!own[id]) bad.push('沒拿到 ' + id);
+    if (timeline[13].includes('x:float') || !timeline[14].includes('x:float')) bad.push('連續 14 天的動作時間不對');
     if (timeline[2].includes('t:headband') || !timeline[3].includes('t:headband')) bad.push('連續 3 天的寶物時間不對');
     if (timeline[6].includes('k:cape') || !timeline[7].includes('k:cape')) bad.push('連續 7 天的寶物時間不對');
     const chestOwned = REWARDS.filter(it => it.get === 'chest' && own[it.id]).length;
@@ -239,6 +240,53 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     }
     await p.evaluate(() => { cur.skin = 'sticker'; applySkin(); render(); });
     result('E5 深色風格的首頁與商店不超出手機寬度', bad);
+  }
+
+  // E8 動作：首頁點小怪獸會動、商店買動作並使用、頭像工作室上鎖、答對與完成畫面一起動
+  {
+    const bad = [];
+    const mvCls = () => p.evaluate(() => { const el = document.querySelector('.rwme .mv'); return el ? el.className : ''; });
+    await p.evaluate(() => { cur.avatar = maFix({ b: 'round', c: 'mint' }); saveProfiles(); U.view = 'home'; render(); });
+    if (!(await mvCls()).includes('mv-still')) bad.push('首頁小怪獸一進來就在動（應該等點了才動）');
+    await p.click('[data-act=me-dance]');
+    if (!/mv-bounce.*mv-once/.test(await mvCls())) bad.push('點首頁小怪獸沒有播放「跳跳」：' + await mvCls());
+    const anim = await p.evaluate(() => getComputedStyle(document.querySelector('.rwme .mv')).animationName);
+    if (anim !== 'mvBounce') bad.push('跳跳的動畫沒有套用：' + anim);
+    // 商店「動作」分類：會動的預覽、買搖擺舞、使用、換回跳跳
+    await p.evaluate(() => { S.rw.coins = 200; });
+    await p.click('[data-act=shop-open]'); await p.click('[data-act=shop-tab][data-t=shop]'); await p.click('[data-act=shop-cat][data-c=x]');   // 商店會記住上次的分頁，先切回「商店」
+    const loops = await p.evaluate(() => document.querySelectorAll('.shopit .mv-loop').length);
+    const sellN = await p.evaluate(() => REWARDS.filter(it => it.c === 'x' && it.price != null).length);
+    if (loops !== sellN) bad.push(`動作預覽應該 ${sellN} 個都在動，實際 ${loops}`);
+    await p.click('[data-act=rw-buy][data-id="x:wiggle"]'); await p.click('[data-act=rw-buy][data-id="x:wiggle"]');
+    await p.click('[data-act=rw-wear][data-id="x:wiggle"]');
+    if ((await p.evaluate(() => cur.avatar.x)) !== 'wiggle') bad.push('使用動作後頭像沒有換成搖擺舞');
+    if (!(await p.textContent('[data-act=rw-wear][data-id="x:wiggle"]')).includes('換回跳跳')) bad.push('使用中的按鈕文字不對');
+    await p.click('[data-act=shop-close]'); await p.click('[data-act=me-dance]');
+    if (!(await mvCls()).includes('mv-wiggle')) bad.push('首頁沒有改播搖擺舞');
+    // 頭像工作室「動作」分頁
+    await p.evaluate(() => { U.view = 'settings'; render(); });
+    await p.click('[data-act=ab-open]'); await p.click('[data-act=ab-tab][data-k=x]');
+    if (!(await p.$('.abopt.locked[data-id="x:spin"]'))) bad.push('轉圈圈沒有上鎖');
+    if (await p.$('.abopt.locked[data-id="x:wiggle"]')) bad.push('買過的搖擺舞還是上鎖');
+    if (!(await p.$('.abprev .mv-loop'))) bad.push('動作分頁的大預覽沒有在動');
+    await p.click('[data-act=ab-cancel]');
+    // 答對時星星旁邊的小怪獸、完成主題畫面
+    await p.evaluate(() => pop(1));
+    if (!(await p.evaluate(() => document.querySelector('#pop').innerHTML.includes('mv-wiggle')))) bad.push('答對時沒有出現自己的小怪獸');
+    await p.evaluate(() => { U.ti = TOPICS[0].id; U.list = TOPICS[0].sents[1]; U.view = 'tdone'; render(); });
+    if (!(await p.$('.duo .mv-wiggle.mv-once'))) bad.push('完成主題畫面的小怪獸沒有動');
+    // 減少動態效果：動畫要停掉
+    await p.emulateMedia({ reducedMotion: 'reduce' });
+    await p.evaluate(() => { U.view = 'home'; render(); }); await p.click('[data-act=me-dance]');
+    if ((await p.evaluate(() => getComputedStyle(document.querySelector('.rwme .mv')).animationName)) !== 'none') bad.push('系統設定「減少動態效果」時還在動');
+    await p.emulateMedia({ reducedMotion: 'no-preference' });
+    // 舊頭像沒有 x → 跳跳；所有動作都畫得出來
+    if ((await p.evaluate(() => maFix({ b: 'drop' }).x)) !== 'bounce') bad.push('舊頭像的預設動作不是跳跳');
+    const broken = await p.evaluate(() => Object.keys(MA_MOVES).filter(x => { const h = moveHtml(avCircle(cur.avatar, 60), x, true); return !h.includes('mv-' + x) || /undefined/.test(h); }));
+    if (broken.length) bad.push('動作畫壞了：' + broken);
+    await p.screenshot({ path: path.join(OUT, 'rewards-moves.png') });
+    result('E8 動作：點首頁小怪獸會動、商店買與使用、頭像工作室上鎖、答對與完成畫面一起動、尊重減少動態設定', bad);
   }
 
   // E6 舊資料：沒有 rw 的進度、配件是圍巾的舊頭像
