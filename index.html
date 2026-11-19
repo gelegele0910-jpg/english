@@ -301,6 +301,14 @@ body[data-skin=minimal] .opt,body[data-skin=minimaldark] .opt{border-color:var(-
 @keyframes mvHeart{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-220%) scale(1.1)}}
 .rwme{background:none;border:0;padding:0;cursor:pointer;display:flex}
 .hmon{display:inline-flex;flex:none}
+.setbox{display:flex;flex-direction:column;gap:10px}
+.sethead{display:flex;gap:12px;align-items:center}
+.setinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.setinfo b{font-size:17px}.setinfo .muted{font-size:12.5px}
+.rtag.fest{background:var(--warm-2);color:var(--warm)}
+.chip.hot{box-shadow:0 0 0 2px var(--warm) inset}
+.feston{font-weight:700;color:var(--warm);margin:0 0 10px}
+.mytitle{margin:-4px 0 8px;font-size:14px;color:var(--muted)}.mytitle b{color:var(--accent)}
 .sil{color:var(--muted);opacity:.7}
 .pk.locked{opacity:.85}
 .egg-ready svg{animation:mvShake .6s ease-in-out infinite;transform-origin:50% 90%}
@@ -7988,6 +7996,57 @@ const MA_SCENE = {
   party: {lock:true, n:"生日派對", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#fff4dc"/><path d="M-6 6 Q60 26 126 6" fill="none" stroke="#a86a5c" stroke-width="1.2"/>${[0,1,2,3,4,5,6].map(i=>{ const x = 4+i*17, y = 9+Math.sin(i/6*Math.PI)*8; return `<path d="M${x} ${y} l10 0 l-5 10 Z" fill="${["#ff9fb6","#8fd1ff","#ffd66b","#a8d88e"][i%4]}"/>`; }).join("")}${[[14,40,"#ff9fb6",20],[104,36,"#8fd1ff",-30],[22,70,"#ffd66b",60],[100,78,"#a8d88e",10],[110,56,"#c9b6e8",40]].map(([x,y,c,r])=>`<rect x="${x}" y="${y}" width="6" height="3" rx="1" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`).join("")}`},
   garden: {lock:true, n:"花園", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#eaf6df"/><circle cx="100" cy="16" r="10" fill="#ffe08a"/><path d="M-10 100 Q60 92 130 100 V130 H-10 Z" fill="#c3e3cb"/>${[[10,98,"#ff9fb6"],[24,104,"#fff"],[96,102,"#c9b6e8"],[110,96,"#ff9fb6"]].map(([x,y,c])=>`<path d="M${x} ${y} v10" stroke="#7fae6a" stroke-width="1.6"/><g transform="translate(${x} ${y})">${[0,72,144,216,288].map(a=>`<ellipse cx="0" cy="-3" rx="2.2" ry="3" transform="rotate(${a})" fill="${c}"/>`).join("")}<circle r="1.6" fill="#ffd66b"/></g>`).join("")}`}
 };
+/* ---------- 主題套裝與節慶限定的部件（取得方式見主程式 SETS、FEST） ---------- */
+Object.assign(MA_TOPS, {
+  deerstalker:{lock:true, n:"偵探帽", f:(L)=>`
+    <path d="M30 46 Q30 20 60 20 Q90 20 90 46 Z" fill="#c9a77c" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M38 26 l44 18 M34 34 l50 10 M50 21 l36 22 M44 22 l-8 22 M60 20 v24 M76 22 l8 22" stroke="#a8875e" stroke-width="1.2" opacity=".7"/>
+    <path d="M30 46 Q24 50 22 44 Q26 40 32 42 Z M90 46 Q96 50 98 44 Q94 40 88 42 Z" fill="#c9a77c" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M58 20 q-2 -6 2 -8 q4 2 2 8" fill="#a8875e" stroke="${L}" stroke-width="1.6"/>`},
+  alien:{lock:true, n:"外星觸角", f:(L)=>`
+    <path d="M48 42 Q42 26 34 22 M72 42 Q78 26 86 22" fill="none" stroke="${L}" stroke-width="2.6" stroke-linecap="round"/>
+    ${[[33,20],[87,20]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="7" fill="#b6f07a" stroke="${L}" stroke-width="2"/><circle cx="${x-2}" cy="${y-2}" r="2.2" fill="#fff"/>`).join("")}
+    <path d="M18 14 l3 3 M100 12 l-3 3 M104 24 l-4 0" stroke="#b6f07a" stroke-width="2" stroke-linecap="round"/>`},
+  ninjaband:{lock:true, n:"忍者頭巾", f:(L)=>`
+    <path d="M26 50 Q60 38 94 50 L94 59 Q60 47 26 59 Z" fill="#4a4258" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+    <rect x="50" y="43" width="20" height="10" rx="2" fill="#c9cfe0" stroke="${L}" stroke-width="1.6" transform="rotate(-2 60 48)"/>
+    <path d="M94 52 q10 -2 16 -10 M94 56 q12 2 16 10" fill="none" stroke="#4a4258" stroke-width="4" stroke-linecap="round"/>`},
+  zongzi:{lock:true, n:"粽子帽", f:(L)=>`<path d="M42 44 L60 12 L78 44 Z" fill="#8cc47a" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M51 28 L69 28 M47 36 L73 36" stroke="#d9b45e" stroke-width="3"/><path d="M60 12 L54 44 M60 12 L66 44" stroke="#6fa85e" stroke-width="1.4"/>`},
+  pumpkin:{lock:true, n:"南瓜帽", f:(L)=>`<path d="M60 20 q-2 -8 4 -10" fill="none" stroke="#5d8a4a" stroke-width="3" stroke-linecap="round"/><ellipse cx="46" cy="34" rx="12" ry="13" fill="#ffa24a" stroke="${L}" stroke-width="2.2"/><ellipse cx="74" cy="34" rx="12" ry="13" fill="#ffa24a" stroke="${L}" stroke-width="2.2"/><ellipse cx="60" cy="33" rx="12" ry="14" fill="#ffb565" stroke="${L}" stroke-width="2.2"/><path d="M54 30 l3 3 l-3 0 Z M66 30 l-3 3 l3 0 Z M54 38 q6 4 12 0" fill="#5a3a20" stroke="#5a3a20" stroke-width="1.4" stroke-linejoin="round"/>`},
+  santa:{lock:true, n:"聖誕帽", f:(L)=>`<path d="M34 46 Q36 22 60 18 Q84 16 96 34 Q102 44 104 58 Q96 54 92 44 Q90 40 86 46 Z" fill="#e2463f" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M30 42 Q60 34 90 42 L90 50 Q60 42 30 50 Z" fill="#fff" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><circle cx="104" cy="60" r="6" fill="#fff" stroke="${L}" stroke-width="2"/>`},
+  antlers:{lock:true, n:"麋鹿角", f:(L)=>[[-1],[1]].map(([k])=>`<path transform="translate(${60+k*16} 40) scale(${k} 1)" d="M0 2 Q2 -14 10 -24 M4 -10 Q12 -12 16 -18 M7 -18 Q2 -24 0 -30" fill="none" stroke="#a6774a" stroke-width="4.4" stroke-linecap="round"/>`).join("") + ""},
+  helmet:{lock:true, n:"太空頭盔", f:(L)=>`<circle cx="60" cy="70" r="47" fill="#d8eeff" fill-opacity=".28" stroke="#9fb4cf" stroke-width="3"/><path d="M28 48 Q38 32 54 28" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".8"/><path d="M22 104 Q60 120 98 104" fill="none" stroke="#9fb4cf" stroke-width="7" stroke-linecap="round"/>`}
+});
+Object.assign(MA_ACC, {
+  roundglass:{lock:true, n:"圓框眼鏡", f:(s,L)=>`<circle cx="${60-s.dx}" cy="${s.ey}" r="8.4" fill="#fff" fill-opacity=".25" stroke="#3f3540" stroke-width="2"/><circle cx="${60+s.dx}" cy="${s.ey}" r="8.4" fill="#fff" fill-opacity=".25" stroke="#3f3540" stroke-width="2"/><path d="M${60-s.dx+8} ${s.ey-1} Q60 ${s.ey-4} ${60+s.dx-8} ${s.ey-1}" fill="none" stroke="#3f3540" stroke-width="2"/>`},
+  bigglass:{lock:true, n:"大框眼鏡", f:(s,L)=>`<rect x="${60-s.dx-10}" y="${s.ey-8}" width="20" height="16" rx="7" fill="#fff" fill-opacity=".3" stroke="#3a5ea8" stroke-width="2.8"/><rect x="${60+s.dx-10}" y="${s.ey-8}" width="20" height="16" rx="7" fill="#fff" fill-opacity=".3" stroke="#3a5ea8" stroke-width="2.8"/><path d="M${60-s.dx+10} ${s.ey-2} H${60+s.dx-10}" stroke="#3a5ea8" stroke-width="2.6"/>`},
+  ninjamask:{lock:true, n:"忍者面罩", f:(s,L)=>`<path d="M${60-s.dx-14} ${s.ey+6} Q60 ${s.ey+2} ${60+s.dx+14} ${s.ey+6} L${60+s.dx+12} ${s.my+10} Q60 ${s.my+16} ${60-s.dx-12} ${s.my+10} Z" fill="#4a4258" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><path d="M${60-s.dx-6} ${s.my+3} q6 2 12 0" fill="none" stroke="#6b6380" stroke-width="1.6" stroke-linecap="round"/>`}
+});
+Object.assign(MA_NECK, {
+  stripescarf:{lock:true, n:"學院條紋圍巾", f:(s,L)=>`<path d="M20 ${s.my+6} Q60 ${s.my+18} 100 ${s.my+6} L100 ${s.my+16} Q60 ${s.my+28} 20 ${s.my+16} Z" fill="#7a62c9" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/><path d="M34 ${s.my+12} v10 M50 ${s.my+15} v10 M70 ${s.my+15} v10 M86 ${s.my+12} v10" stroke="#ffd66b" stroke-width="4"/><path d="M76 ${s.my+18} L74 ${s.my+36} L86 ${s.my+36} L86 ${s.my+16} Z" fill="#7a62c9" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><path d="M75 ${s.my+28} h11" stroke="#ffd66b" stroke-width="4"/>`},
+  redbow:{lock:true, n:"紅色蝴蝶領結", f:(s,L)=>`<path d="M60 ${s.my+12} L46 ${s.my+4} Q43 ${s.my+12} 46 ${s.my+20} Z M60 ${s.my+12} L74 ${s.my+4} Q77 ${s.my+12} 74 ${s.my+20} Z" fill="#e2463f" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><rect x="56" y="${s.my+8}" width="8" height="8" rx="2" fill="#c43a34" stroke="${L}" stroke-width="1.6"/>`},
+  knot:{lock:true, n:"福字中國結", f:(s,L)=>`<path d="M60 ${s.my+6} v5" stroke="#e2463f" stroke-width="2"/><rect x="51" y="${s.my+11}" width="18" height="18" rx="3" transform="rotate(45 60 ${s.my+20})" fill="#e2463f" stroke="${L}" stroke-width="1.8"/><text x="60" y="${s.my+24.5}" text-anchor="middle" font-size="11" font-weight="700" fill="#ffd66b" font-family="Huninn,sans-serif">福</text><path d="M57 ${s.my+31} l-2 8 M60 ${s.my+32} v8 M63 ${s.my+31} l2 8" stroke="#e2463f" stroke-width="1.6" stroke-linecap="round"/>`},
+  spacebadge:{lock:true, n:"太空徽章", f:(s,L)=>`<path d="M54 ${s.my+6} L57 ${s.my+12} M66 ${s.my+6} L63 ${s.my+12}" stroke="#3a5ea8" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="${s.my+18}" r="7.5" fill="#3a5ea8" stroke="${L}" stroke-width="1.8"/><circle cx="58.5" cy="${s.my+18}" r="3.2" fill="#ffb565"/><ellipse cx="58.5" cy="${s.my+18}" rx="6" ry="1.8" fill="none" stroke="#ffd66b" stroke-width="1.3" transform="rotate(-18 58.5 ${s.my+18})"/><path transform="translate(63.5 ${s.my+14}) scale(.18)" d="${STAR5}" fill="#fff"/>`}
+});
+Object.assign(MA_BACK, {
+  broom:{lock:true, n:"飛天掃帚", f:(L)=>`<path d="M4 98 L92 70" stroke="#a6774a" stroke-width="5" stroke-linecap="round"/><path d="M92 70 L116 56 L118 72 L114 66 L112 80 L108 72 L102 84 Z" fill="#e8c27a" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><path d="M88 66 l6 10" stroke="#7a4a2a" stroke-width="3"/>`},
+  wand:{lock:true, n:"閃亮魔杖", f:(L)=>`<path d="M100 96 L112 52" stroke="#6b4a32" stroke-width="4" stroke-linecap="round"/><path d="M112 52 L113 46" stroke="#fff3b8" stroke-width="4" stroke-linecap="round"/><path transform="translate(112 40) scale(.5)" d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="#ffd66b"/><path transform="translate(104 30) scale(.3)" d="M0 -10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="#ffd66b"/>`},
+  magnifier:{lock:true, n:"放大鏡", f:(L)=>`<path d="M98 100 L108 78" stroke="#6b4a32" stroke-width="5" stroke-linecap="round"/><circle cx="112" cy="66" r="12" fill="#e6f4ff" fill-opacity=".7" stroke="#a8875e" stroke-width="3.4"/><path d="M106 60 q4 -4 9 -2" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`},
+  jetpack:{lock:true, n:"火箭背包", f:(L)=>[[-1],[1]].map(([k])=>`<g transform="translate(${60+k*40} 66)"><rect x="-7" y="-14" width="14" height="30" rx="7" fill="#d2d8e8" stroke="${L}" stroke-width="2"/><path d="M-5 16 Q0 32 5 16 Z" fill="#ffb565" stroke="#e57a2e" stroke-width="1.4"/><path d="M-7 -4 h14" stroke="#e2463f" stroke-width="3"/></g>`).join("")},
+  shuriken:{lock:true, n:"忍者飛鏢", f:(L)=>`<g transform="translate(106 40) rotate(20)"><path d="M0 -12 L3 -3 L12 0 L3 3 L0 12 L-3 3 L-12 0 L-3 -3 Z" fill="#c9cfe0" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/><circle r="2.4" fill="#4a4258"/></g>`},
+  lantern:{lock:true, n:"紅燈籠", f:(L)=>`<path d="M100 64 V40" stroke="${L}" stroke-width="1.4"/><ellipse cx="100" cy="28" rx="13" ry="12" fill="#e2463f" stroke="${L}" stroke-width="2"/><rect x="93" y="14" width="14" height="4" rx="1" fill="#ffd66b" stroke="${L}" stroke-width="1.4"/><rect x="93" y="38" width="14" height="4" rx="1" fill="#ffd66b" stroke="${L}" stroke-width="1.4"/><path d="M100 17 V39 M93 22 Q100 28 93 34 M107 22 Q100 28 107 34" stroke="#ff8a7a" stroke-width="1.2" fill="none"/><path d="M98 42 v8 M100 42 v9 M102 42 v8" stroke="#ffd66b" stroke-width="1.4"/>`},
+  rabbitlamp:{lock:true, n:"兔子燈籠", f:(L)=>`<path d="M98 66 V48" stroke="${L}" stroke-width="1.4"/><path d="M90 26 Q86 10 92 8 Q96 14 95 26 Z M100 26 Q100 10 106 10 Q108 18 103 27 Z" fill="#fff" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="99" cy="36" rx="15" ry="12" fill="#fff" stroke="${L}" stroke-width="2"/><circle cx="104" cy="33" r="1.6" fill="#e2463f"/><path d="M86 40 Q99 44 112 40" stroke="#ff9fb6" stroke-width="2" fill="none"/><ellipse cx="99" cy="36" rx="9" ry="6" fill="#ffd66b" opacity=".35"/>`},
+  batwings:{lock:true, n:"蝙蝠翅膀", f:(L)=>[[-1],[1]].map(([k])=>`<path transform="translate(${60+k*30} 64) scale(${k} 1)" d="M0 0 Q14 -22 34 -18 Q30 -10 34 -4 Q26 -6 26 2 Q18 -2 16 6 Q8 2 0 8 Z" fill="#5a4a7a" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>`).join("")}
+});
+Object.assign(MA_SCENE, {
+  space:{lock:true, n:"星球軌道", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#2b2a5a"/>${[[10,12],[30,40],[100,8],[112,46],[16,80],[108,92]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#fff"/>`).join("")}<circle cx="96" cy="26" r="13" fill="#ffb565"/><ellipse cx="96" cy="26" rx="22" ry="5" fill="none" stroke="#ffd66b" stroke-width="2.4" transform="rotate(-15 96 26)"/><circle cx="18" cy="22" r="6" fill="#8fd1ff"/>`},
+  bamboo:{lock:true, n:"竹林", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#e8f4dc"/>${[6,22,100,114].map((x,i)=>`<rect x="${x}" y="-10" width="7" height="140" fill="${i%2?"#8cc47a":"#a8d88e"}"/>${[20,50,80].map(y=>`<path d="M${x} ${y+i*6} h7" stroke="#6fa85e" stroke-width="2"/>`).join("")}`).join("")}<path d="M28 20 q10 -4 16 2 q-10 2 -16 -2 Z M92 34 q-10 -4 -16 2 q10 2 16 -2 Z" fill="#8cc47a"/>`},
+  cny:{lock:true, n:"新年快樂", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#fff0e0"/><path d="M-10 4 Q60 16 130 4" fill="none" stroke="#a86a5c" stroke-width="1.2"/>${[18,60,102].map(x=>`<ellipse cx="${x}" cy="${12+(x===60?4:0)}" rx="9" ry="8" fill="#e2463f"/><rect x="${x-4}" y="${2+(x===60?4:0)}" width="8" height="3" fill="#ffd66b"/><path d="M${x} ${20+(x===60?4:0)} v6" stroke="#ffd66b" stroke-width="1.4"/>`).join("")}<rect x="2" y="40" width="12" height="54" rx="2" fill="#e2463f"/><rect x="106" y="40" width="12" height="54" rx="2" fill="#e2463f"/><text x="8" y="58" font-size="9" fill="#ffd66b" text-anchor="middle" font-family="Huninn,sans-serif">春</text><text x="112" y="58" font-size="9" fill="#ffd66b" text-anchor="middle" font-family="Huninn,sans-serif">福</text>`},
+  moonnight:{lock:true, n:"中秋月夜", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#2f3a6a"/><circle cx="92" cy="26" r="20" fill="#fff3b8"/><circle cx="86" cy="22" r="3" fill="#f2e28a"/><circle cx="98" cy="32" r="2" fill="#f2e28a"/>${[[14,16],[34,8],[24,40]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#fff"/>`).join("")}<path d="M-10 100 Q30 92 60 98 Q90 92 130 100 V130 H-10 Z" fill="#3f4f80"/>`},
+  halloween:{lock:true, n:"萬聖夜", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#3a2d5a"/><circle cx="96" cy="22" r="14" fill="#ffd66b"/>${[[20,20],[34,34]].map(([x,y])=>`<path transform="translate(${x} ${y})" d="M-8 0 Q-4 -5 0 -1 Q4 -5 8 0 Q4 -1 0 3 Q-4 -1 -8 0 Z" fill="#1d1630"/>`).join("")}<path d="M-10 102 Q60 94 130 102 V130 H-10 Z" fill="#2a2042"/><ellipse cx="14" cy="100" rx="9" ry="7" fill="#ffa24a"/><ellipse cx="108" cy="102" rx="7" ry="6" fill="#ffa24a"/>`},
+  snow:{lock:true, n:"雪地聖誕", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#dcecf8"/>${[[10,10],[30,26],[94,14],[110,40],[20,56],[104,70],[60,6]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2" fill="#fff"/>`).join("")}<path d="M104 96 L114 74 L108 76 L116 58 L110 60 L116 44 L100 60 L106 58 L96 76 L102 74 L92 96 Z" fill="#6fa85e"/><path transform="translate(108 42) scale(.4)" d="${STAR5}" fill="#ffd66b"/><path d="M-10 98 Q60 90 130 98 V130 H-10 Z" fill="#fff"/>`},
+  castle:{lock:true, n:"魔法城堡", f:()=>`<rect x="-10" y="-10" width="140" height="140" fill="#3d3570"/>${[[12,10],[30,28],[52,6],[78,14],[110,40],[18,52]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#fff"/>`).join("")}<path d="M96 14 a10 10 0 1 0 8 16 a8 8 0 1 1 -8 -16 Z" fill="#fff3b8"/><path d="M-10 114 V88 H2 V72 L9 58 L16 72 V88 H26 V80 H32 V88 H88 V80 H94 V88 H104 V72 L111 58 L118 72 V88 H130 V114 Z" fill="#2a2450"/>${[[7,78],[109,78]].map(([x,y])=>`<rect x="${x}" y="${y}" width="4" height="5" rx="2" fill="#ffd66b"/>`).join("")}`}
+});
 /* 動作（不是畫在身上的部件，播放時套用 CSS 動畫 .mv-代號） */
 const MA_MOVES = {
   bounce: {n:"跳跳"},
@@ -9096,16 +9155,46 @@ const REWARDS = [
   ["m","gum",50,1],["m","drool",30,1],["m","bigo",30,1],["m","heartm","task",1],
   ["s","stars",120,2],["s","meadow","streak7",2],["s","sea","chest",2],["s","board","task10",1],["s","party","chest",3],["s","garden",100,1],
   ["x","wiggle",50,1],["x","spin",80,2],["x","squish",60,1],["x","sleep",40,1],["x","shake","task",1],["x","hearts","streak7",2],["x","float","streak14",3],
-  ...Object.keys(HIDDEN).map(k=>["h", k, HIDDEN[k].get, HIDDEN[k].rare])
+  ...Object.keys(HIDDEN).map(k=>["h", k, HIDDEN[k].get, HIDDEN[k].rare]),
+  /* 主題套裝（各件也可以單買）與兩件單品 */
+  ["a","roundglass",80,1],["n","stripescarf",120,1],["k","broom",200,2],["s","castle",120,2],
+  ["t","deerstalker",120,1],["n","redbow",80,1],["a","bigglass",80,1],["k","magnifier",100,1],
+  ["t","helmet",200,2],["k","jetpack",150,2],["s","space",120,2],["n","spacebadge",80,1],
+  ["t","ninjaband",100,1],["a","ninjamask",80,1],["k","shuriken",80,1],["s","bamboo",120,2],
+  ["k","wand",150,2],["t","alien",80,1],
+  /* 節慶限定：只在節日期間的商店出現（價格見 FEST_PRICE） */
+  ["t","zongzi","fest:duanwu",2],["k","lantern","fest:cny",2],["n","knot","fest:cny",2],["s","cny","fest:cny",2],
+  ["k","rabbitlamp","fest:midautumn",2],["s","moonnight","fest:midautumn",2],
+  ["t","pumpkin","fest:halloween",2],["k","batwings","fest:halloween",2],["s","halloween","fest:halloween",2],
+  ["t","santa","fest:xmas",2],["t","antlers","fest:xmas",2],["s","snow","fest:xmas",2]
 ].map(([c,k,get,rare])=>({id:c+":"+k, c, k, get, rare, price: typeof get==="number" ? get : null}));
+const FEST_PRICE = {"t:zongzi":80,"k:lantern":80,"n:knot":60,"s:cny":120,"k:rabbitlamp":80,"s:moonnight":120,"t:pumpkin":80,"k:batwings":120,"s:halloween":120,"t:santa":80,"t:antlers":80,"s:snow":120};
+REWARDS.forEach(it=>{ if(typeof it.get === "string" && it.get.startsWith("fest:")){ it.fest = it.get.slice(5); it.fp = FEST_PRICE[it.id]; } });
 const RW_BY = {}; REWARDS.forEach(r=>{ RW_BY[r.id] = r; });
+/* 主題套裝：集滿 4 件送稱號＋100 金幣 */
+const SETS = [
+  {id:"magic",  n:"魔法學院", title:"小小魔法師", items:["a:roundglass","n:stripescarf","k:broom","s:castle"]},
+  {id:"detect", n:"小偵探",   title:"名偵探",     items:["t:deerstalker","n:redbow","a:bigglass","k:magnifier"]},
+  {id:"space",  n:"太空探險", title:"太空小隊長", items:["t:helmet","k:jetpack","s:space","n:spacebadge"]},
+  {id:"ninja",  n:"忍者",     title:"影子忍者",   items:["t:ninjaband","a:ninjamask","k:shuriken","s:bamboo"]}
+];
+const SET_BONUS = 100;
+/* 節慶：農曆節日每年國曆日期不同，先內建 2026～2030 年（之後要補上新的年份） */
+const FEST = {
+  cny:       {n:"春節",   dates:{2026:"2-17",2027:"2-6",2028:"1-26",2029:"2-13",2030:"2-3"}, pre:7, post:14},
+  duanwu:    {n:"端午節", dates:{2026:"6-19",2027:"6-9",2028:"5-28",2029:"6-16",2030:"6-5"}, pre:7, post:3},
+  midautumn: {n:"中秋節", dates:{2026:"9-25",2027:"9-15",2028:"10-3",2029:"9-22",2030:"9-12"}, pre:7, post:3},
+  halloween: {n:"萬聖節", fixed:"10-31", pre:11, post:2},
+  xmas:      {n:"聖誕節", fixed:"12-25", pre:15, post:6}
+};
+Object.keys(FEST).forEach(f=>{ RW_SRC["fest:" + f] = FEST[f].n + "限定"; });
 const RW_RARE = {1:["普通","r1"],2:["稀有","r2"],3:["傳說","r3"]};
 const TASKS = [
   {id:"s", n:"完成 5 個句子", goal:5, v:d=>(d.s||0) + (d.a||0)*5},
   {id:"g", n:"玩 1 次遊戲", goal:1, v:d=>d.g||0},
   {id:"r", n:"複習 5 個字", goal:5, v:d=>d.r||0}
 ];
-function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}, egg:{d:0, last:"", n:0}, night:{n:0, last:""}, hi90:0, speedBest:0}; }
+function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}, egg:{d:0, last:"", n:0}, night:{n:0, last:""}, hi90:0, speedBest:0, sets:{}, title:"", fgift:{}}; }
 function RW(){
   if(!S.rw || typeof S.rw !== "object") S.rw = newRw();
   const d = newRw(); for(const k in d) if(S.rw[k] == null) S.rw[k] = d[k];   // 補齊舊資料缺的欄位（原地修改，不換物件）
@@ -9113,7 +9202,7 @@ function RW(){
 }
 function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0}; if(!r.day.claim) r.day.claim = {}; return r.day; }
 function rwName(it){ return RW_CAT[it.c][1][it.k].n; }
-function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : it.c === "h" ? `${RW_SRC[it.get]}，或用神秘蛋孵出來` : RW_SRC[it.get]; }
+function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : it.fest ? `${FEST[it.fest].n}期間商店 ${it.fp} 金幣（${festWhen(it.fest)}）` : it.c === "h" ? `${RW_SRC[it.get]}，或用神秘蛋孵出來` : RW_SRC[it.get]; }
 function rwOwned(){ return (S && cur) ? RW().own : {}; }
 function canUsePart(own){ return (k, v, o) => !o[v].lock || !!own[k + ":" + v]; }
 function coinSvg(size){ return `<svg class="coin" viewBox="0 0 48 48" width="${size}" height="${size}" aria-hidden="true"><circle cx="24" cy="25.5" r="17" fill="#e9a93a"/><circle cx="24" cy="23" r="17" fill="#ffd66b" stroke="#a8741c" stroke-width="2.4"/><circle cx="24" cy="23" r="12" fill="none" stroke="#e9a93a" stroke-width="2"/><path transform="translate(24 23) scale(.68)" d="${STAR5}" fill="#fff3b8" stroke="#a8741c" stroke-width="2.4" stroke-linejoin="round"/></svg>`; }
@@ -9128,6 +9217,52 @@ function openChest(){
   if(!pool.length){ earn(50, "寶箱"); return null; }
   const it = pick(pool); grant(it.id); return it.id;
 }
+/* ---- 節慶：期間判斷 ---- */
+function festDay(y, md){ const [m, d] = md.split("-").map(Number); return dayNo(new Date(y, m - 1, d, 12).getTime()); }
+/** 某節慶在 y 年的期間 [開始, 結束]（dayNo）；沒有那一年的日期就回傳 null */
+function festRange(f, y){
+  const F = FEST[f], md = F.fixed || (F.dates && F.dates[y]);
+  if(!md) return null;
+  const c = festDay(y, md); return [c - F.pre, c + F.post];
+}
+function festActive(f, t){
+  t = t == null ? dayNo() : t;
+  const y = new Date(t * DAY + 12 * 36e5).getUTCFullYear();
+  return [y - 1, y, y + 1].some(yy=>{ const r = festRange(f, yy); return r && t >= r[0] && t <= r[1]; });
+}
+function festNow(){ return Object.keys(FEST).filter(f=>festActive(f)); }
+/** 下一次開始的日子（月/日），用來顯示「下次：12/10 開始」 */
+function festNext(f){
+  const t = dayNo(), y = new Date().getFullYear();
+  for(const yy of [y, y + 1, y + 2]){ const r = festRange(f, yy); if(r && r[1] >= t){ const d = new Date(r[0] * DAY + 12 * 36e5); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`; } }
+  return "";
+}
+function festWhen(f){ return festActive(f) ? "現在開放中" : festNext(f) ? `下次 ${festNext(f)} 開始` : "日期待公布"; }
+/** 現在買得到的價格（節慶寶物只在節日期間有價格） */
+function itemPrice(it){ return it.price != null ? it.price : (it.fest && festActive(it.fest)) ? it.fp : null; }
+/** 節日期間第一次簽到：送一樣這個節慶還沒有的寶物（每個節慶每年一次） */
+function festGift(){
+  const r = RW(), y = new Date().getFullYear();
+  festNow().forEach(f=>{
+    const key = f + "-" + y; if(r.fgift[key]) return;
+    r.fgift[key] = 1;
+    const pool = REWARDS.filter(it=>it.fest === f && !r.own[it.id]);
+    if(pool.length) grant(pick(pool).id); else earn(30, FEST[f].n + "禮物");
+  });
+}
+/* ---- 主題套裝：集滿送稱號與金幣 ---- */
+function setOwned(st){ const own = RW().own; return st.items.filter(id=>own[id]).length; }
+function rwSets(){
+  const r = RW();
+  SETS.forEach(st=>{
+    if(r.sets[st.id] || setOwned(st) < st.items.length) return;
+    r.sets[st.id] = 1; r.title = st.title; earn(SET_BONUS, "集滿" + st.n);
+    (U.rwq = U.rwq || []).push("set:" + st.id); U.sheet = "reward";
+  });
+}
+/** 整套穿上的樣子（只放套裝裡的 4 件，預覽要和「整套穿上」完全一樣） */
+function setLook(st){ const av = previewAv(); st.items.forEach(id=>{ const [c, k] = id.split(":"); av[c] = k; }); return av; }
+
 /* ---- 成就：達成就解鎖對應的隱藏版小怪獸 ---- */
 const ACH = {
   luna:  {goal:30, v:()=>streakNow()},
@@ -9144,7 +9279,7 @@ let achBusy = false;
 function rwAch(){
   if(achBusy || !S || !cur) return;
   achBusy = true;
-  try{ Object.keys(ACH).forEach(k=>{ const [v, g] = achProgress(k); if(v >= g) grant("h:" + k); }); } finally { achBusy = false; }
+  try{ Object.keys(ACH).forEach(k=>{ const [v, g] = achProgress(k); if(v >= g) grant("h:" + k); }); rwSets(); } finally { achBusy = false; }
 }
 /* ---- 神秘蛋：每天第一次練習長大一天（不用連續），滿 5 天可以孵化 ---- */
 const EGG_DAYS = 5;
@@ -9175,7 +9310,7 @@ function ciState(){ const r = RW(); return r.ci.last === today() ? "done" : toda
 function taskState(t){ const d = rwDay(); if(d.claim[t.id]) return "done"; return t.v((S.log||{})[today()] || {}) >= t.goal ? "ready" : "wait"; }
 function claimCheckin(){
   const r = RW(); if(ciState() !== "ready") return;
-  r.ci.last = today(); r.ci.days++; earn(10, "簽到");
+  r.ci.last = today(); r.ci.days++; earn(10, "簽到"); festGift();
   const st = streakNow();
   if(r.ci.days >= 3) grant("t:strawhat");
   if(st >= 3) grant("t:headband");
@@ -9245,39 +9380,76 @@ function dailyCard(){
 }
 
 /* 商店與收藏冊 */
-function vShop(){
-  const r = RW(), tab = U.shopTab || "shop", cat = (tab === "shop" && U.shopCat === "h") ? "t" : (U.shopCat || "t");
-  const own = r.own, have = REWARDS.filter(it=>own[it.id]).length;
-  const head = `<div class="lhead"><button class="x" data-act="shop-close" aria-label="返回">✕</button><b>寶物商店</b><span class="coinpill static">${coinSvg(22)}<span>${r.coins}</span></span></div>
-    <div class="chips" style="margin:0 0 10px"><button class="chip ${tab==="shop"?"on":""}" data-act="shop-tab" data-t="shop">商店</button><button class="chip ${tab==="book"?"on":""}" data-act="shop-tab" data-t="book">收藏冊（${have}/${REWARDS.length}）</button></div>
-    <div class="chips abtabs" style="margin:0 0 10px">${Object.keys(RW_CAT).filter(c=>tab==="book" || c!=="h").map(c=>`<button class="chip ${c===cat?"on":""}" data-act="shop-cat" data-c="${c}">${RW_CAT[c][0]}</button>`).join("")}</div>`;
-  const list = REWARDS.filter(it=>it.c===cat && (tab==="book" || it.price != null));
-  const cards = list.map(it=>{
-    const has = !!own[it.id], rare = RW_RARE[it.rare];
-    if(it.c === "h"){
-      const [v, g] = achProgress(it.k);
-      const art = has ? `<span class="hmon">${monster(it.k, "cheer", 88)}</span>` : `<span class="hmon sil">${silhouette(it.k, 88)}</span>`;
-      const act = has ? (wearing(it) ? `<span class="muted" style="font-size:12px">現在的夥伴</span>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">設成夥伴</button>`)
-        : `<span class="muted" style="font-size:12px">${h(RW_SRC[it.get])}<br>${v} / ${g}</span>`;
-      return `<div class="shopit ${has ? "own" : ""}">${art}${has ? "" : `<span class="lockb">${li("lock",14)}</span>`}<b>${has ? h(rwName(it)) : "？？？"}</b><span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
-    }
-    const art = it.c === "x" ? moveHtml(avCircle(withPart(it), 88), it.k, true) : `<span class="avc shopav" style="width:88px;height:88px">${maSvg(withPart(it), 88)}</span>`;
-    let act;
-    const on = it.c === "x" ? ["使用中・換回跳跳", "使用這個動作"] : ["穿著中・脫下", "穿上"];
-    if(has) act = wearing(it) ? `<button class="btn ghost small" data-act="rw-wear" data-id="${it.id}">${on[0]}</button>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">${on[1]}</button>`;
-    else if(it.price != null) act = U.arm === "buy:" + it.id
-      ? `<button class="btn warm small" data-act="rw-buy" data-id="${it.id}">確定花 ${it.price} 金幣？</button>`
-      : `<button class="btn small" data-act="rw-buy" data-id="${it.id}" ${r.coins < it.price ? "disabled" : ""}>${coinSvg(16)} ${it.price}</button>`;
-    else act = `<span class="muted" style="font-size:12px">${h(RW_SRC[it.get])}</span>`;
-    const locked = !has && tab === "book";   // 灰色＋鎖頭只在收藏冊；商店用彩色預覽
-    return `<div class="shopit ${has ? "own" : locked ? "lockd" : ""}">${art}${locked ? `<span class="lockb">${li("lock",14)}</span>` : ""}<b>${h(rwName(it))}</b><span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
+/** 一張寶物卡片（商店與收藏冊共用） */
+function rwCard(it, tab){
+  const r = RW(), has = !!r.own[it.id], rare = RW_RARE[it.rare], price = itemPrice(it);
+  if(it.c === "h"){
+    const [v, g] = achProgress(it.k);
+    const art = has ? `<span class="hmon">${monster(it.k, "cheer", 88)}</span>` : `<span class="hmon sil">${silhouette(it.k, 88)}</span>`;
+    const act = has ? (wearing(it) ? `<span class="muted" style="font-size:12px">現在的夥伴</span>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">設成夥伴</button>`)
+      : `<span class="muted" style="font-size:12px">${h(RW_SRC[it.get])}<br>${v} / ${g}</span>`;
+    return `<div class="shopit ${has ? "own" : ""}">${art}${has ? "" : `<span class="lockb">${li("lock",14)}</span>`}<b>${has ? h(rwName(it)) : "？？？"}</b><span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
+  }
+  const art = it.c === "x" ? moveHtml(avCircle(withPart(it), 88), it.k, true) : `<span class="avc shopav" style="width:88px;height:88px">${maSvg(withPart(it), 88)}</span>`;
+  const on = it.c === "x" ? ["使用中・換回跳跳", "使用這個動作"] : ["穿著中・脫下", "穿上"];
+  let act;
+  if(has) act = wearing(it) ? `<button class="btn ghost small" data-act="rw-wear" data-id="${it.id}">${on[0]}</button>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">${on[1]}</button>`;
+  else if(price != null) act = U.arm === "buy:" + it.id
+    ? `<button class="btn warm small" data-act="rw-buy" data-id="${it.id}">確定花 ${price} 金幣？</button>`
+    : `<button class="btn small" data-act="rw-buy" data-id="${it.id}" ${r.coins < price ? "disabled" : ""}>${coinSvg(16)} ${price}</button>`;
+  else act = `<span class="muted" style="font-size:12px">${h(it.fest ? `${RW_SRC[it.get]}・${festWhen(it.fest)}` : RW_SRC[it.get])}</span>`;
+  const locked = !has && tab === "book";   // 灰色＋鎖頭只在收藏冊；商店用彩色預覽
+  const tag = it.fest ? `<span class="rtag fest">${h(FEST[it.fest].n)}</span>` : `<span class="rtag ${rare[1]}">${rare[0]}</span>`;
+  return `<div class="shopit ${has ? "own" : locked ? "lockd" : ""}">${art}${locked ? `<span class="lockb">${li("lock",14)}</span>` : ""}<b>${h(rwName(it))}</b>${tag}${act}</div>`;
+}
+function vSets(tab){
+  const r = RW();
+  return SETS.map(st=>{
+    const n = setOwned(st), done = !!r.sets[st.id];
+    const items = st.items.map(id=>rwCard(RW_BY[id], tab)).join("");
+    const wearBtn = n ? `<button class="btn sec small" data-act="set-wear" data-s="${st.id}">穿上有的 ${n} 件</button>` : "";
+    const titleBtn = done && r.title !== st.title ? `<button class="btn ghost small" data-act="set-title" data-s="${st.id}">使用稱號「${h(st.title)}」</button>` : "";
+    return `<div class="card setbox">
+      <div class="sethead"><span class="avc" style="width:84px;height:84px">${maSvg(setLook(st), 84)}</span>
+        <div class="setinfo"><b>${h(st.n)}</b><span class="muted">${done ? `已集滿・稱號「${h(st.title)}」` : `收集 ${n} / ${st.items.length}・集滿送稱號「${h(st.title)}」＋${SET_BONUS} 金幣`}</span>
+        <span class="rwbar"><i style="width:${n / st.items.length * 100}%"></i></span><div class="row" style="gap:6px;margin-top:4px">${wearBtn}${titleBtn}</div></div></div>
+      <div class="shopgrid">${items}</div></div>`;
   }).join("");
+}
+function vFest(tab){
+  const now = festNow();
+  const list = REWARDS.filter(it=>it.fest && (tab === "book" || now.includes(it.fest)));
+  const head = now.length ? `<p class="center feston">${now.map(f=>h(FEST[f].n)).join("、")}活動中！節日期間第一次簽到還會送一樣禮物。</p>`
+    : `<p class="muted center">現在沒有節慶活動。${Object.keys(FEST).map(f=>`${h(FEST[f].n)} ${h(festWhen(f))}`).join("・")}</p>`;
+  return head + (list.length ? `<div class="shopgrid">${list.map(it=>rwCard(it, tab)).join("")}</div>` : (tab === "shop" ? `<p class="muted center">可以先到收藏冊看看有哪些節慶寶物。</p>` : ""));
+}
+function vShop(){
+  const r = RW(), tab = U.shopTab || "shop";
+  let cat = U.shopCat || "set"; if(tab === "shop" && cat === "h") cat = "set";
+  const have = REWARDS.filter(it=>r.own[it.id]).length;
+  const cats = [["set","套裝"],["fest","節慶"], ...Object.keys(RW_CAT).filter(c=>tab === "book" || c !== "h").map(c=>[c, RW_CAT[c][0]])];
+  const head = `<div class="lhead"><button class="x" data-act="shop-close" aria-label="返回">✕</button><b>寶物商店</b><span class="coinpill static">${coinSvg(22)}<span>${r.coins}</span></span></div>
+    ${r.title ? `<p class="center mytitle">我的稱號：<b>${h(r.title)}</b></p>` : ""}
+    <div class="chips" style="margin:0 0 10px"><button class="chip ${tab==="shop"?"on":""}" data-act="shop-tab" data-t="shop">商店</button><button class="chip ${tab==="book"?"on":""}" data-act="shop-tab" data-t="book">收藏冊（${have}/${REWARDS.length}）</button></div>
+    <div class="chips abtabs" style="margin:0 0 10px">${cats.map(([c, n])=>`<button class="chip ${c===cat?"on":""} ${c==="fest" && festNow().length ? "hot" : ""}" data-act="shop-cat" data-c="${c}">${n}</button>`).join("")}</div>`;
+  if(cat === "set") return head + vSets(tab);
+  if(cat === "fest") return head + vFest(tab);
+  const list = REWARDS.filter(it=>it.c === cat && (tab === "book" || itemPrice(it) != null));
   const empty = list.length ? "" : `<p class="muted center">這一類現在沒有在賣，可以到收藏冊看看怎麼拿到。</p>`;
-  const tip = tab==="shop" ? `<p class="muted center" style="margin:10px 0 0">金幣在首頁「今天的任務」領，也可以玩遊戲、完成主題、做完拼字複習得到。</p>` : "";
-  return head + `<div class="shopgrid">${cards}</div>${empty}${tip}`;
+  const tip = tab === "shop" ? `<p class="muted center" style="margin:10px 0 0">金幣在首頁「今天的任務」領，也可以玩遊戲、完成主題、做完拼字複習得到。</p>` : "";
+  return head + `<div class="shopgrid">${list.map(it=>rwCard(it, tab)).join("")}</div>${empty}${tip}`;
 }
 function vRewardSheet(){
-  const id = U.rwq[0], it = RW_BY[id];
+  const id = U.rwq[0];
+  if(id.startsWith("set:")){
+    const st = SETS.find(x=>"set:" + x.id === id);
+    return `<div class="sheet-bg" data-act="rw-close"></div><div class="sheet center rwpop">
+    <div class="sheet-h"><b>集滿「${h(st.n)}」套裝！</b><button class="x" data-act="rw-close" aria-label="關閉">✕</button></div>
+    ${moveHtml(`<span class="avc" style="width:150px;height:150px">${maSvg(setLook(st), 150)}</span>`, moveOf(), false)}
+    <h3 style="margin:10px 0 2px">獲得稱號「${h(st.title)}」</h3><p class="muted" style="margin:0 0 12px">還有 ${SET_BONUS} 枚金幣！</p>
+    <div class="stack"><button class="btn" data-act="set-wear" data-s="${st.id}" data-close="1">整套穿上</button><button class="btn sec" data-act="rw-close">好！</button></div></div>`;
+  }
+  const it = RW_BY[id];
   if(it.c === "h") return `<div class="sheet-bg" data-act="rw-close"></div><div class="sheet center rwpop">
     <div class="sheet-h"><b>隱藏版小怪獸出現了！</b><button class="x" data-act="rw-close" aria-label="關閉">✕</button></div>
     <span class="hmon">${monster(it.k, "cheer", 150)}</span>
@@ -9296,16 +9468,17 @@ const RW_ACT = {
   "rw-task"(el){ claimTask(el.dataset.t); U.dance = 1; render(); U.dance = 0; },
   "me-dance"(){ U.dance = 1; render(); U.dance = 0; },
   "rw-hatch"(){ const k = hatchEgg(); if(!k) toast("蛋裡跑出 100 枚金幣！隱藏版已經全部收集到了"); render(); },
-  "shop-open"(){ leaveActivity(); U.shopFrom = U.view; U.shopTab = U.shopTab || "shop"; U.shopCat = U.shopCat || "t"; U.arm = ""; U.view = "shop"; render(); },
+  "shop-open"(){ leaveActivity(); U.shopFrom = U.view; U.shopTab = U.shopTab || "shop"; U.shopCat = U.shopCat || "set"; U.arm = ""; U.view = "shop"; render(); },
   "shop-close"(){ U.arm = ""; U.view = U.shopFrom === "avatar" ? "avatar" : "home"; render(); },
   "shop-tab"(el){ U.shopTab = el.dataset.t; U.arm = ""; render(); },
   "shop-cat"(el){ U.shopCat = el.dataset.c; U.arm = ""; render(); },
   "rw-buy"(el){
     const it = RW_BY[el.dataset.id], r = RW();
-    if(!it || it.price == null || r.own[it.id]) return;
-    if(r.coins < it.price){ toast("金幣還不夠，再練習一下就有了！"); return; }
+    const price = it ? itemPrice(it) : null;
+    if(!it || price == null || r.own[it.id]) return;
+    if(r.coins < price){ toast("金幣還不夠，再練習一下就有了！"); return; }
     if(U.arm !== "buy:" + it.id){ U.arm = "buy:" + it.id; render(); return; }
-    U.arm = ""; r.coins -= it.price; r.own[it.id] = 1; saveProg(); pop(0); toast(`買到「${rwName(it)}」了！`); render();
+    U.arm = ""; r.coins -= price; r.own[it.id] = 1; saveProg(); pop(0); toast(`買到「${rwName(it)}」了！`); render();
   },
   "rw-wear"(el){
     const it = RW_BY[el.dataset.id]; if(!it || !RW().own[it.id]) return;
@@ -9320,6 +9493,16 @@ const RW_ACT = {
     if(el.dataset.close){ U.rwq.shift(); if(!U.rwq.length) U.sheet = null; }
     toast(av[it.c] === it.k ? (it.c === "x" ? "換成這個動作了！" : "穿上了！") : (it.c === "x" ? "換回跳跳了" : "脫下了")); U.dance = it.c === "x" ? 1 : 0; render(); U.dance = 0;
   },
+  "set-wear"(el){
+    const st = SETS.find(x=>x.id === el.dataset.s), own = RW().own; if(!st) return;
+    const av = previewAv(); let n = 0;
+    st.items.forEach(id=>{ if(own[id]){ const [c, k] = id.split(":"); av[c] = k; n++; } });
+    if(!n) return;
+    cur.avatar = av; saveProfiles();
+    if(el.dataset.close){ U.rwq.shift(); if(!U.rwq.length) U.sheet = null; }
+    toast(`穿上「${st.n}」${n} 件了！`); U.dance = 1; render(); U.dance = 0;
+  },
+  "set-title"(el){ const st = SETS.find(x=>x.id === el.dataset.s), r = RW(); if(st && r.sets[st.id]){ r.title = st.title; saveProg(); toast(`稱號換成「${st.title}」`); render(); } },
   "rw-close"(){ if(U.rwq) U.rwq.shift(); if(!U.rwq || !U.rwq.length) U.sheet = null; render(); },
   "ab-locked"(el){ const it = RW_BY[el.dataset.id]; if(it) toast(`「${rwName(it)}」還沒收集到：${rwHow(it)}`); }
 };
@@ -10026,7 +10209,7 @@ function render(){
   } else tabs.style.display = "none";
   $("#top").innerHTML = (cur && !focus) ? `
     <div class="top">
-      <button class="who" data-act="go" data-v="profiles"><span class="av">${av(cur.avatar,48)}</span><span><b>${h(cur.name)}</b><small>${LEVELS[lvl()-1].name} · 點這裡換人</small></span></button>
+      <button class="who" data-act="go" data-v="profiles"><span class="av">${av(cur.avatar,48)}</span><span><b>${h(cur.name)}</b><small>${LEVELS[lvl()-1].name} · ${S && S.rw && S.rw.title ? h(S.rw.title) : "點這裡換人"}</small></span></button>
       <div class="pills"><button class="pill mpill" data-act="mode-open" aria-label="切換練習情境：${MODES[mode()].n}">${li(MODES[mode()].ic,20)}<span>${MODES[mode()].s}</span></button><span class="pill">${ic("star",22)}${S.stars}</span><span class="pill">${ic("fire",22)}${streakNow()}</span></div>
     </div>` : "";
   $("#sheet").innerHTML = (U.sheet==="mode" && cur) ? vModeSheet() : (U.sheet==="reward" && cur && U.rwq && U.rwq.length) ? vRewardSheet() : "";

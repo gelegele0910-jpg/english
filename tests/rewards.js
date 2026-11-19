@@ -36,14 +36,19 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
       if (rnd() < 0.45) { const n = 1 + Math.floor(rnd() * 40); earn(n, '測試'); earned += n; }
       else {
         const it = shopItems[Math.floor(rnd() * shopItems.length)], before = { c: S.rw.coins, own: !!S.rw.own[it.id] };
+        const sets0 = Object.keys(S.rw.sets).length;
         U.arm = ''; ACT['rw-buy']({ dataset: { id: it.id } }); ACT['rw-buy']({ dataset: { id: it.id } });
-        if (!before.own && before.c >= it.price) { spent += it.price; if (!S.rw.own[it.id] || S.rw.coins !== before.c - it.price) bad.push('買得起卻沒買成 ' + it.id); }
+        const bonus = (Object.keys(S.rw.sets).length - sets0) * SET_BONUS;   // 這次購買剛好集滿套裝的獎金
+        if (Object.keys(S.rw.sets).length - sets0 > 1) bad.push('一次購買送了不只一個套裝獎金');
+        earned += bonus;
+        if (!before.own && before.c >= it.price) { spent += it.price; if (!S.rw.own[it.id] || S.rw.coins !== before.c - it.price + bonus) bad.push('買得起卻沒買成 ' + it.id); }
         else if (S.rw.coins !== before.c) bad.push((before.own ? '重複購買扣錢 ' : '錢不夠還扣錢 ') + it.id);
       }
       if (S.rw.coins < 0) bad.push('金幣變成負數');
       if (S.rw.coins !== earned - spent) { bad.push(`帳目不符：${S.rw.coins} ≠ ${earned} − ${spent}`); break; }
     }
-    out.push(['P1 金幣帳目正確、不會負數、不能重複買、錢不夠買不了（1500 步）', [...new Set(bad)]]);
+    if (Object.keys(S.rw.sets).length !== SETS.filter(st => st.items.every(id => S.rw.own[id])).length) bad.push('集滿的套裝數和獎金次數對不起來');
+    out.push(['P1 金幣帳目正確（含集滿套裝獎金）、不會負數、不能重複買、錢不夠買不了（1500 步）', [...new Set(bad)]]);
 
     // P2 簽到：要先有練習、一天只能領一次
     bad = []; reset(); day = 0;
@@ -169,6 +174,7 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     const bad = [];
     await p.click('[data-act=shop-open]');
     if ((await state()).view !== 'shop') bad.push('打不開商店');
+    await p.click('[data-act=shop-cat][data-c=t]');   // 商店預設分類是「套裝」，先切到頭飾
     if (await p.$('.shopit.lockd')) bad.push('商店裡還沒買的東西被畫成灰色（灰色只該在收藏冊）');
     const dis = await p.$eval('[data-act=rw-buy][data-id="t:wizard"]', el => el.disabled);
     if (!dis) bad.push('金幣不夠時購買按鈕沒有停用');
