@@ -8178,6 +8178,30 @@ function icon(set, name, a, b, size) {
 /* 英文聽力樂園：原創小怪獸（軟萌慵懶風） */
 const BLUSH = "#f4a7a3";
 const MOUTH = "#d9776f";
+/* ---------- 立體軟萌畫風：身體用「左上亮、右下暗」的漸層＋柔光，腮紅暈開，影子柔和，看起來圓圓軟軟的 ----------
+   softify(svg 內容, [要變立體的顏色...], 線條色) 會把這些顏色的 fill 換成各自的漸層。漸層 id 每次都不同（SOFT_UID），同一頁有很多張也不會打架。 */
+let SOFT_UID = 0;
+function hexMix(a, b, t){
+  const p = x=>{ x = x.replace("#",""); if(x.length === 3) x = x.split("").map(ch=>ch+ch).join(""); return [0,2,4].map(i=>parseInt(x.slice(i,i+2),16)); };
+  const A = p(a), B = p(b);
+  return "#" + A.map((v,i)=>Math.round(v + (B[i]-v)*t).toString(16).padStart(2,"0")).join("");
+}
+function softify(svg, fills, line){
+  const u = "sf" + (++SOFT_UID);
+  let defs = `<radialGradient id="${u}k" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${BLUSH}" stop-opacity=".95"/><stop offset=".6" stop-color="${BLUSH}" stop-opacity=".45"/><stop offset="1" stop-color="${BLUSH}" stop-opacity="0"/></radialGradient>`
+    + `<radialGradient id="${u}s" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3f3540" stop-opacity=".22"/><stop offset="1" stop-color="#3f3540" stop-opacity="0"/></radialGradient>`
+    + `<radialGradient id="${u}g" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+  [...new Set(fills.filter(Boolean).map(f=>f.toLowerCase()))].forEach((f, i)=>{
+    const id = u + "f" + i;
+    defs += `<radialGradient id="${id}" cx=".4" cy=".34" r=".72" fx=".32" fy=".24"><stop offset="0" stop-color="${hexMix(f,"#ffffff",.62)}"/><stop offset=".5" stop-color="${f}"/><stop offset="1" stop-color="${hexMix(f,line||"#3f3540",.32)}"/></radialGradient>`;
+    svg = svg.split(`fill="${f}"`).join(`fill="url(#${id})"`).split(`fill="${f.toUpperCase()}"`).join(`fill="url(#${id})"`);
+  });
+  svg = svg.replace(/rx="5" ry="3" fill="(#f4a7a3|\$\{BLUSH\})"/g, `rx="7.5" ry="5" fill="url(#${u}k)"`)
+    .split(`rx="5" ry="3" fill="${BLUSH}"`).join(`rx="7.5" ry="5" fill="url(#${u}k)"`)
+    .split(`fill="#3f3540" opacity=".1"`).join(`fill="url(#${u}s)"`);
+  return {defs:`<defs>${defs}</defs>`, svg, gloss:(x, y, rx, ry, rot)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${rot||-28} ${x} ${y})" fill="url(#${u}g)"/><circle cx="${x - rx*.35}" cy="${y - ry*.15}" r="${Math.max(1.4, ry*.28)}" fill="#fff" opacity=".9"/>`};
+}
+
 
 const MON = {
   dudu: { name: "嘟嘟", en: "Dudu", fill: "#c3e3cb", shade: "#a9d4b4", line: "#5d7f68", ex: "#fff6d8",
@@ -8345,7 +8369,9 @@ function monster(id, e, size) {
     <ellipse cx="${60 - bx}" cy="${blushY}" rx="5" ry="3" fill="${BLUSH}" opacity="${e === "oops" ? .35 : (m.shy ? 1 : .7)}"/>
     <ellipse cx="${60 + bx}" cy="${blushY}" rx="5" ry="3" fill="${BLUSH}" opacity="${e === "oops" ? .35 : (m.shy ? 1 : .7)}"/>
     ${eyesFor(m, e)}${glassesFor(m)}${mouthFor(m, e)}${id === "pupu" ? "" : ""}${armsFor(m, e)}${wearFor(id, m)}${extrasFor(m, e)}${propsFor(id, m, e)}`;
-  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  const sf = softify(body, [m.fill, m.shade, m.ex], m.line);
+  const sv = sf.svg.replace(/(<path d="[^"]*" fill="url\(#sf\d+f0\)"[^>]*\/>)/, "$1" + sf.gloss(43, (m.gloss || 52), 13, 7.5));   // 身體後面加一道柔光
+  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${sf.defs}${sv}</svg>`;
 }
 
 const PROFILE = {
@@ -8671,7 +8697,11 @@ const HIDDEN = {
 };
 function hiddenMon(id, size, bare, e){
   HM_E = e || "normal";
-  const body = HIDDEN[id].f(); HM_E = "normal";
+  let body = HIDDEN[id].f(); HM_E = "normal";
+  // 立體畫風：除了白色、眼睛、腮紅、嘴巴、線條色以外，每個有顏色的部分都加上光影
+  const L = (HM_INFO[id] || {}).line || DK, skip = ["#fff", "#ffffff", DK, BLUSH, MOUTH, L, "#3f3540"].map(x=>x.toLowerCase());
+  const fills = [...new Set([...body.matchAll(/fill="(#[0-9a-fA-F]{3,6})"/g)].map(m=>m[1].toLowerCase()))].filter(f=>!skip.includes(f));
+  const sf = softify(body, fills, L); body = sf.defs + sf.svg;
   return bare ? body : `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 }
 function silhouette(id, size){
@@ -9853,7 +9883,10 @@ function maSvg(cfg, size, opts){
     ${MA_HAND[cfg.w].f(s,L,c)}
     ${MA_FLOAT[cfg.f].f(L)}`;
   const vb = opts.full ? "0 -4 120 120" : "1 -5 118 118";
-  return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${body}</svg>`;
+  // 立體畫風：身體顏色（與肚子、小手）加上光影，身體後面加一道柔光
+  const sf = softify(body, [c[1], c[2]], L);
+  const sv = sf.svg.replace(new RegExp('(<path d="' + s.d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '" fill="url\\(#sf\\d+f0\\)"[^>]*\\/>)'), "$1" + sf.gloss(42, s.top + 16, 12, 7));
+  return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${sf.defs}${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${sv}</svg>`;
 }
 /* 底部選單用線條圖示 */
 ICON_LINE.home = c => `<path d="M8 22 L24 9 L40 22 V38 a2 2 0 0 1 -2 2 H29 V29 H19 V40 H10 a2 2 0 0 1 -2 -2 Z" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/>`;
