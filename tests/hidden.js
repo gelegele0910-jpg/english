@@ -33,6 +33,7 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     let bad = [];
     for (const id of IDS) for (const e of EXPR) { const svg = monster(id, e, 80); if (!svg.includes('</svg>') || /undefined|NaN/.test(svg)) bad.push(id + '/' + e); }
     for (const id of IDS) if (/undefined|NaN/.test(silhouette(id, 80))) bad.push('黑影 ' + id);
+    for (const id of Object.keys(BUDDY_ART)) for (const e of EXPR) { const svg = monster(id, e, 80); if (!svg.includes('</svg>') || /undefined|NaN/.test(svg)) bad.push('夥伴新造型 ' + id + '/' + e); }
     for (const st of [0, 1, 2]) if (/undefined|NaN/.test(eggSvg(st, 40))) bad.push('蛋 ' + st);
     for (const id of IDS) for (const k of ['greet', 'right', 'wrong', 'done']) if (!(BUDDY_LINES[id][k] || []).length) bad.push('沒有台詞 ' + id + '.' + k);
     out.push([`H1 ${IDS.length} 隻隱藏版 × ${EXPR.length} 種表情、黑影、神秘蛋都畫得出來，台詞齊全`, bad]);
