@@ -8186,6 +8186,35 @@ function hexMix(a, b, t){
   const A = p(a), B = p(b);
   return "#" + A.map((v,i)=>Math.round(v + (B[i]-v)*t).toString(16).padStart(2,"0")).join("");
 }
+/* ---------- 平面無框線畫風（目前使用）：色塊不畫外框、顏色飽和一點、線條（嘴巴、天線等）改成深色細線、拿掉腳下影子 ---------- */
+let ART_STYLE = "flat";   // "flat" 平面無框線、"soft" 立體漸層、"line" 原本的框線
+const FLAT_INK = "#3a2f33";
+function flatify(svg, fills, line, deepen){
+  const lc = (line || "").toLowerCase();
+  svg = svg.split(`fill="#3f3540" opacity=".1"`).join(`fill="none"`);   // 腳下影子
+  svg = svg.replace(/<(path|ellipse|circle|rect|polygon|polyline|text)\b([^>]*?)(\/?)>/g, (all, tag, attrs, close)=>{
+    const fm = attrs.match(/\bfill="([^"]*)"/), filled = fm && fm[1] !== "none" && fm[1] !== "transparent";
+    if(filled) attrs = attrs.replace(/\s(stroke|stroke-width|stroke-linejoin|stroke-linecap|stroke-dasharray|paint-order)="[^"]*"/g, "");
+    else if(lc) attrs = attrs.replace(/\bstroke="([^"]*)"/, (m, c)=>c.toLowerCase() === lc ? `stroke="${FLAT_INK}"` : m);
+    return `<${tag}${attrs}${close}>`;
+  });
+  const map = {};
+  fills.filter(Boolean).forEach((f, i)=>{ f = f.toLowerCase(); if(!map[f]) map[f] = vivid(f, deepen == null ? 1 : deepen); });
+  if(deepen == null && fills[1] && fills[0]) map[fills[1].toLowerCase()] = hexMix(vivid(fills[0].toLowerCase(), 1), "#ffffff", .38);   // 肚子：比身體淺
+  Object.entries(map).forEach(([f, g])=>{ svg = svg.split(`fill="${f}"`).join(`fill="${g}"`).split(`fill="${f.toUpperCase()}"`).join(`fill="${g}"`); });
+  return svg;
+}
+/** 粉嫩色 → 比較飽和、清爽的顏色（平面風用）；k 越大越鮮豔 */
+function vivid(hex, k){
+  let [r, g, b] = [1,3,5].map(i=>parseInt(hex.length === 4 ? hex[(i+1)/2].repeat(2) : hex.slice(i, i+2), 16) / 255);
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b); let hh = 0, ss = 0, l = (mx+mn)/2;
+  if(mx !== mn){ const d = mx - mn; ss = l > .5 ? d/(2-mx-mn) : d/(mx+mn); hh = mx === r ? (g-b)/d + (g<b?6:0) : mx === g ? (b-r)/d + 2 : (r-g)/d + 4; hh /= 6; }
+  const yel = hh > .1 && hh < .2;   // 黃色壓暗會變成芥末色，只加彩度
+  ss = Math.max(ss, Math.min(yel ? .85 : .58, ss * (1 + .55*k) + .05*k));   // 只提高、不降低彩度
+  l = Math.min(l, (yel ? .64 : .7) + (1 - k) * .16);   // 定在中等深淺：沒有框線也看得清楚
+  const q = l < .5 ? l*(1+ss) : l+ss-l*ss, pp = 2*l-q, f = t=>{ t = (t+1)%1; return t<1/6 ? pp+(q-pp)*6*t : t<1/2 ? q : t<2/3 ? pp+(q-pp)*(2/3-t)*6 : pp; };
+  return "#" + [hh+1/3, hh, hh-1/3].map(t=>Math.round(f(t)*255).toString(16).padStart(2,"0")).join("");
+}
 function softify(svg, fills, line){
   const u = "sf" + (++SOFT_UID);
   let defs = `<radialGradient id="${u}k" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${BLUSH}" stop-opacity=".95"/><stop offset=".6" stop-color="${BLUSH}" stop-opacity=".45"/><stop offset="1" stop-color="${BLUSH}" stop-opacity="0"/></radialGradient>`
@@ -8369,6 +8398,8 @@ function monster(id, e, size) {
     <ellipse cx="${60 - bx}" cy="${blushY}" rx="5" ry="3" fill="${BLUSH}" opacity="${e === "oops" ? .35 : (m.shy ? 1 : .7)}"/>
     <ellipse cx="${60 + bx}" cy="${blushY}" rx="5" ry="3" fill="${BLUSH}" opacity="${e === "oops" ? .35 : (m.shy ? 1 : .7)}"/>
     ${eyesFor(m, e)}${glassesFor(m)}${mouthFor(m, e)}${id === "pupu" ? "" : ""}${armsFor(m, e)}${wearFor(id, m)}${extrasFor(m, e)}${propsFor(id, m, e)}`;
+  if(ART_STYLE === "flat") return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${flatify(body, [m.fill, m.shade, m.ex], m.line)}</svg>`;
+  if(ART_STYLE === "line") return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
   const sf = softify(body, [m.fill, m.shade, m.ex], m.line);
   const sv = sf.svg.replace(/(<path d="[^"]*" fill="url\(#sf\d+f0\)"[^>]*\/>)/, "$1" + sf.gloss(43, (m.gloss || 52), 13, 7.5));   // 身體後面加一道柔光
   return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${sf.defs}${sv}</svg>`;
@@ -8701,7 +8732,8 @@ function hiddenMon(id, size, bare, e){
   // 立體畫風：除了白色、眼睛、腮紅、嘴巴、線條色以外，每個有顏色的部分都加上光影
   const L = (HM_INFO[id] || {}).line || DK, skip = ["#fff", "#ffffff", DK, BLUSH, MOUTH, L, "#3f3540"].map(x=>x.toLowerCase());
   const fills = [...new Set([...body.matchAll(/fill="(#[0-9a-fA-F]{3,6})"/g)].map(m=>m[1].toLowerCase()))].filter(f=>!skip.includes(f));
-  const sf = softify(body, fills, L); body = sf.defs + sf.svg;
+  if(ART_STYLE === "flat") body = flatify(body, fills, L, .5);
+  else if(ART_STYLE === "soft"){ const sf = softify(body, fills, L); body = sf.defs + sf.svg; }
   return bare ? body : `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 }
 function silhouette(id, size){
@@ -9884,6 +9916,10 @@ function maSvg(cfg, size, opts){
     ${MA_FLOAT[cfg.f].f(L)}`;
   const vb = opts.full ? "0 -4 120 120" : "1 -5 118 118";
   // 立體畫風：身體顏色（與肚子、小手）加上光影，身體後面加一道柔光
+  if(ART_STYLE !== "soft"){
+    const flat = ART_STYLE === "flat" ? flatify(body.split(`<path d="${s.d}" fill="none" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>`).join(""), [c[1], c[2]], L) : body;   // 平面風不畫衣服外圍的框線
+    return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${flat}</svg>`;
+  }
   const sf = softify(body, [c[1], c[2]], L);
   const sv = sf.svg.replace(new RegExp('(<path d="' + s.d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '" fill="url\\(#sf\\d+f0\\)"[^>]*\\/>)'), "$1" + sf.gloss(42, s.top + 16, 12, 7));
   return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${sf.defs}${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${sv}</svg>`;

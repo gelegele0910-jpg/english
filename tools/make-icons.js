@@ -33,7 +33,6 @@ const DESIGNS = {
       ${[[0, '#ff6f9c'], [1, '#ffb52e'], [2, '#3fbfa8']].map(([i, c]) => `<path d="M ${150 - i * 20} ${130 - i * 34} Q 200 ${96 - i * 40} ${250 + i * 20} ${130 - i * 34}" fill="none" stroke="${c}" stroke-width="14" stroke-linecap="round"/>`).join('')}
       <path d="M58 330 Q50 190 200 168 Q350 190 342 330 Q200 400 58 330 Z" fill="url(#shell)" stroke="${L}" stroke-width="10" stroke-linejoin="round"/>
       <g clip-path="url(#sc)"><path d="${rib}" stroke="#e77aa2" stroke-width="9" fill="none" stroke-linecap="round"/></g>
-      <path d="M58 330 Q50 190 200 168 Q350 190 342 330 Q200 400 58 330 Z" fill="none" stroke="${L}" stroke-width="10" stroke-linejoin="round"/>
       <path d="M168 352 L232 352 L246 392 Q200 404 154 392 Z" fill="#ffb3cf" stroke="${L}" stroke-width="9" stroke-linejoin="round"/>
       <ellipse cx="140" cy="230" rx="40" ry="17" transform="rotate(-30 140 230)" fill="#fff" opacity=".65"/>
       <text x="256" y="492" text-anchor="middle" font-family="'Baloo 2'" font-weight="800" font-size="84" fill="#ff6f9c" stroke="${L}" stroke-width="12" paint-order="stroke" stroke-linejoin="round">Echo</text>
@@ -74,7 +73,8 @@ const DESIGNS = {
   await p.addStyleTag({ url: 'https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Fredoka:wght@700&display=block' });
   await p.evaluate(async () => { await document.fonts.load("800 60px 'Baloo 2'"); await document.fonts.load("700 40px 'Fredoka'"); });
   const svgs = {};
-  for (const [k, f] of Object.entries(DESIGNS)) svgs[k] = await p.evaluate(src => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">${(0, eval)('(' + src + ')')()}</svg>`, f.toString());
+  // 平面風：圖示也不畫框線（跟小怪獸一致）
+  for (const [k, f] of Object.entries(DESIGNS)) svgs[k] = await p.evaluate(src => { const inner = (0, eval)('(' + src + ')')(); return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">${ART_STYLE === 'flat' ? flatify(inner, [], '#4a3434') : inner}</svg>`; }, f.toString());
   const shot = async (svg, size, file) => {
     await p.setViewportSize({ width: size, height: size });
     await p.evaluate(([svg, size]) => { document.body.innerHTML = svg.replace('width="512" height="512"', `width="${size}" height="${size}"`); document.body.style.cssText = 'margin:0;padding:0;background:none'; document.documentElement.style.background = 'none'; window.scrollTo(0, 0); }, [svg, size]);
