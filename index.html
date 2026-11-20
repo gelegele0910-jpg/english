@@ -8528,9 +8528,9 @@ function hmEyes(x, y, dx, L, big){
     if(HM_E === "cheer" || HM_E === "happy") return `<path d="M${ex-4.5} ${y+1.5} Q${ex} ${y-4.5} ${ex+4.5} ${y+1.5}" fill="none" stroke="${L}" stroke-width="2.6" stroke-linecap="round"/>`;
     if(HM_E === "sleepy") return `<path d="M${ex-4.5} ${y} Q${ex} ${y+3.6} ${ex+4.5} ${y}" fill="none" stroke="${L}" stroke-width="2.4" stroke-linecap="round"/>`;
     if(HM_E === "oops"){ const k = i ? -1 : 1; return `<path d="M${ex-3.6*k} ${y-3.6} L${ex+3*k} ${y} L${ex-3.6*k} ${y+3.6}" fill="none" stroke="${DK}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`; }
-    // 白色大眼睛＋黑眼珠（想事情時眼珠往右上看）；外圍一圈細深色邊，白色的臉上也看得清楚
+    // 白色大眼睛＋黑眼珠（想事情時眼珠往右上看），不畫外框（像月亮貓頭鷹）
     const oy = HM_E === "think" ? -1.6 : .6, ox = HM_E === "think" ? 1.6 : (i ? -.5 : .5), R = big ? 7.4 : 6.2, r = big ? 4.3 : 3.6;
-    return `<circle cx="${ex}" cy="${y}" r="${R + 1}" fill="${DK}"/><circle cx="${ex}" cy="${y}" r="${R}" fill="#fff"/><circle cx="${ex+ox}" cy="${y+oy}" r="${r}" fill="${DK}"/><circle cx="${ex+ox+r*.38}" cy="${y+oy-r*.4}" r="${r*.38}" fill="#fff"/><circle cx="${ex+ox-r*.4}" cy="${y+oy+r*.42}" r="${r*.16}" fill="#fff"/>`;
+    return `<circle cx="${ex}" cy="${y}" r="${R}" fill="#fff"/><circle cx="${ex+ox}" cy="${y+oy}" r="${r}" fill="${DK}"/><circle cx="${ex+ox+r*.38}" cy="${y+oy-r*.4}" r="${r*.38}" fill="#fff"/><circle cx="${ex+ox-r*.4}" cy="${y+oy+r*.42}" r="${r*.16}" fill="#fff"/>`;
   }).join("");
 }
 function hmMouth(x, y, L, open){
@@ -8748,15 +8748,15 @@ function hmArms(lx, rx, y, F, len){
 }
 function hmLids(x, y, dx, F, big){   // 半閉的眼皮（懶洋洋）
   if(HM_E !== "normal") return "";
-  const R = (big ? 7.4 : 6.2) + 1.2;
-  return [x-dx, x+dx].map(ex=>`<path d="M${ex-R} ${y} A${R} ${R} 0 0 1 ${ex+R} ${y} Z" fill="${F}"/><path d="M${ex-R+1} ${y} H${ex+R-1}" stroke="${DK}" stroke-width="1.6" stroke-linecap="round"/>`).join("");
+  const R = (big ? 7.4 : 6.2) + .4;
+  return [x-dx, x+dx].map(ex=>`<path d="M${ex-R} ${y} A${R} ${R} 0 0 1 ${ex+R} ${y} Z" fill="${F}"/>`).join("");
 }
 function hmEye1(x, y, R, L){   // 一顆大眼睛（毛毛）
   if(HM_E === "cheer" || HM_E === "happy") return `<path d="M${x-R*.8} ${y+2} Q${x} ${y-R*.9} ${x+R*.8} ${y+2}" fill="none" stroke="${L}" stroke-width="3" stroke-linecap="round"/>`;
   if(HM_E === "sleepy") return `<path d="M${x-R*.8} ${y} Q${x} ${y+R*.6} ${x+R*.8} ${y}" fill="none" stroke="${L}" stroke-width="2.8" stroke-linecap="round"/>`;
   if(HM_E === "oops") return `<path d="M${x-7} ${y-6} L${x+1} ${y} L${x-7} ${y+6} M${x+8} ${y-6} L${x+2} ${y} L${x+8} ${y+6}" fill="none" stroke="${DK}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
   const ox = HM_E === "think" ? 3 : 0, oy = HM_E === "think" ? -3 : 1, r = R * .56;
-  return `<circle cx="${x}" cy="${y}" r="${R + 1.2}" fill="${DK}"/><circle cx="${x}" cy="${y}" r="${R}" fill="#fff"/><circle cx="${x+ox}" cy="${y+oy}" r="${r}" fill="${DK}"/><circle cx="${x+ox+r*.38}" cy="${y+oy-r*.4}" r="${r*.36}" fill="#fff"/><circle cx="${x+ox-r*.42}" cy="${y+oy+r*.42}" r="${r*.15}" fill="#fff"/>`;
+  return `<circle cx="${x}" cy="${y}" r="${R}" fill="#fff"/><circle cx="${x+ox}" cy="${y+oy}" r="${r}" fill="${DK}"/><circle cx="${x+ox+r*.38}" cy="${y+oy-r*.4}" r="${r*.36}" fill="#fff"/><circle cx="${x+ox-r*.42}" cy="${y+oy+r*.42}" r="${r*.15}" fill="#fff"/>`;
 }
 const BUDDY_ART = {
   /* 嘟嘟：薄荷綠的麻糬，兩支軟軟的小角，戴著條紋睡帽，懶洋洋的半閉眼 */
@@ -8786,18 +8786,8 @@ const BUDDY_ART = {
       <ellipse cx="38" cy="82" rx="5" ry="3" fill="${BLUSH}" opacity=".8"/><ellipse cx="82" cy="82" rx="5" ry="3" fill="${BLUSH}" opacity=".8"/>
       ${hmMouth(60, 78, L, true)}${hmExtra(60, 70)}`; }},
   /* 啵啵：蜜桃色的豆子，頭上一根泡泡天線，綁著星星頭帶，兩手拿彩球加油 */
-  bobo: {line:"#8a4636", f:()=>{ const L = "#8a4636", F = "#ff9474", B = "#ffc8b5";
-    const up = HM_E === "cheer", pom = (x, y, c)=>`<g transform="translate(${x} ${y})">${[0,45,90,135,180,225,270,315].map(a=>`<ellipse cx="0" cy="-6" rx="3.2" ry="6.4" transform="rotate(${a})" fill="${c}"/>`).join("")}<circle r="4" fill="${c}"/></g>`;
-    return `${HM_SHADOW}
-      <path d="M60 38 Q58 26 66 18" fill="none" stroke="${L}" stroke-width="2.6" stroke-linecap="round"/>
-      <circle cx="67" cy="15" r="7" fill="#ff6f9c"/><circle cx="64.6" cy="12.6" r="2.2" fill="#fff" opacity=".8"/>
-      <path d="M60 36 Q94 36 99 82 Q101 108 60 108 Q19 108 21 82 Q26 36 60 36 Z" fill="${F}"/>
-      <ellipse cx="60" cy="96" rx="20" ry="10" fill="${B}"/>
-      <path d="M24 58 Q60 44 96 58 L95 66 Q60 53 25 66 Z" fill="#ff5c86"/><path d="M25 62 Q60 49 95.5 62" fill="none" stroke="#fff" stroke-width="2"/>
-      <path transform="translate(60 53) scale(.65)" d="${STAR5}" fill="#ffd94a"/>
-      ${pom(up ? 16 : 18, up ? 54 : 88, "#ffd94a")}${pom(up ? 104 : 102, up ? 54 : 88, "#5ac8d8")}
-      <ellipse cx="45" cy="108" rx="9" ry="4.6" fill="${F}"/><ellipse cx="75" cy="108" rx="9" ry="4.6" fill="${F}"/>
-      ${hmFace(60, 76, 12, L)}`; }},
+  /* 啵啵：蜜桃色的啦啦隊，兩手拿彩球，加油時舉高（造型見 BOBO_LOOKS） */
+  bobo: {line:"#8a4636", f:()=>BOBO_LOOKS[BOBO_LOOK]()},
   /* 咕咕：一片奶油吐司，頭上一塊融化的奶油，兩顆小虎牙，手上拿著咬一口的餅乾 */
   gugu: {line:"#7a5520", f:()=>{ const L = "#7a5520", C = "#d99b4a", F = "#f6cd5c";
     const mouth = HM_E === "sleepy" || HM_E === "think" ? hmMouth(60, 76, L) : `<path d="M53 83 Q60 91 67 83 Z" fill="${MOUTH}"/><path d="M55 83 l1.6 3.4 l1.6 -3.4 Z M62 83 l1.6 3.4 l1.6 -3.4 Z" fill="#fff"/>`;
@@ -8834,6 +8824,44 @@ const BUDDY_ART = {
       <g transform="translate(60 ${HM_E === "cheer" ? 98 : 96})"><path d="M-22 -9 Q-11 -13 0 -8 Q11 -13 22 -9 V8 Q11 4 0 9 Q-11 4 -22 8 Z" fill="#5aa2ef"/><path d="M-19 -6 Q-10 -9 -1 -5 V6 Q-10 2 -19 5 Z M19 -6 Q10 -9 1 -5 V6 Q10 2 19 5 Z" fill="#fff"/><path d="M-15 -2 h10 M-15 1 h10 M5 -2 h10 M5 1 h10" stroke="#c9cfe0" stroke-width="1.2"/></g>
       <ellipse cx="38" cy="95" rx="6" ry="5" fill="${F}"/><ellipse cx="82" cy="95" rx="6" ry="5" fill="${F}"/>
       <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>`; }}
+};
+/* 啵啵的造型（三款候選）：peach 小蜜桃、bunny 垂耳兔、buns 丸子頭 */
+let BOBO_LOOK = "peach";
+function boboPom(x, y, c){ return `<g transform="translate(${x} ${y})">${[0,45,90,135,180,225,270,315].map(a=>`<ellipse cx="0" cy="-6" rx="3.2" ry="6.4" transform="rotate(${a})" fill="${c}"/>`).join("")}<circle r="4" fill="${c}"/></g>`; }
+function boboPoms(){ const up = HM_E === "cheer"; return boboPom(up ? 16 : 19, up ? 56 : 90, "#ffd94a") + boboPom(up ? 104 : 101, up ? 56 : 90, "#5ac8d8"); }
+const BOBO_LOOKS = {
+  /* 小蜜桃：圓圓的蜜桃身體，頭頂中間有一道淺凹，兩片小葉子 */
+  peach: ()=>{ const L = "#8a4636", F = "#ff9a8a", B = "#ffd0c6";
+    return `${HM_SHADOW}
+      <path d="M60 46 Q58 36 62 30" stroke="#8a5a3c" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M61 34 Q48 22 40 30 Q50 40 61 34 Z" fill="#7fc36a"/><path d="M62 33 Q74 20 84 27 Q74 38 62 33 Z" fill="#5fae55"/>
+      <path d="M60 48 Q42 36 26 50 Q14 64 18 84 Q22 108 60 108 Q98 108 102 84 Q106 64 94 50 Q78 36 60 48 Z" fill="${F}"/>
+      <path d="M60 50 Q62 66 58 80" stroke="#f07a6a" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".55"/>
+      <ellipse cx="60" cy="97" rx="20" ry="9" fill="${B}"/>
+      ${boboPoms()}
+      <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>
+      ${hmFace(60, 76, 12, L)}`; },
+  /* 垂耳兔：兩隻長長的垂耳，胸前一顆愛心 */
+  bunny: ()=>{ const L = "#8a4636", F = "#ff9a8a", B = "#ffd0c6";
+    return `${HM_SHADOW}
+      <path d="M60 40 Q96 40 100 82 Q102 108 60 108 Q18 108 20 82 Q24 40 60 40 Z" fill="${F}"/>
+      ${[-1,1].map(k=>`<path d="M${60+k*14} 43 Q${60+k*40} 36 ${60+k*47} 60 Q${60+k*50} 80 ${60+k*40} 84 Q${60+k*34} 70 ${60+k*30} 58 Q${60+k*24} 50 ${60+k*12} 50 Z" fill="#f07f70"/><path d="M${60+k*36} 52 Q${60+k*43} 64 ${60+k*41} 76" stroke="#ffc0b5" stroke-width="3.4" fill="none" stroke-linecap="round"/>`).join("")}
+      <ellipse cx="60" cy="97" rx="20" ry="9" fill="${B}"/>
+      <path d="M60 99 c-3 -4 -8 -1 -5 3 l5 4 l5 -4 c3 -4 -2 -7 -5 -3 Z" fill="#ff5c86"/>
+      ${boboPoms()}
+      <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>
+      ${hmFace(60, 74, 12, L)}`; },
+  /* 丸子頭：頭上兩顆圓圓的丸子，綁著蝴蝶結 */
+  buns: ()=>{ const L = "#8a4636", F = "#ff9a8a", B = "#ffd0c6";
+    const bow = (x)=>`<g transform="translate(${x} 38)"><path d="M0 0 L-7 -5 Q-9 0 -7 5 Z M0 0 L7 -5 Q9 0 7 5 Z" fill="#ff5c86"/><circle r="2.4" fill="#ff5c86"/></g>`;
+    return `${HM_SHADOW}
+      <circle cx="34" cy="38" r="13" fill="${F}"/><circle cx="86" cy="38" r="13" fill="${F}"/>
+      ${bow(43)}${bow(77)}
+      <path d="M60 40 Q96 40 100 82 Q102 108 60 108 Q18 108 20 82 Q24 40 60 40 Z" fill="${F}"/>
+      <ellipse cx="60" cy="97" rx="20" ry="9" fill="${B}"/>
+      ${boboPoms()}
+      <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>
+      ${hmFace(60, 74, 12, L)}`; }
 };
 function hiddenMon(id, size, bare, e){
   HM_E = e || "normal";
