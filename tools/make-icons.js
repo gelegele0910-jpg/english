@@ -21,9 +21,9 @@ const DESIGNS = {
       <ellipse cx="160" cy="452" rx="150" ry="34" fill="#ffe2a6" stroke="${L}" stroke-width="8"/>
       ${mon}`;
   },
-  // B 貝殼回音：沙灘上一個大貝殼，彩色聲波從貝殼傳出來，嘟嘟把耳朵靠在貝殼上聽
+  // B 貝殼回音：沙灘上一個大貝殼，彩色聲波從貝殼傳出來，啵啵把耳朵靠在貝殼上聽
   b: () => {
-    const L = '#4a3434', mon = monster('dudu', 'happy', 240).replace('<svg ', '<svg x="262" y="214" ');
+    const L = '#4a3434', mon = monster('bobo', 'happy', 240).replace('<svg ', '<svg x="262" y="214" ');
     const rib = [-60, -36, -12, 12, 36, 60].map(a => { const r = a * Math.PI / 180; return `M200 372 L${(200 + Math.sin(r) * 150).toFixed(0)} ${(372 - Math.cos(r) * 170).toFixed(0)}`; }).join(' ');
     return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4d9"/><stop offset="1" stop-color="#ffe0ec"/></linearGradient>
         <radialGradient id="shell" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#fff3f7"/><stop offset=".55" stop-color="#ffb3cf"/><stop offset="1" stop-color="#e77aa2"/></radialGradient>
