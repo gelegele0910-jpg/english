@@ -4,7 +4,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { start, ROOT } = require('../tests/server');
-const CHOSEN = process.env.ICON || 'a';
+const CHOSEN = process.env.ICON || 'd';   // 選定：D 字島（A 的背景、ABC 放大）
 const PREVIEW = process.argv.includes('--preview');
 
 // 每一款是在網頁裡執行的函式，回傳 512×512 的 SVG（可以用 monster()）
@@ -51,17 +51,17 @@ const DESIGNS = {
       ${mon}
       ${[[108, 250, '#ff6f9c', 1], [404, 236, '#3fbfa8', .9]].map(([x, y, c, k]) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 -40 V12 a14 12 0 1 1 -10 -10 V-40 l34 -10 V2 a14 12 0 1 1 -10 -10 V-32 Z" fill="${c}" stroke="${L}" stroke-width="6" stroke-linejoin="round"/></g>`).join('')}`;
   },
-  // D 字島：圓滾滾的 Echo 大字像一座島浮在海上，啵啵趴在字上面，旁邊冒出 ABC 小泡泡
+  // D 字島（選定）：圓滾滾的 Echo 大字像一座島浮在海上，小蜜桃啵啵站在字上面，旁邊冒出 ABC 泡泡；背景用 A 的粉藍漸層
   d: () => {
     const L = '#4a3434', mon = monster('bobo', 'cheer', 230).replace('<svg ', '<svg x="140" y="40" ');
-    return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3f6ff"/><stop offset="1" stop-color="#bfe6ff"/></linearGradient>
+    return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9f2"/><stop offset=".55" stop-color="#d9f1ff"/><stop offset="1" stop-color="#a6dcff"/></linearGradient>
         <linearGradient id="word" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ff0b4"/><stop offset="1" stop-color="#47c27a"/></linearGradient></defs>
       <rect width="512" height="512" fill="url(#sky)"/>
       <path d="M0 360 Q64 342 128 360 T256 360 T384 360 T512 360 V512 H0 Z" fill="#7cc8f2"/><path d="M0 410 Q64 394 128 410 T256 410 T384 410 T512 410 V512 H0 Z" fill="#5ab4ea"/>
       <ellipse cx="256" cy="372" rx="210" ry="30" fill="#ffe2a6" stroke="${L}" stroke-width="8"/>
       <text x="256" y="372" text-anchor="middle" font-family="'Baloo 2'" font-weight="800" font-size="190" fill="url(#word)" stroke="${L}" stroke-width="14" paint-order="stroke" stroke-linejoin="round" letter-spacing="-4">Echo</text>
       ${mon}
-      ${[[392, 92, 'A', '#ff6f9c'], [440, 150, 'B', '#ffb52e'], [470, 212, 'C', '#3fbfa8']].map(([x, y, t, c], i) => `<circle cx="${x}" cy="${y}" r="${30 - i * 3}" fill="#fff" stroke="${L}" stroke-width="7"/><text x="${x}" y="${y + 13}" text-anchor="middle" font-family="'Fredoka'" font-weight="700" font-size="${38 - i * 4}" fill="${c}">${t}</text>`).join('')}`;
+      ${[[404, 82, 'A', '#ff6f9c'], [452, 148, 'B', '#ffb52e'], [472, 218, 'C', '#3fbfa8']].map(([x, y, t, c], i) => `<circle cx="${x}" cy="${y}" r="${38 - i * 2}" fill="#fff"/><text x="${x}" y="${y + 17}" text-anchor="middle" font-family="'Fredoka'" font-weight="700" font-size="${50 - i * 2}" fill="${c}">${t}</text>`).join('')}`;
   }
 };
 
