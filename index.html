@@ -459,6 +459,13 @@ body[data-mode=silent] button.play[data-act=pl-toggle]{display:flex!important}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
 .pcard{background:var(--card);border-radius:var(--r);padding:16px 10px;text-align:center;cursor:pointer;position:relative}
 .plock{position:absolute;top:8px;right:8px;color:var(--muted)}
+/* 班級連結的設定步驟 */
+.steps{border:1.5px dashed var(--line);border-radius:var(--rb);padding:8px 12px;margin:0 0 10px}
+.steps summary{cursor:pointer;font-weight:700;color:var(--accent);font-size:calc(15px*var(--fz))}
+.steps ol{margin:8px 0 0;padding-left:1.3em}
+.steps li{margin:0 0 8px;font-size:calc(14px*var(--fz));line-height:1.6}
+.steps code{font-size:calc(13px*var(--fz));background:var(--accent-2);border-radius:4px;padding:0 4px}
+.cl-code{display:block;width:100%;height:120px;margin-top:6px;font-family:monospace;font-size:calc(11px*var(--fz))}
 /* 密碼鍵盤 */
 .pinav{display:flex;justify-content:center;margin-bottom:4px}
 .pinmsg{margin:4px 0 10px;color:var(--muted);font-size:calc(15px*var(--fz));text-align:center}
@@ -10732,10 +10739,10 @@ function openEdit(){
 function react(ok){ U.react = ok ? {e:"cheer", t:bline("right")} : {e:"oops", t:bline("wrong")}; }
 
 /* ================= 密碼（4 位數字） =================
-   孩子的密碼在 P.list[i].pin，家長密碼在 P.parent = {pin, q, a}（q 提示問題、a 答案）。
+   孩子的密碼在 P.list[i].pin，管理者密碼在 P.parent = {pin, q, a}（q 提示問題、a 答案）。
    都只存雜湊（SHA-256，加上學習者 id 當鹽），不存原本的數字。這是家庭用的鎖：防兄弟姊妹互用、防偷看，
    資料本身照舊存在試算表，懂電腦的大人仍可繞過。
-   家長密碼可以：打開家長看板、新增／刪除學習者、進入任何孩子的帳號、幫孩子重設密碼。 */
+   管理者密碼可以：打開學習看板、新增／刪除學習者、進入任何孩子的帳號、幫孩子重設密碼。 */
 async function pinHash(salt, code){
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("elp:" + salt + ":" + code));
   return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2, "0")).join("");
@@ -10766,26 +10773,26 @@ async function pinFull(){
   if(U.pinFail >= 5){ U.pinFail = 0; U.pinWait = Date.now() + 30000; }
   q.val = ""; q.err = Date.now() < (U.pinWait || 0) ? "錯太多次了，請等 30 秒再試" : "密碼不對，再試一次"; render();
 }
-/** 要家長密碼才能做的事；還沒設家長密碼就直接做 */
+/** 要管理者密碼才能做的事；還沒設管理者密碼就直接做 */
 function needParent(why, then){
   if(!hasParent()){ then(); return; }
-  askPin({t:"家長密碼", sub:why, check:parentOk, ok:then, links:[["忘記家長密碼？", "pq-forgot"]]});
+  askPin({t:"管理者密碼", sub:why, check:parentOk, ok:then, links:[["忘記管理者密碼？", "pq-forgot"]]});
 }
-/** 點學習者：有密碼就先輸入（孩子自己的或家長的都可以） */
+/** 點學習者：有密碼就先輸入（孩子自己的或管理者的都可以） */
 function tryEnter(id){
   const p = P.list.find(x=>x.id === id); if(!p) return;
   const go = ()=>{ setUnlocked(id); enterProfile(id); };
   if(!p.pin || unlocked(id)){ go(); return; }
   askPin({t:p.name + " 的密碼", av:avCircle(p.avatar, 64), sub:"輸入 4 位數字密碼", check:c=>kidOk(p, c), ok:go, id,
-    links:[[hasParent() ? "忘記密碼？請家長輸入家長密碼" : "忘記密碼？", "pin-parent-enter"]]});
+    links:[[hasParent() ? "忘記密碼？請管理者輸入管理者密碼" : "忘記密碼？", "pin-parent-enter"]]});
 }
 function setKidPin(p){
   askPin({k:"set", t:"設定 " + p.name + " 的密碼", sub:"輸入新的 4 位數字", ok:async code=>{ p.pin = await pinHash(p.id, code); saveProfiles(); toast("密碼設定好了！下次要輸入密碼才能進來"); }});
 }
-/** 改密碼、取消密碼前先確認：輸入自己的舊密碼，或家長密碼 */
+/** 改密碼、取消密碼前先確認：輸入自己的舊密碼，或管理者密碼 */
 function confirmKid(p, why, then){
   askPin({t:"先輸入 " + p.name + " 現在的密碼", sub:why, check:c=>kidOk(p, c), ok:then,
-    links: hasParent() ? [["忘記了？請家長輸入家長密碼", "pin-parent-ok"]] : []});
+    links: hasParent() ? [["忘記了？請管理者輸入管理者密碼", "pin-parent-ok"]] : []});
 }
 function vPinSheet(){
   const q = U.pin, n = q.val.length, keys = ["1","2","3","4","5","6","7","8","9","","0","del"];
@@ -10798,26 +10805,26 @@ function vPinSheet(){
     ${q.links.map(([t, a])=>`<button class="btn ghost small pinlink" data-act="${a}">${h(t)}</button>`).join("")}
   </div>`;
 }
-/* 家長提示問題：設定（setq）或忘記家長密碼時回答（forgot） */
+/* 管理者提示問題：設定（setq）或忘記管理者密碼時回答（forgot） */
 function vPqSheet(){
   const q = U.pq;
   return `<div class="sheet-bg" data-act="pq-close"></div><div class="sheet">
-    <div class="sheet-h"><b>${q.mode === "setq" ? "設定提示問題" : "忘記家長密碼"}</b><button class="x" data-act="pq-close" aria-label="關閉">✕</button></div>
+    <div class="sheet-h"><b>${q.mode === "setq" ? "設定提示問題" : "忘記管理者密碼"}</b><button class="x" data-act="pq-close" aria-label="關閉">✕</button></div>
     ${q.mode === "setq" ? `
-      <p class="muted" style="margin:0 0 10px">忘記家長密碼時，答對這個問題就能重新設定。請選孩子不容易猜到的問題。</p>
+      <p class="muted" style="margin:0 0 10px">忘記管理者密碼時，答對這個問題就能重新設定。請選孩子不容易猜到的問題。</p>
       <div class="label">問題</div><input class="field" id="pqQ" maxlength="40" placeholder="例如：我第一台車的顏色" value="${h(q.q || "")}">
       <div class="label">答案</div><input class="field" id="pqA" maxlength="40" placeholder="答案（不分大小寫、空白）" autocomplete="off">
       ${q.err ? `<p class="pinmsg bad">${h(q.err)}</p>` : ""}
       <button class="btn" style="margin-top:12px" data-act="pq-save">完成</button>`
     : `
-      <p class="muted" style="margin:0 0 10px">回答提示問題，就能重新設定家長密碼。</p>
+      <p class="muted" style="margin:0 0 10px">回答提示問題，就能重新設定管理者密碼。</p>
       <div class="label">${h(P.parent.q || "提示問題")}</div><input class="field" id="pqA" maxlength="40" placeholder="輸入答案" autocomplete="off">
       ${q.err ? `<p class="pinmsg bad">${h(q.err)}</p>` : ""}
       <button class="btn" style="margin-top:12px" data-act="pq-check">確認</button>`}
   </div>`;
 }
 function setParentPin(then){
-  askPin({k:"set", t:"設定家長密碼", sub:"輸入新的 4 位數字（不要跟孩子的一樣）", ok:async code=>{ U.pq = {mode:"setq", pin:await pinHash("parent", code), then}; U.sheet = "pq"; }});
+  askPin({k:"set", t:"設定管理者密碼", sub:"輸入新的 4 位數字（不要跟孩子的一樣）", ok:async code=>{ U.pq = {mode:"setq", pin:await pinHash("parent", code), then}; U.sheet = "pq"; }});
 }
 function vPinCard(){
   return `<div class="card">
@@ -10826,11 +10833,12 @@ function vPinCard(){
     <div class="row" style="margin:6px 0 4px">${cur.pin
       ? `<button class="btn sec small" data-act="pw-change">更改密碼</button><button class="btn ghost small" data-act="pw-remove">不要密碼了</button>`
       : `<button class="btn sec small" data-act="pw-set">設定密碼</button>`}</div>
-    <div class="setrow" style="margin-top:8px"><span>家長密碼</span><span class="muted">${hasParent() ? "已設定" : "還沒設定"}</span></div>
-    <p class="muted" style="margin:2px 0 8px">家長密碼可以打開家長看板、新增或刪除學習者、進入任何孩子的帳號，孩子忘記密碼時也能幫忙重設。</p>
+    <div class="setrow" style="margin-top:8px"><span>管理者密碼</span><span class="muted">${hasParent() ? "已設定" : "還沒設定"}</span></div>
+    <p class="muted" style="margin:2px 0 8px">管理者密碼可以打開學習看板、刪除學習者、進入任何孩子的帳號，孩子忘記密碼時也能幫忙重設；也可以設定新增學習者時要不要輸入。</p>
     <div class="row">${hasParent()
-      ? `<button class="btn sec small" data-act="pp-change">更改家長密碼</button><button class="btn ghost small" data-act="pp-remove">取消家長密碼</button>`
-      : `<button class="btn sec small" data-act="pp-set">設定家長密碼</button>`}</div>
+      ? `<button class="btn sec small" data-act="pp-change">更改管理者密碼</button><button class="btn ghost small" data-act="pp-remove">取消管理者密碼</button>`
+      : `<button class="btn sec small" data-act="pp-set">設定管理者密碼</button>`}</div>
+    ${hasParent() ? `<button class="mopt ${P.addLock ? "on" : ""}" style="margin-top:10px" data-act="pp-addlock" aria-pressed="${P.addLock ? "true" : "false"}"><span class="mi">${li(P.addLock ? "lock" : "users", 22)}</span><span class="mt"><b>新增學習者要管理者密碼：${P.addLock ? "開" : "關"}</b><span>${P.addLock ? "要輸入管理者密碼才能新增（適合班級，避免學生自己亂建）" : "誰都可以自己新增學習者（適合請朋友一起玩）"}</span></span></button>` : ""}
   </div>`;
 }
 const PIN_ACT = {
@@ -10843,22 +10851,24 @@ const PIN_ACT = {
     if(q.val.length === 4) pinFull();
   },
   "pin-close"(){ closePin(); },
-  /* 孩子忘記密碼：家長輸入家長密碼就能進去（之後可在設定重設）；還沒有家長密碼就先設一個 */
+  /* 孩子忘記密碼：管理者輸入管理者密碼就能進去（之後可在設定重設）；還沒有管理者密碼就先設一個 */
   "pin-parent-enter"(){
     const id = U.pin && U.pin.id; if(!id) return;
     const p = P.list.find(x=>x.id === id);
     const go = ()=>{ setUnlocked(id); enterProfile(id); toast("可以到「設定」幫 " + p.name + " 重新設定密碼"); };
-    if(hasParent()) askPin({t:"家長密碼", sub:"輸入家長密碼進入 " + p.name, check:parentOk, ok:go, links:[["忘記家長密碼？", "pq-forgot"]]});
-    else { toast("還沒有家長密碼，請家長先設定一個"); setParentPin(go); }
+    if(hasParent()) askPin({t:"管理者密碼", sub:"輸入管理者密碼進入 " + p.name, check:parentOk, ok:go, links:[["忘記管理者密碼？", "pq-forgot"]]});
+    else { toast("還沒有管理者密碼，請管理者先設定一個"); setParentPin(go); }
   },
-  /* 改／取消孩子密碼時忘了舊密碼：改用家長密碼確認 */
-  "pin-parent-ok"(){ const q = U.pin; if(!q) return; askPin({t:"家長密碼", sub:q.sub, check:parentOk, ok:q.ok, links:[["忘記家長密碼？", "pq-forgot"]]}); },
+  /* 改／取消孩子密碼時忘了舊密碼：改用管理者密碼確認 */
+  "pin-parent-ok"(){ const q = U.pin; if(!q) return; askPin({t:"管理者密碼", sub:q.sub, check:parentOk, ok:q.ok, links:[["忘記管理者密碼？", "pq-forgot"]]}); },
   "pw-set"(){ setKidPin(cur); },
   "pw-change"(){ const p = cur; confirmKid(p, "確認後就能設定新密碼", ()=>setKidPin(p)); },
   "pw-remove"(){ const p = cur; confirmKid(p, "確認後就不需要密碼了", ()=>{ delete p.pin; saveProfiles(); toast("已經取消密碼"); }); },
-  "pp-set"(){ setParentPin(()=>toast("家長密碼設定好了！")); },
-  "pp-change"(){ needParent("先輸入現在的家長密碼", ()=>askPin({k:"set", t:"新的家長密碼", sub:"輸入新的 4 位數字", ok:async code=>{ P.parent.pin = await pinHash("parent", code); saveProfiles(); toast("家長密碼改好了"); }})); },
-  "pp-remove"(){ needParent("輸入家長密碼後就會取消", ()=>{ delete P.parent; saveProfiles(); toast("已經取消家長密碼"); }); },
+  "pp-set"(){ setParentPin(()=>toast("管理者密碼設定好了！")); },
+  "pp-change"(){ needParent("先輸入現在的管理者密碼", ()=>askPin({k:"set", t:"新的管理者密碼", sub:"輸入新的 4 位數字", ok:async code=>{ P.parent.pin = await pinHash("parent", code); saveProfiles(); toast("管理者密碼改好了"); }})); },
+  /* 新增學習者要不要管理者密碼（P.addLock，預設關閉）；開或關都要先輸入管理者密碼 */
+  "pp-addlock"(){ needParent("輸入管理者密碼來切換這個設定", ()=>{ P.addLock = !P.addLock; saveProfiles(); toast(P.addLock ? "新增學習者需要管理者密碼了" : "大家都可以自己新增學習者了"); }); },
+  "pp-remove"(){ needParent("輸入管理者密碼後就會取消", ()=>{ delete P.parent; delete P.addLock; saveProfiles(); toast("已經取消管理者密碼"); }); },
   "pq-forgot"(){
     if(!hasParent()) return;
     const back = U.pin;   // 回答對了以後，繼續原本要做的事
@@ -10877,9 +10887,9 @@ const PIN_ACT = {
     const q = U.pq, a = pqNorm($("#pqA").value);
     if(!a || await pinHash("parent-a", a) !== P.parent.a){ q.err = "答案不對，再想想看"; render(); return; }
     U.pq = null;
-    askPin({k:"set", t:"新的家長密碼", sub:"答對了！輸入新的 4 位數字", ok:async code=>{
-      P.parent.pin = await pinHash("parent", code); saveProfiles(); toast("家長密碼重新設定好了");
-      const b = q.back; if(b && b.ok && b.check === parentOk) await b.ok();   // 原本要用家長密碼做的事，直接繼續
+    askPin({k:"set", t:"新的管理者密碼", sub:"答對了！輸入新的 4 位數字", ok:async code=>{
+      P.parent.pin = await pinHash("parent", code); saveProfiles(); toast("管理者密碼重新設定好了");
+      const b = q.back; if(b && b.ok && b.check === parentOk) await b.ok();   // 原本要用管理者密碼做的事，直接繼續
     }});
   }
 };
@@ -10892,7 +10902,7 @@ function vProfiles(){
     ${P.list.map(p=>`<div class="pcard" data-act="enter" data-id="${h(p.id)}">${p.pin ? `<span class="plock" aria-label="有密碼">${li("lock",18)}</span>` : ""}${avCircle(p.avatar,74)}<span class="mini">${monster(p.partner||"bobo","normal",40)}</span><b>${h(p.name)}</b><small>${LEVELS[(p.level||1)-1].name}</small></div>`).join("")}
     <div class="pcard add" data-act="new-profile">${li("users",36)}<b>新增學習者</b><small>每個人有自己的進度</small></div>
   </div>
-  ${P.list.length ? `<button class="btn ghost" style="margin-top:14px" data-act="board-open">${li("users",18)} 家長看板：看大家的練習狀況</button>` : ""}`;
+  ${P.list.length ? `<button class="btn ghost" style="margin-top:14px" data-act="board-open">${li("users",18)} 學習看板：看大家的練習狀況</button>` : ""}`;
 }
 function partnerGrid(sel, act, showLocked){
   const locked = PARTNERS.filter(id=>!partnerOk(id));
@@ -12502,8 +12512,22 @@ function vSettings(){
     <div class="setrow"><span>累積星星</span><span class="muted">${S.stars} 顆</span></div>
   </div>
   ${!GAS_RUN && !BK.k ? `<div class="card">
-    <div class="label">建立班級連結（給老師用）</div>
-    <p class="muted" style="margin:0 0 8px">老師用自己的 Apps Script 部署後，把網址貼在這裡，就會產生一個專屬連結。學生用這個連結練習，資料會存在老師自己的試算表，跟你家的資料完全分開。</p>
+    <div class="label">建立班級連結</div>
+    <p class="muted" style="margin:0 0 8px">讓學生的練習紀錄存在老師自己的 Google 試算表，跟這台裝置的資料分開。</p>
+    <details class="steps" ${U.clOpen ? "open" : ""}>
+      <summary data-act="cl-steps">第一次使用：設定步驟（約 5 分鐘）</summary>
+      <ol>
+        <li>用電腦開一個新的 <b>Google 試算表</b>，取個名字，例如「五年甲班英文」。</li>
+        <li>點上方選單 <b>擴充功能 → Apps Script</b>。</li>
+        <li>按下面的〔複製程式碼〕，回到 Apps Script，把裡面原本的內容全部刪掉、貼上，再按 💾 儲存。
+          <button class="btn sec small" style="margin-top:6px" data-act="cl-copycode">複製程式碼</button>${U.clCode ? `<textarea class="field cl-code" readonly>${h(U.clCode)}</textarea>` : ""}</li>
+        <li>上方函式選單選 <b>setup</b>，按 <b>▶ 執行</b>。第一次會要求授權：選你的 Google 帳號 →「進階」→「前往（不安全）」→「允許」。這是你自己的程式，可以放心。</li>
+        <li>右上角 <b>部署 → 新增部署作業</b>，按齒輪選 <b>網頁應用程式</b>：執行身分選「<b>我</b>」，誰可以存取選「<b>所有人</b>」（一定要選這個，學生才能存檔）。</li>
+        <li>按 <b>部署</b>，複製出現的 <b>網頁應用程式網址</b>（結尾是 <code>/exec</code>）。</li>
+        <li>把網址貼到下面，填上班級名稱，按「產生班級連結」，再把連結傳給學生。</li>
+      </ol>
+      <p class="muted" style="margin:6px 0 0">學生的練習狀況會自動整理在試算表的「學員進度」分頁。</p>
+    </details>
     <input id="clUrl" class="dict-in" style="font-size:calc(15px*var(--fz))" placeholder="貼上老師的 Apps Script 網址（/exec 結尾）" value="${h(U.clUrl||"")}">
     <input id="clName" class="dict-in" style="font-size:calc(15px*var(--fz));margin-top:8px" placeholder="班級名稱，例如：五年甲班" value="${h(U.clName||"")}">
     <button class="btn" style="margin-top:8px" data-act="cl-make">產生班級連結</button>
@@ -12513,7 +12537,7 @@ function vSettings(){
   ${vPinCard()}
   <div class="stack">
     <button class="btn sec" data-act="rec-open" data-id="${h(cur.id)}">${li("words",18)} 我的學習紀錄</button>
-    <button class="btn sec" data-act="board-open">${li("users",18)} 家長看板（看大家的練習狀況）</button>
+    <button class="btn sec" data-act="board-open">${li("users",18)} 學習看板（看大家的練習狀況）</button>
     <button class="btn sec" data-act="go" data-v="profiles">${li("users",18)} 切換學習者</button>
     <button class="btn ${U.arm==="reset"?"warm":"ghost"}" data-act="reset">${U.arm==="reset"?"再按一次：清除 "+h(cur.name)+" 的所有進度":"清除這位學習者的進度"}</button>
     <button class="btn ${U.arm==="del"?"warm":"ghost"}" data-act="del-profile">${U.arm==="del"?"再按一次：刪除 "+h(cur.name):"刪除這位學習者"}</button>
@@ -12547,7 +12571,7 @@ function render(){
   if(spIn && !IS_MOBILE){ spIn.focus(); spIn.setSelectionRange(spIn.value.length, spIn.value.length); }
 }
 
-/* ================= 學習紀錄（每日紀錄、日曆、家長看板） =================
+/* ================= 學習紀錄（每日紀錄、日曆、學習看板） =================
    S.log = { "2026-11-18": { s:句子, a:文章, w:新單字, v:單字卡, r:複習, g:遊戲, c:補聽說, sp:跟讀次數, ss:跟讀分數加總, t:秒數 } } */
 function logAdd(f, n){
   if(!S) return; n = (n==null) ? 1 : n; if(!n) return;
@@ -12594,7 +12618,7 @@ setInterval(()=>{
 /* 跟讀分數：每次結果只記一次 */
 function logSpeak(score){ logAdd("sp", 1); logAdd("ss", score); if(score >= 90) RW().hi90++; if(score >= 80) earn(1, "跟讀很棒"); saveProg(); }
 
-/* 讀取任何一位學習者的進度（家長看板用） */
+/* 讀取任何一位學習者的進度（學習看板用） */
 function loadProgOf(id){
   const local = parse(lsGet("elp-prog-"+id));
   if(!GAS) return Promise.resolve(local);
@@ -12605,7 +12629,7 @@ function loadProgOf(id){
   }).catch(()=>local);
 }
 
-/* ---- 家長看板 ---- */
+/* ---- 學習看板 ---- */
 function openBoard(){
   U.board = {data:{}, loading:true}; U.view = "board"; render();
   Promise.all(P.list.map(p=> (cur && cur.id===p.id && S ? Promise.resolve(S) : loadProgOf(p.id)).then(g=>{ U.board.data[p.id] = g || newProg(); })))
@@ -12613,7 +12637,7 @@ function openBoard(){
 }
 function vBoard(){
   const B = U.board || {data:{}};
-  const head = `<div class="lhead"><button class="x" data-act="board-exit" aria-label="返回">✕</button><b>家長看板</b><span style="width:40px"></span></div>`;
+  const head = `<div class="lhead"><button class="x" data-act="board-exit" aria-label="返回">✕</button><b>學習看板</b><span style="width:40px"></span></div>`;
   const cards = P.list.map(p=>{
     const g = B.data[p.id];
     if(!g) return `<div class="card bcard"><div class="brow">${avCircle(p.avatar,54)}<div class="binfo"><b>${h(p.name)}</b><span class="muted">讀取中…</span></div></div></div>`;
@@ -12689,7 +12713,21 @@ function vRecord(){
 }
 function streakOf(g){ const t=today(), y=dstr(new Date(Date.now()-DAY)); return (g.streak.last===t||g.streak.last===y) ? g.streak.count : 0; }
 const REC_ACT = {
-  "board-open"(){ needParent("看家長看板要輸入家長密碼", openBoard); },
+  /* 複製後端程式碼（apps-script/Code.gs，和網頁放在同一個網站）給老師貼到 Apps Script；複製不了就顯示出來讓老師自己選取 */
+  "cl-steps"(){ U.clOpen = !U.clOpen; render(); },   // 記住展開狀態，重畫畫面時不會自己收起來
+  async "cl-copycode"(){
+    const url = "apps-script/Code.gs";
+    try{
+      if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){   // Safari 要在按下去的當下開始複製
+        await navigator.clipboard.write([new ClipboardItem({"text/plain": fetch(url).then(r=>{ if(!r.ok) throw 0; return r.blob(); }).then(b=>new Blob([b], {type:"text/plain"}))})]);
+      } else { const t = await (await fetch(url)).text(); await navigator.clipboard.writeText(t); }
+      toast("程式碼複製好了！到 Apps Script 貼上");
+    }catch(e){
+      try{ const r = await fetch(url); if(!r.ok) throw 0; U.clCode = await r.text(); render(); toast("請在下面的框框裡全選、複製"); }
+      catch(e2){ toast("讀不到程式碼，請到 GitHub 的 apps-script/Code.gs 複製"); }
+    }
+  },
+  "board-open"(){ needParent("看學習看板要輸入管理者密碼", openBoard); },
   "board-exit"(){ U.board = null; U.view = cur ? "home" : "profiles"; render(); },
   "rec-open"(el){ openRecord(el.dataset.id || (cur && cur.id), U.view); },
   "rec-exit"(){ const f = U.rcd && U.rcd.from; U.rcd = null; U.view = (f==="board") ? "board" : (cur ? (f && f!=="record" ? f : "home") : "profiles"); render(); },
@@ -12714,7 +12752,7 @@ const ACT = {
     U.view = v; render(); },
   exit(){ leaveActivity(); U.view = "home"; U.greet = bline("greet"); render(); },
   enter(el){ tryEnter(el.dataset.id); },
-  "new-profile"(){ needParent("新增學習者要輸入家長密碼", openEdit); },
+  "new-profile"(){ if(P.addLock) needParent("新增學習者要輸入管理者密碼", openEdit); else openEdit(); },
   "e-av"(el){ U.edit.avatar = el.dataset.a; U.edit.touched = true; render(); },
   "e-partner"(el){ U.edit.partner = el.dataset.p; U.edit.touched = true; render(); },
   "e-lv"(el){ U.edit.level = +el.dataset.l; U.edit.touched = true; render(); },
@@ -12862,10 +12900,10 @@ const ACT = {
   },
   "del-profile"(){
     if(U.arm!=="del"){ U.arm = "del"; render(); return; }
-    U.arm = ""; needParent("刪除學習者要輸入家長密碼", delProfile);
+    U.arm = ""; needParent("刪除學習者要輸入管理者密碼", delProfile);
   }
 };
-/* 刪除目前的學習者（設了家長密碼時，要先輸入家長密碼） */
+/* 刪除目前的學習者（設了管理者密碼時，要先輸入管理者密碼） */
 function delProfile(){
   {
     const id = cur.id;

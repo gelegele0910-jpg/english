@@ -98,7 +98,7 @@ const { start, blockExternal } = require('./server');
   await p.evaluate(() => { for (const v of ['home', 'settings', 'profiles', 'board']) { U.view = v; render(); } });
   await p.waitForTimeout(300);
   if (fired) fail++;
-  console.log((fired ? 'FAIL' : 'PASS') + ' F6 惡意名字在首頁、設定、選人、家長看板都不會執行');
+  console.log((fired ? 'FAIL' : 'PASS') + ' F6 惡意名字在首頁、設定、選人、學習看板都不會執行');
 
   if (errs.length) { fail++; console.log('FAIL 頁面錯誤：' + errs.join(' | ')); }
   await b.close(); srv.close();

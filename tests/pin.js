@@ -1,4 +1,4 @@
-// 密碼測試：孩子密碼、家長密碼、忘記密碼、錯太多次、重新整理、鍵盤輸入、舊資料相容
+// 密碼測試：孩子密碼、管理者密碼、忘記密碼、錯太多次、重新整理、鍵盤輸入、舊資料相容
 // 用法：node tests/pin.js
 const { chromium } = require('playwright');
 const path = require('path'), fs = require('fs');
@@ -82,7 +82,7 @@ const result = (name, bad) => { if (bad.length) fail++; console.log((bad.length 
     result('P3 重新整理不用再輸入；新開的分頁停在選人畫面並要求密碼', bad);
   }
 
-  // P4 家長密碼：設定（含提示問題）→ 家長看板、新增、刪除都要輸入；錯的不行
+  // P4 管理者密碼：設定（含提示問題）→ 管理者看板、新增、刪除都要輸入；錯的不行
   {
     const bad = [];
     await p.evaluate(() => { U.view = 'settings'; render(); });
@@ -91,37 +91,55 @@ const result = (name, bad) => { if (bad.length) fail++; console.log((bad.length 
     await p.screenshot({ path: path.join(OUT, 'pin-question.png') });
     await p.click('[data-act=pq-save]'); await p.waitForFunction(() => !U.sheet);
     const par = await p.evaluate(() => JSON.parse(localStorage.getItem('elp-profiles')).parent);
-    if (!par || par.pin.length !== 64 || par.a.length !== 64 || /mi|8888/i.test(par.pin + par.a)) bad.push('家長密碼或答案沒有用雜湊存');
-    // 家長看板
+    if (!par || par.pin.length !== 64 || par.a.length !== 64 || /mi|8888/i.test(par.pin + par.a)) bad.push('管理者密碼或答案沒有用雜湊存');
+    // 管理者看板
     await p.click('[data-act=board-open]'); await sheetOpen();
     await type('1234');
-    if ((await st()).view === 'board') bad.push('用孩子的密碼打開了家長看板');
+    if ((await st()).view === 'board') bad.push('用孩子的密碼打開了管理者看板');
     await type('8888'); await p.waitForFunction(() => U.view === 'board');
     await p.click('[data-act=board-exit]');
-    // 新增學習者
+    // 新增學習者：預設不用管理者密碼（請朋友一起玩）；打開開關後才要
+    await toProfiles(); await p.click('[data-act=new-profile]');
+    await p.waitForFunction(() => U.view === 'edit' || U.sheet === 'pin');
+    if ((await st()).view !== 'edit') bad.push('開關沒打開，新增學習者卻要管理者密碼');
+    await p.click('[data-act=go][data-v=profiles]');
+    await p.click(await kidCard('小美')); await p.waitForFunction(() => U.view === 'home');
+    await p.evaluate(() => { U.view = 'settings'; render(); });
+    await p.click('[data-act=pp-addlock]'); await sheetOpen(); await type('1234');
+    if (await p.evaluate(() => P.addLock)) bad.push('用孩子的密碼就能打開「新增要密碼」');
+    await type('8888'); await p.waitForFunction(() => P.addLock === true && !U.sheet);
+    if (!JSON.parse(await p.evaluate(() => localStorage.getItem('elp-profiles'))).addLock) bad.push('開關沒有存檔');
     await toProfiles(); await p.click('[data-act=new-profile]'); await sheetOpen();
-    if ((await st()).view === 'edit') bad.push('沒輸入家長密碼就能新增');
+    if ((await st()).view === 'edit') bad.push('開關打開了，沒輸入管理者密碼就能新增');
     await type('8888'); await p.waitForFunction(() => U.view === 'edit');
+    await p.click('[data-act=go][data-v=profiles]');
+    // 關掉開關後又可以直接新增
+    await p.click(await kidCard('小美')); await p.waitForFunction(() => U.view === 'home');
+    await p.evaluate(() => { U.view = 'settings'; render(); });
+    await p.click('[data-act=pp-addlock]'); await sheetOpen(); await type('8888'); await p.waitForFunction(() => P.addLock === false && !U.sheet);
+    await toProfiles(); await p.click('[data-act=new-profile]');
+    await p.waitForFunction(() => U.view === 'edit' || U.sheet === 'pin');
+    if ((await st()).view !== 'edit') bad.push('關掉開關後還是要管理者密碼');
     await p.click('[data-act=go][data-v=profiles]');
     // 刪除學習者（小美）
     await p.click(await kidCard('小美')); await p.waitForFunction(() => U.view === 'home');
     await p.evaluate(() => { U.view = 'settings'; render(); });
     await p.click('[data-act=del-profile]'); await p.click('[data-act=del-profile]'); await sheetOpen();
     await p.click('.sheet [data-act=pin-close]');
-    if (!(await p.evaluate(() => P.list.some(x => x.name === '小美')))) bad.push('沒輸入家長密碼就刪掉了');
+    if (!(await p.evaluate(() => P.list.some(x => x.name === '小美')))) bad.push('沒輸入管理者密碼就刪掉了');
     await p.click('[data-act=del-profile]'); await p.click('[data-act=del-profile]'); await sheetOpen(); await type('8888');
     await p.waitForFunction(() => U.view === 'profiles');
-    if (await p.evaluate(() => P.list.some(x => x.name === '小美'))) bad.push('輸入家長密碼後沒有刪除');
-    result('P4 家長密碼（含提示問題）：家長看板、新增、刪除學習者都要家長密碼；孩子的密碼不行', bad);
+    if (await p.evaluate(() => P.list.some(x => x.name === '小美'))) bad.push('輸入管理者密碼後沒有刪除');
+    result('P4 管理者密碼（含提示問題）：學習看板、刪除學習者要管理者密碼；新增學習者預設不用，打開開關才要；孩子的密碼不行', bad);
   }
 
-  // P5 孩子忘記密碼：家長密碼可以進去，並在設定裡用家長密碼改掉孩子的密碼
+  // P5 孩子忘記密碼：管理者密碼可以進去，並在設定裡用管理者密碼改掉孩子的密碼
   {
     const bad = [];
     await p.click(await kidCard('小安')); await sheetOpen();
     await p.click('[data-act=pin-parent-enter]'); await type('8888');
     await p.waitForFunction(() => U.view === 'home');
-    if ((await st()).cur !== '小安') bad.push('家長密碼沒有進到小安');
+    if ((await st()).cur !== '小安') bad.push('管理者密碼沒有進到小安');
     await p.evaluate(() => { U.view = 'settings'; render(); });
     await p.click('[data-act=pw-change]'); await sheetOpen();
     await p.click('[data-act=pin-parent-ok]'); await type('8888');
@@ -130,10 +148,10 @@ const result = (name, bad) => { if (bad.length) fail++; console.log((bad.length 
     await toProfiles(); await p.click(await kidCard('小安')); await sheetOpen();
     await type('1234'); if ((await st()).view === 'home') bad.push('舊密碼還能用');
     await type('5678'); await p.waitForFunction(() => U.view === 'home');
-    result('P5 孩子忘記密碼：家長密碼可以進去、也能幫忙改成新密碼，舊密碼失效', bad);
+    result('P5 孩子忘記密碼：管理者密碼可以進去、也能幫忙改成新密碼，舊密碼失效', bad);
   }
 
-  // P6 忘記家長密碼：答錯不行、答對（不分大小寫空白）重設；舊的家長密碼失效
+  // P6 忘記管理者密碼：答錯不行、答對（不分大小寫空白）重設；舊的管理者密碼失效
   {
     const bad = [];
     await p.evaluate(() => { U.view = 'settings'; render(); });
@@ -144,14 +162,14 @@ const result = (name, bad) => { if (bad.length) fail++; console.log((bad.length 
     if (!(await p.textContent('#sheet')).includes('答案不對')) bad.push('答錯沒有提示');
     await p.fill('#pqA', 'mimi'); await p.click('[data-act=pq-check]');
     await p.waitForSelector('.pinpad'); await type('4321'); await type('4321');
-    await p.waitForFunction(() => U.view === 'board');   // 重設後直接繼續打開家長看板
+    await p.waitForFunction(() => U.view === 'board');   // 重設後直接繼續打開管理者看板
     await p.click('[data-act=board-exit]');
     await p.evaluate(() => { U.view = 'settings'; render(); });
     await p.click('[data-act=board-open]'); await sheetOpen(); await type('8888');
-    if ((await st()).view === 'board') bad.push('舊的家長密碼還能用');
+    if ((await st()).view === 'board') bad.push('舊的管理者密碼還能用');
     await type('4321'); await p.waitForFunction(() => U.view === 'board');
     await p.click('[data-act=board-exit]');
-    result('P6 忘記家長密碼：答錯不行，答對（不分大小寫、空白）可重設並繼續原本的動作，舊密碼失效', bad);
+    result('P6 忘記管理者密碼：答錯不行，答對（不分大小寫、空白）可重設並繼續原本的動作，舊密碼失效', bad);
   }
 
   // P7 錯 5 次要等 30 秒（等的時候連對的也不行）；電腦可以用鍵盤輸入
@@ -184,7 +202,7 @@ const result = (name, bad) => { if (bad.length) fail++; console.log((bad.length 
     result('P8 sticker／night／minimaldark × 三種情境，密碼鍵盤都正常', bad);
   }
 
-  // P9 舊資料（沒有任何密碼欄位）：不會跳出密碼，家長看板直接打開
+  // P9 舊資料（沒有任何密碼欄位）：不會跳出密碼，學習看板直接打開
   {
     const bad = [];
     const p3 = await (await b.newContext()).newPage(); await blockExternal(p3);
@@ -193,7 +211,7 @@ const result = (name, bad) => { if (bad.length) fail++; console.log((bad.length 
     await p3.evaluate(() => ACT['board-open']()); await p3.waitForFunction(() => U.view === 'board');
     if (await p3.evaluate(() => U.sheet === 'pin')) bad.push('舊資料跳出了密碼');
     await p3.close();
-    result('P9 舊資料沒有密碼：照常直接進入、家長看板直接打開', bad);
+    result('P9 舊資料沒有密碼：照常直接進入、學習看板直接打開', bad);
   }
 
   result('P10 全程沒有頁面錯誤', errs);
