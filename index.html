@@ -4,7 +4,14 @@
 <base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>英文聽力樂園</title>
+<title>Echo Island</title>
+<!-- 手機加到主畫面用的名字與圖示（圖示由 tools/make-icons.js 產生） -->
+<meta name="apple-mobile-web-app-title" content="Echo Island">
+<meta name="application-name" content="Echo Island">
+<meta name="theme-color" content="#a6dcff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Fredoka:wght@500;600;700&family=Baloo+2:wght@600;700;800&family=LXGW+WenKai+TC:wght@400;700&family=Gaegu:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -8170,6 +8177,59 @@ function icon(set, name, a, b, size) {
 /* 英文聽力樂園：原創小怪獸（軟萌慵懶風） */
 const BLUSH = "#f4a7a3";
 const MOUTH = "#d9776f";
+/* ---------- 立體軟萌畫風：身體用「左上亮、右下暗」的漸層＋柔光，腮紅暈開，影子柔和，看起來圓圓軟軟的 ----------
+   softify(svg 內容, [要變立體的顏色...], 線條色) 會把這些顏色的 fill 換成各自的漸層。漸層 id 每次都不同（SOFT_UID），同一頁有很多張也不會打架。 */
+let SOFT_UID = 0;
+function hexMix(a, b, t){
+  const p = x=>{ x = x.replace("#",""); if(x.length === 3) x = x.split("").map(ch=>ch+ch).join(""); return [0,2,4].map(i=>parseInt(x.slice(i,i+2),16)); };
+  const A = p(a), B = p(b);
+  return "#" + A.map((v,i)=>Math.round(v + (B[i]-v)*t).toString(16).padStart(2,"0")).join("");
+}
+/* ---------- 平面無框線畫風（目前使用）：色塊不畫外框、顏色飽和一點、線條（嘴巴、天線等）改成深色細線、拿掉腳下影子 ---------- */
+let ART_STYLE = "flat";   // "flat" 平面無框線、"soft" 立體漸層、"line" 原本的框線
+const FLAT_INK = "#3a2f33";
+function flatify(svg, fills, line, deepen){
+  const lc = (line || "").toLowerCase();
+  svg = svg.split(`fill="#3f3540" opacity=".1"`).join(`fill="none"`);   // 腳下影子
+  svg = svg.replace(/<(path|ellipse|circle|rect|polygon|polyline|text)\b([^>]*?)(\/?)>/g, (all, tag, attrs, close)=>{
+    const fm = attrs.match(/\bfill="([^"]*)"/), filled = fm && fm[1] !== "none" && fm[1] !== "transparent";
+    if(filled) attrs = attrs.replace(/\s(stroke|stroke-width|stroke-linejoin|stroke-linecap|stroke-dasharray|paint-order)="[^"]*"/g, "");
+    else if(lc) attrs = attrs.replace(/\bstroke="([^"]*)"/, (m, c)=>c.toLowerCase() === lc ? `stroke="${FLAT_INK}"` : m);
+    return `<${tag}${attrs}${close}>`;
+  });
+  const map = {};
+  fills.filter(Boolean).forEach((f, i)=>{ f = f.toLowerCase(); if(!map[f]) map[f] = vivid(f, deepen == null ? 1 : deepen); });
+  if(deepen == null && fills[1] && fills[0]) map[fills[1].toLowerCase()] = hexMix(vivid(fills[0].toLowerCase(), 1), "#ffffff", .38);   // 肚子：比身體淺
+  Object.entries(map).forEach(([f, g])=>{ svg = svg.split(`fill="${f}"`).join(`fill="${g}"`).split(`fill="${f.toUpperCase()}"`).join(`fill="${g}"`); });
+  return svg;
+}
+/** 粉嫩色 → 比較飽和、清爽的顏色（平面風用）；k 越大越鮮豔 */
+function vivid(hex, k){
+  let [r, g, b] = [1,3,5].map(i=>parseInt(hex.length === 4 ? hex[(i+1)/2].repeat(2) : hex.slice(i, i+2), 16) / 255);
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b); let hh = 0, ss = 0, l = (mx+mn)/2;
+  if(mx !== mn){ const d = mx - mn; ss = l > .5 ? d/(2-mx-mn) : d/(mx+mn); hh = mx === r ? (g-b)/d + (g<b?6:0) : mx === g ? (b-r)/d + 2 : (r-g)/d + 4; hh /= 6; }
+  const yel = hh > .1 && hh < .2;   // 黃色壓暗會變成芥末色，只加彩度
+  ss = Math.max(ss, Math.min(yel ? .85 : .58, ss * (1 + .55*k) + .05*k));   // 只提高、不降低彩度
+  l = Math.min(l, (yel ? .64 : .7) + (1 - k) * .16);   // 定在中等深淺：沒有框線也看得清楚
+  const q = l < .5 ? l*(1+ss) : l+ss-l*ss, pp = 2*l-q, f = t=>{ t = (t+1)%1; return t<1/6 ? pp+(q-pp)*6*t : t<1/2 ? q : t<2/3 ? pp+(q-pp)*(2/3-t)*6 : pp; };
+  return "#" + [hh+1/3, hh, hh-1/3].map(t=>Math.round(f(t)*255).toString(16).padStart(2,"0")).join("");
+}
+function softify(svg, fills, line){
+  const u = "sf" + (++SOFT_UID);
+  let defs = `<radialGradient id="${u}k" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="${BLUSH}" stop-opacity=".95"/><stop offset=".6" stop-color="${BLUSH}" stop-opacity=".45"/><stop offset="1" stop-color="${BLUSH}" stop-opacity="0"/></radialGradient>`
+    + `<radialGradient id="${u}s" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3f3540" stop-opacity=".22"/><stop offset="1" stop-color="#3f3540" stop-opacity="0"/></radialGradient>`
+    + `<radialGradient id="${u}g" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+  [...new Set(fills.filter(Boolean).map(f=>f.toLowerCase()))].forEach((f, i)=>{
+    const id = u + "f" + i;
+    defs += `<radialGradient id="${id}" cx=".4" cy=".34" r=".72" fx=".32" fy=".24"><stop offset="0" stop-color="${hexMix(f,"#ffffff",.62)}"/><stop offset=".5" stop-color="${f}"/><stop offset="1" stop-color="${hexMix(f,line||"#3f3540",.32)}"/></radialGradient>`;
+    svg = svg.split(`fill="${f}"`).join(`fill="url(#${id})"`).split(`fill="${f.toUpperCase()}"`).join(`fill="url(#${id})"`);
+  });
+  svg = svg.replace(/rx="5" ry="3" fill="(#f4a7a3|\$\{BLUSH\})"/g, `rx="7.5" ry="5" fill="url(#${u}k)"`)
+    .split(`rx="5" ry="3" fill="${BLUSH}"`).join(`rx="7.5" ry="5" fill="url(#${u}k)"`)
+    .split(`fill="#3f3540" opacity=".1"`).join(`fill="url(#${u}s)"`);
+  return {defs:`<defs>${defs}</defs>`, svg, gloss:(x, y, rx, ry, rot)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${rot||-28} ${x} ${y})" fill="url(#${u}g)"/><circle cx="${x - rx*.35}" cy="${y - ry*.15}" r="${Math.max(1.4, ry*.28)}" fill="#fff" opacity=".9"/>`};
+}
+
 
 const MON = {
   dudu: { name: "嘟嘟", en: "Dudu", fill: "#c3e3cb", shade: "#a9d4b4", line: "#5d7f68", ex: "#fff6d8",
@@ -8323,6 +8383,10 @@ function propsFor(id, m, e) {
 function monster(id, e, size) {
   const m = MON[id], c = m;
   if (m.hidden) return hiddenMon(id, size || 120, false, HM_EXPR[e] || "normal");
+  if (BUDDY_ART[id] && ART_STYLE === "flat") {   // 新造型（平面風）
+    HM_E = e || "normal"; const art = BUDDY_ART[id].f(); HM_E = "normal";
+    return `<svg viewBox="0 0 120 120" width="${size || 120}" height="${size || 120}" xmlns="http://www.w3.org/2000/svg">${flatify(art, [], BUDDY_ART[id].line)}</svg>`;
+  }
   e = e || "normal"; size = size || 120;
   const blushY = m.eyes ? 83 : m.eyeY + 7;
   const bx = m.eyes ? 26 : (m.cyclops ? 18 : m.dx + 9);
@@ -8337,13 +8401,17 @@ function monster(id, e, size) {
     <ellipse cx="${60 - bx}" cy="${blushY}" rx="5" ry="3" fill="${BLUSH}" opacity="${e === "oops" ? .35 : (m.shy ? 1 : .7)}"/>
     <ellipse cx="${60 + bx}" cy="${blushY}" rx="5" ry="3" fill="${BLUSH}" opacity="${e === "oops" ? .35 : (m.shy ? 1 : .7)}"/>
     ${eyesFor(m, e)}${glassesFor(m)}${mouthFor(m, e)}${id === "pupu" ? "" : ""}${armsFor(m, e)}${wearFor(id, m)}${extrasFor(m, e)}${propsFor(id, m, e)}`;
-  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  if(ART_STYLE === "flat") return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${flatify(body, [m.fill, m.shade, m.ex], m.line)}</svg>`;
+  if(ART_STYLE === "line") return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+  const sf = softify(body, [m.fill, m.shade, m.ex], m.line);
+  const sv = sf.svg.replace(/(<path d="[^"]*" fill="url\(#sf\d+f0\)"[^>]*\/>)/, "$1" + sf.gloss(43, (m.gloss || 52), 13, 7.5));   // 身體後面加一道柔光
+  return `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">${sf.defs}${sv}</svg>`;
 }
 
 const PROFILE = {
   dudu: { color: "薄荷綠", trait: "懶洋洋、最愛午睡", line: "慢慢來就好～", role: "首頁陪伴、🎧 連續聽", detail: "頭上兩支小角軟軟的。做什麼都慢吞吞，但從不放棄，最會安慰人。" },
   momo: { color: "薰衣草紫", trait: "好奇寶寶、愛發問", line: "這個字是什麼意思呀？", role: "單字遊戲主持人", detail: "毛茸茸的獨眼怪獸，看到新單字眼睛就會發亮。" },
-  bobo: { color: "蜜桃粉", trait: "活力滿點的啦啦隊", line: "答對了！你超棒的！", role: "答對、拿星星時出現", detail: "頭上的天線泡泡會跟著心情晃動，最喜歡替大家加油。" },
+  bobo: { color: "蜜桃粉", trait: "活力滿點的啦啦隊", line: "答對了！你超棒的！", role: "答對、拿星星時出現", detail: "長得像一顆小蜜桃，頭上的小葉子會跟著心情晃動，最喜歡拿彩球替大家加油。" },
   gugu: { color: "奶油黃", trait: "貪吃鬼、肚子常常咕咕叫", line: "學完一課就可以吃點心了吧？", role: "連續天數、每日目標", detail: "長得像一片吐司，有兩顆小虎牙。只要聊到食物就精神百倍。" },
   pupu: { color: "天空藍", trait: "害羞、說話小小聲", line: "我、我們一起念念看好嗎…", role: "跟讀練習，鼓勵開口說", detail: "一朵小雲朵，緊張時會躲起來，但很溫柔，會陪你一起念。" },
   hulu: { color: "奶茶色", trait: "愛看書的小博士", line: "嗯～我們把這篇再聽一次吧。", role: "文章聽力、複習生字", detail: "戴著圓眼鏡，頭上長了一株小芽，知道好多故事。" }
@@ -8456,22 +8524,27 @@ const STAR5 = "M0 -10 L3 -3 L10 -3 L4 2 L6 9 L0 5 L-6 9 L-4 2 L-10 -3 L-3 -3 Z";
 let HM_E = "normal";   // 目前要畫的表情：normal / cheer / oops / think
 function hmEyes(x, y, dx, L, big){
   return [x-dx, x+dx].map((ex,i)=>{
-    if(HM_E === "cheer") return `<path d="M${ex-4.5} ${y+1.5} Q${ex} ${y-4.5} ${ex+4.5} ${y+1.5}" fill="none" stroke="${L}" stroke-width="2.6" stroke-linecap="round"/>`;
+    if(HM_E === "cheer" || HM_E === "happy") return `<path d="M${ex-4.5} ${y+1.5} Q${ex} ${y-4.5} ${ex+4.5} ${y+1.5}" fill="none" stroke="${L}" stroke-width="2.6" stroke-linecap="round"/>`;
+    if(HM_E === "sleepy") return `<path d="M${ex-4.5} ${y} Q${ex} ${y+3.6} ${ex+4.5} ${y}" fill="none" stroke="${L}" stroke-width="2.4" stroke-linecap="round"/>`;
     if(HM_E === "oops"){ const k = i ? -1 : 1; return `<path d="M${ex-3.6*k} ${y-3.6} L${ex+3*k} ${y} L${ex-3.6*k} ${y+3.6}" fill="none" stroke="${DK}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`; }
-    const oy = HM_E === "think" ? -1.8 : 0, ox = HM_E === "think" ? 1.4 : 0;
-    return `<ellipse cx="${ex+ox}" cy="${y+oy}" rx="${big?4.2:3.2}" ry="${big?4.8:3.9}" fill="${DK}"/><circle cx="${ex+ox+1.3}" cy="${y+oy-1.6}" r="${big?1.7:1.3}" fill="#fff"/>`;
+    // 白色大眼睛＋黑眼珠（想事情時眼珠往右上看），不畫外框（像月亮貓頭鷹）
+    const oy = HM_E === "think" ? -1.6 : .6, ox = HM_E === "think" ? 1.6 : (i ? -.5 : .5), R = big ? 7.4 : 6.2, r = big ? 4.3 : 3.6;
+    return `<circle cx="${ex}" cy="${y}" r="${R}" fill="#fff"/><circle cx="${ex+ox}" cy="${y+oy}" r="${r}" fill="${DK}"/><circle cx="${ex+ox+r*.38}" cy="${y+oy-r*.4}" r="${r*.38}" fill="#fff"/><circle cx="${ex+ox-r*.4}" cy="${y+oy+r*.42}" r="${r*.16}" fill="#fff"/>`;
   }).join("");
 }
 function hmMouth(x, y, L, open){
   if(HM_E === "cheer") return `<path d="M${x-6} ${y+6} Q${x} ${y+16} ${x+6} ${y+6} Z" fill="${MOUTH}" stroke="${L}" stroke-width="1.9" stroke-linejoin="round"/><path d="M${x-3} ${y+11} Q${x} ${y+9.5} ${x+3} ${y+11}" fill="none" stroke="#ff9eae" stroke-width="2"/>`;
   if(HM_E === "oops") return `<path d="M${x-6} ${y+9} q1.5 -2.4 3 0 t3 0 t3 0 t3 0" fill="none" stroke="${L}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`;
   if(HM_E === "think") return `<path d="M${x-1} ${y+9} h5" stroke="${L}" stroke-width="2" stroke-linecap="round"/>`;
+  if(HM_E === "sleepy") return `<ellipse cx="${x}" cy="${y+10}" rx="2.4" ry="2" fill="${MOUTH}"/>`;
+  if(HM_E === "happy") return `<path d="M${x-5} ${y+7} Q${x} ${y+14} ${x+5} ${y+7} Z" fill="${MOUTH}" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`;
   return open ? `<path d="M${x-4.5} ${y+7} Q${x} ${y+14} ${x+4.5} ${y+7} Z" fill="${MOUTH}" stroke="${L}" stroke-width="1.8" stroke-linejoin="round"/>`
     : `<path d="M${x-3.5} ${y+8} q1.75 2.2 3.5 0 q1.75 2.2 3.5 0" fill="none" stroke="${L}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 function hmExtra(x, y){
   if(HM_E === "think") return `<g transform="translate(${x+30} ${y-30})"><circle r="9" fill="#fff" stroke="#b7a7c9" stroke-width="1.6"/><text y="4.5" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="13" font-weight="700" fill="#7d68b0">?</text></g>`;
   if(HM_E === "oops") return `<path d="M${x+26} ${y-14} q4 6 0 8 q-4 -2 0 -8 Z" fill="#8fd1ff" stroke="#5aa2ef" stroke-width="1.2"/>`;
+  if(HM_E === "sleepy") return `<text x="${x+24}" y="${y-18}" font-family="Fredoka,sans-serif" font-size="12" font-weight="700" fill="#8fa8d8">z</text><text x="${x+31}" y="${y-26}" font-family="Fredoka,sans-serif" font-size="9" font-weight="700" fill="#8fa8d8">z</text>`;
   if(HM_E === "cheer") return [[x-34,y-26,.5],[x+32,y-30,.4]].map(([sx,sy,k])=>`<path transform="translate(${sx} ${sy}) scale(${k})" d="${STAR5}" fill="#ffd66b"/>`).join("");
   return "";
 }
@@ -8661,9 +8734,142 @@ const HIDDEN = {
       ${[[44,90],[76,90]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="5.6" ry="4.4" fill="${F}" stroke="${L}" stroke-width="1.8"/>`).join("")}
       <path transform="translate(104 34) scale(.4)" d="${STAR5}" fill="#ffd66b"/><path transform="translate(14 60) scale(.3)" d="${STAR5}" fill="#ffd66b"/>`; }}
 };
+/* ---------- 六隻原始夥伴（新造型）：跟隱藏版同一種畫法，平面無框線、白色大眼睛 ----------
+   表情用 HM_E：normal／happy／cheer／think／oops／sleepy。手會跟著表情動（hmArms）。 */
+function hmArms(lx, rx, y, F, len){
+  len = len || 11;
+  const up = HM_E === "cheer", wave = HM_E === "happy", down = HM_E === "sleepy" || HM_E === "oops";
+  const arm = (x, k)=>{
+    const rot = up ? -k*140 : wave ? (k < 0 ? 40 : -120) : down ? k*20 : HM_E === "think" ? (k < 0 ? 30 : -150) : k*35;
+    return `<ellipse cx="${x}" cy="${y}" rx="6" ry="${len*.55}" transform="rotate(${rot} ${x} ${y}) translate(0 ${len*.45})" fill="${F}"/>`;
+  };
+  return arm(lx, -1) + arm(rx, 1);
+}
+function hmLids(x, y, dx, F, big){   // 半閉的眼皮（懶洋洋）
+  if(HM_E !== "normal") return "";
+  const R = (big ? 7.4 : 6.2) + .4;
+  return [x-dx, x+dx].map(ex=>`<path d="M${ex-R} ${y} A${R} ${R} 0 0 1 ${ex+R} ${y} Z" fill="${F}"/>`).join("");
+}
+function hmEye1(x, y, R, L){   // 一顆大眼睛（毛毛）
+  if(HM_E === "cheer" || HM_E === "happy") return `<path d="M${x-R*.8} ${y+2} Q${x} ${y-R*.9} ${x+R*.8} ${y+2}" fill="none" stroke="${L}" stroke-width="3" stroke-linecap="round"/>`;
+  if(HM_E === "sleepy") return `<path d="M${x-R*.8} ${y} Q${x} ${y+R*.6} ${x+R*.8} ${y}" fill="none" stroke="${L}" stroke-width="2.8" stroke-linecap="round"/>`;
+  if(HM_E === "oops") return `<path d="M${x-7} ${y-6} L${x+1} ${y} L${x-7} ${y+6} M${x+8} ${y-6} L${x+2} ${y} L${x+8} ${y+6}" fill="none" stroke="${DK}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const ox = HM_E === "think" ? 3 : 0, oy = HM_E === "think" ? -3 : 1, r = R * .56;
+  return `<circle cx="${x}" cy="${y}" r="${R}" fill="#fff"/><circle cx="${x+ox}" cy="${y+oy}" r="${r}" fill="${DK}"/><circle cx="${x+ox+r*.38}" cy="${y+oy-r*.4}" r="${r*.36}" fill="#fff"/><circle cx="${x+ox-r*.42}" cy="${y+oy+r*.42}" r="${r*.15}" fill="#fff"/>`;
+}
+const BUDDY_ART = {
+  /* 嘟嘟：薄荷綠的麻糬，兩支軟軟的小角，戴著條紋睡帽，懶洋洋的半閉眼 */
+  dudu: {line:"#3f6b4c", f:()=>{ const L = "#3f6b4c", F = "#8ed9a0", B = "#c9f0d2";
+    return `${HM_SHADOW}
+      ${hmArms(24, 96, 84, F)}
+      <path d="M18 86 Q16 48 60 46 Q104 48 102 86 Q102 108 60 108 Q18 108 18 86 Z" fill="${F}"/>
+      <ellipse cx="60" cy="96" rx="24" ry="10" fill="${B}"/>
+      <path d="M28 54 Q22 40 30 34 Q36 44 38 52 Z M92 54 Q98 40 90 34 Q84 44 82 52 Z" fill="#fff3c9"/>
+      <path d="M30 52 Q32 26 60 24 Q84 24 96 40 Q104 52 108 66 Q98 60 94 52 Q92 48 90 54 Q60 44 30 52 Z" fill="#9cc3f0"/>
+      <path d="M46 30 Q49 41 48 50 M64 25 Q67 37 65 48 M81 31 Q85 40 84 49" stroke="#fff" stroke-width="3.6" fill="none" stroke-linecap="round" opacity=".8"/>
+      <path d="M28 52 Q60 42 92 52 L91 59 Q60 50 29 59 Z" fill="#fff3c9"/>
+      <circle cx="108" cy="67" r="6.5" fill="#fff3c9"/>
+      <ellipse cx="45" cy="108" rx="9" ry="4.6" fill="${F}"/><ellipse cx="75" cy="108" rx="9" ry="4.6" fill="${F}"/>
+      ${hmFace(60, 74, 13, L)}${hmLids(60, 74, 13, F)}`; }},
+  /* 毛毛：薰衣草紫的毛球，一顆好奇的大眼睛，兩根彈簧天線上有粉紅毛球 */
+  momo: {line:"#5d4b8a", f:()=>{ const L = "#5d4b8a", F = "#a98ae0", B = "#d6c8f5";
+    const fluff = Array.from({length:16}, (_, i)=>{ const a = i/16*Math.PI*2; return `<circle cx="${(60+Math.cos(a)*33).toFixed(1)}" cy="${(76+Math.sin(a)*28).toFixed(1)}" r="9.5" fill="${F}"/>`; }).join("");
+    return `${HM_SHADOW}
+      <path d="M44 44 Q38 30 46 24 Q40 18 36 22 M76 44 Q82 30 74 24 Q80 18 84 22" fill="none" stroke="${L}" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="34" cy="19" r="7" fill="#ff9fc8"/><circle cx="86" cy="19" r="7" fill="#ff9fc8"/><circle cx="32" cy="17" r="2" fill="#fff" opacity=".7"/><circle cx="84" cy="17" r="2" fill="#fff" opacity=".7"/>
+      ${hmArms(25, 95, 82, F)}
+      ${fluff}<ellipse cx="60" cy="76" rx="35" ry="30" fill="${F}"/>
+      <ellipse cx="60" cy="96" rx="20" ry="9" fill="${B}"/>
+      <ellipse cx="45" cy="110" rx="8" ry="4.4" fill="${F}"/><ellipse cx="75" cy="110" rx="8" ry="4.4" fill="${F}"/>
+      ${hmEye1(60, 68, 12.5, L)}
+      <ellipse cx="38" cy="82" rx="5" ry="3" fill="${BLUSH}" opacity=".8"/><ellipse cx="82" cy="82" rx="5" ry="3" fill="${BLUSH}" opacity=".8"/>
+      ${hmMouth(60, 78, L, true)}${hmExtra(60, 70)}`; }},
+  /* 啵啵：蜜桃色的豆子，頭上一根泡泡天線，綁著星星頭帶，兩手拿彩球加油 */
+  /* 啵啵：蜜桃色的啦啦隊，兩手拿彩球，加油時舉高（造型見 BOBO_LOOKS） */
+  bobo: {line:"#8a4636", f:()=>BOBO_LOOKS[BOBO_LOOK]()},
+  /* 咕咕：一片奶油吐司，頭上一塊融化的奶油，兩顆小虎牙，手上拿著咬一口的餅乾 */
+  gugu: {line:"#7a5520", f:()=>{ const L = "#7a5520", C = "#d99b4a", F = "#f6cd5c";
+    const mouth = HM_E === "sleepy" || HM_E === "think" ? hmMouth(60, 76, L) : `<path d="M53 83 Q60 91 67 83 Z" fill="${MOUTH}"/><path d="M55 83 l1.6 3.4 l1.6 -3.4 Z M62 83 l1.6 3.4 l1.6 -3.4 Z" fill="#fff"/>`;
+    return `${HM_SHADOW}
+      ${hmArms(26, 94, 84, C)}
+      <path d="M22 100 V62 Q18 38 40 38 Q60 22 80 38 Q102 38 98 62 V100 Q98 108 90 108 H30 Q22 108 22 100 Z" fill="${C}"/>
+      <path d="M28 98 V64 Q25 45 42 45 Q60 31 78 45 Q95 45 92 64 V98 Q92 102 88 102 H32 Q28 102 28 98 Z" fill="${F}"/>
+      <path d="M46 36 H74 Q78 36 77 40 L76 44 Q71 47 70 52 Q68 46 64 45 H50 Q46 45 45 41 Z" fill="#fff3a6"/>
+      ${[[40,62],[82,60],[44,94],[78,92]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="1.6" ry="1" fill="${C}" opacity=".6"/>`).join("")}
+      <g transform="translate(${HM_E === "cheer" ? 102 : 100} ${HM_E === "cheer" ? 58 : 88})"><path d="M-9 0 A9 9 0 1 1 7 6 Q3 2 5 -2 Q1 -3 0 -7 Q-5 -6 -9 0 Z" fill="#c98a4b"/>${[[-4,-2],[1,3],[-2,5]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.4" fill="#6b4029"/>`).join("")}</g>
+      <ellipse cx="44" cy="110" rx="9" ry="4.4" fill="${C}"/><ellipse cx="76" cy="110" rx="9" ry="4.4" fill="${C}"/>
+      ${[[60-12-7, 1],[60+12+7, 1]].map(([bx])=>`<ellipse cx="${bx}" cy="${76+7}" rx="5" ry="3" fill="${BLUSH}" opacity=".8"/>`).join("")}
+      ${hmEyes(60, 72, 12, L)}${mouth}${hmExtra(60, 72)}`; }},
+  /* 噗噗：天空藍的小雲朵，害羞時會用手遮臉，圍著黃色圍巾，頭上掛著一滴小雨滴 */
+  pupu: {line:"#3c6a92", f:()=>{ const L = "#3c6a92", F = "#86c3ef", B = "#cfe7fa";
+    const shy = HM_E === "normal" || HM_E === "oops" || HM_E === "think";
+    return `${HM_SHADOW}
+      <path d="M28 106 Q12 106 14 90 Q6 76 20 68 Q18 48 40 50 Q48 34 64 39 Q84 33 90 54 Q108 58 104 76 Q112 92 96 106 Z" fill="${F}"/>
+      <path d="M30 100 Q60 108 92 100 Q90 106 84 106 H34 Q30 105 30 100 Z" fill="${B}"/>
+      <path d="M66 22 q5 7 0 10 q-5 -3 0 -10 Z" fill="#5aa2ef"/>
+      <path d="M22 86 Q60 98 98 86 L97 93 Q60 105 23 93 Z" fill="#ffd23f"/><path d="M80 92 L84 108 L92 106 L88 90 Z" fill="#ffd23f"/><path d="M84 98 h6 M85 102 h6" stroke="#f0a020" stroke-width="1.4"/>
+      ${hmFace(60, 70, 12, L)}
+      ${shy ? `<ellipse cx="40" cy="78" rx="7" ry="8" fill="${F}"/><ellipse cx="80" cy="78" rx="7" ry="8" fill="${F}"/>` : hmArms(18, 102, 76, F)}
+      <ellipse cx="44" cy="109" rx="8" ry="4.2" fill="${F}"/><ellipse cx="76" cy="109" rx="8" ry="4.2" fill="${F}"/>`; }},
+  /* 呼嚕：奶茶色的小熊書蟲，頭上長一株小芽，戴圓眼鏡，抱著一本打開的書 */
+  hulu: {line:"#6b4a32", f:()=>{ const L = "#6b4a32", F = "#d9a77c", B = "#f2d5b8";
+    return `${HM_SHADOW}
+      <circle cx="32" cy="46" r="11" fill="${F}"/><circle cx="88" cy="46" r="11" fill="${F}"/><circle cx="32" cy="46" r="5.5" fill="${B}"/><circle cx="88" cy="46" r="5.5" fill="${B}"/>
+      <path d="M60 40 Q58 30 62 24" fill="none" stroke="#5fa75a" stroke-width="2.6" stroke-linecap="round"/><path d="M62 26 Q52 16 46 22 Q54 30 62 26 Z M62 26 Q72 14 80 20 Q72 30 62 26 Z" fill="#7fc36a"/>
+      <path d="M20 84 Q18 42 60 40 Q102 42 100 84 Q100 108 60 108 Q20 108 20 84 Z" fill="${F}"/>
+      <ellipse cx="60" cy="96" rx="22" ry="10" fill="${B}"/>
+      ${hmFace(60, 70, 13, L)}
+      ${[47, 73].map(x=>`<circle cx="${x}" cy="70" r="10" fill="none" stroke="#6b4a32" stroke-width="2.4"/>`).join("")}<path d="M57 69 Q60 66.5 63 69" stroke="#6b4a32" stroke-width="2.4" fill="none"/>
+      <g transform="translate(60 ${HM_E === "cheer" ? 98 : 96})"><path d="M-22 -9 Q-11 -13 0 -8 Q11 -13 22 -9 V8 Q11 4 0 9 Q-11 4 -22 8 Z" fill="#5aa2ef"/><path d="M-19 -6 Q-10 -9 -1 -5 V6 Q-10 2 -19 5 Z M19 -6 Q10 -9 1 -5 V6 Q10 2 19 5 Z" fill="#fff"/><path d="M-15 -2 h10 M-15 1 h10 M5 -2 h10 M5 1 h10" stroke="#c9cfe0" stroke-width="1.2"/></g>
+      <ellipse cx="38" cy="95" rx="6" ry="5" fill="${F}"/><ellipse cx="82" cy="95" rx="6" ry="5" fill="${F}"/>
+      <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>`; }}
+};
+/* 啵啵的造型（三款候選）：peach 小蜜桃、bunny 垂耳兔、buns 丸子頭 */
+let BOBO_LOOK = "peach";
+function boboPom(x, y, c){ return `<g transform="translate(${x} ${y})">${[0,45,90,135,180,225,270,315].map(a=>`<ellipse cx="0" cy="-6" rx="3.2" ry="6.4" transform="rotate(${a})" fill="${c}"/>`).join("")}<circle r="4" fill="${c}"/></g>`; }
+function boboPoms(){ const up = HM_E === "cheer"; return boboPom(up ? 16 : 19, up ? 56 : 90, "#ffd94a") + boboPom(up ? 104 : 101, up ? 56 : 90, "#5ac8d8"); }
+const BOBO_LOOKS = {
+  /* 小蜜桃：圓圓的蜜桃身體，頭頂中間有一道淺凹，兩片小葉子 */
+  peach: ()=>{ const L = "#8a4636", F = "#ff9a8a", B = "#ffd0c6";
+    return `${HM_SHADOW}
+      <path d="M60 46 Q58 36 62 30" stroke="#8a5a3c" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M61 34 Q48 22 40 30 Q50 40 61 34 Z" fill="#7fc36a"/><path d="M62 33 Q74 20 84 27 Q74 38 62 33 Z" fill="#5fae55"/>
+      <path d="M60 48 Q42 36 26 50 Q14 64 18 84 Q22 108 60 108 Q98 108 102 84 Q106 64 94 50 Q78 36 60 48 Z" fill="${F}"/>
+      <path d="M60 50 Q62 66 58 80" stroke="#f07a6a" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".55"/>
+      <ellipse cx="60" cy="97" rx="20" ry="9" fill="${B}"/>
+      ${boboPoms()}
+      <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>
+      ${hmFace(60, 76, 12, L)}`; },
+  /* 垂耳兔：兩隻長長的垂耳，胸前一顆愛心 */
+  bunny: ()=>{ const L = "#8a4636", F = "#ff9a8a", B = "#ffd0c6";
+    return `${HM_SHADOW}
+      <path d="M60 40 Q96 40 100 82 Q102 108 60 108 Q18 108 20 82 Q24 40 60 40 Z" fill="${F}"/>
+      ${[-1,1].map(k=>`<path d="M${60+k*14} 43 Q${60+k*40} 36 ${60+k*47} 60 Q${60+k*50} 80 ${60+k*40} 84 Q${60+k*34} 70 ${60+k*30} 58 Q${60+k*24} 50 ${60+k*12} 50 Z" fill="#f07f70"/><path d="M${60+k*36} 52 Q${60+k*43} 64 ${60+k*41} 76" stroke="#ffc0b5" stroke-width="3.4" fill="none" stroke-linecap="round"/>`).join("")}
+      <ellipse cx="60" cy="97" rx="20" ry="9" fill="${B}"/>
+      <path d="M60 99 c-3 -4 -8 -1 -5 3 l5 4 l5 -4 c3 -4 -2 -7 -5 -3 Z" fill="#ff5c86"/>
+      ${boboPoms()}
+      <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>
+      ${hmFace(60, 74, 12, L)}`; },
+  /* 丸子頭：頭上兩顆圓圓的丸子，綁著蝴蝶結 */
+  buns: ()=>{ const L = "#8a4636", F = "#ff9a8a", B = "#ffd0c6";
+    const bow = (x)=>`<g transform="translate(${x} 38)"><path d="M0 0 L-7 -5 Q-9 0 -7 5 Z M0 0 L7 -5 Q9 0 7 5 Z" fill="#ff5c86"/><circle r="2.4" fill="#ff5c86"/></g>`;
+    return `${HM_SHADOW}
+      <circle cx="34" cy="38" r="13" fill="${F}"/><circle cx="86" cy="38" r="13" fill="${F}"/>
+      ${bow(43)}${bow(77)}
+      <path d="M60 40 Q96 40 100 82 Q102 108 60 108 Q18 108 20 82 Q24 40 60 40 Z" fill="${F}"/>
+      <ellipse cx="60" cy="97" rx="20" ry="9" fill="${B}"/>
+      ${boboPoms()}
+      <ellipse cx="45" cy="109" rx="9" ry="4.4" fill="${F}"/><ellipse cx="75" cy="109" rx="9" ry="4.4" fill="${F}"/>
+      ${hmFace(60, 74, 12, L)}`; }
+};
 function hiddenMon(id, size, bare, e){
   HM_E = e || "normal";
-  const body = HIDDEN[id].f(); HM_E = "normal";
+  let body = HIDDEN[id].f(); HM_E = "normal";
+  // 立體畫風：除了白色、眼睛、腮紅、嘴巴、線條色以外，每個有顏色的部分都加上光影
+  const L = (HM_INFO[id] || {}).line || DK, skip = ["#fff", "#ffffff", DK, BLUSH, MOUTH, L, "#3f3540"].map(x=>x.toLowerCase());
+  const fills = [...new Set([...body.matchAll(/fill="(#[0-9a-fA-F]{3,6})"/g)].map(m=>m[1].toLowerCase()))].filter(f=>!skip.includes(f));
+  if(ART_STYLE === "flat") body = flatify(body, fills, L, .5);
+  else if(ART_STYLE === "soft"){ const sf = softify(body, fills, L); body = sf.defs + sf.svg; }
   return bare ? body : `<svg viewBox="0 0 120 120" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 }
 function silhouette(id, size){
@@ -9845,7 +10051,14 @@ function maSvg(cfg, size, opts){
     ${MA_HAND[cfg.w].f(s,L,c)}
     ${MA_FLOAT[cfg.f].f(L)}`;
   const vb = opts.full ? "0 -4 120 120" : "1 -5 118 118";
-  return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${body}</svg>`;
+  // 立體畫風：身體顏色（與肚子、小手）加上光影，身體後面加一道柔光
+  if(ART_STYLE !== "soft"){
+    const flat = ART_STYLE === "flat" ? flatify(body.split(`<path d="${s.d}" fill="none" stroke="${L}" stroke-width="2.4" stroke-linejoin="round"/>`).join(""), [c[1], c[2]], L) : body;   // 平面風不畫衣服外圍的框線
+    return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${flat}</svg>`;
+  }
+  const sf = softify(body, [c[1], c[2]], L);
+  const sv = sf.svg.replace(new RegExp('(<path d="' + s.d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + '" fill="url\\(#sf\\d+f0\\)"[^>]*\\/>)'), "$1" + sf.gloss(42, s.top + 16, 12, 7));
+  return `<svg viewBox="${vb}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${sf.defs}${cfg.s !== "none" ? MA_SCENE[cfg.s].f() : bg ? `<rect x="-10" y="-10" width="140" height="140" fill="${bg}"/>` : ""}${sv}</svg>`;
 }
 /* 底部選單用線條圖示 */
 ICON_LINE.home = c => `<path d="M8 22 L24 9 L40 22 V38 a2 2 0 0 1 -2 2 H29 V29 H19 V40 H10 a2 2 0 0 1 -2 -2 Z" fill="none" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/>`;

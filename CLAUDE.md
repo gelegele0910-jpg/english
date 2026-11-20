@@ -2,7 +2,7 @@
 
 ## 專案概述
 
-「英文聽力樂園」：給台灣國小～高中（學測）學生的英文聽力／口說練習網頁 App。介面全部是繁體中文（zh-Hant），以可愛角色、多種介面風格、星星與連續天數鼓勵學習。
+「英文聽力樂園」（英文名 **Echo Island**，網頁標題與手機主畫面名稱）：給台灣國小～高中（學測）學生的英文聽力／口說練習網頁 App。介面全部是繁體中文（zh-Hant），以可愛角色、多種介面風格、星星與連續天數鼓勵學習。
 
 - **沒有建置流程、沒有套件**：純 HTML + CSS + 原生 JavaScript，直接用瀏覽器開啟 `index.html` 即可。測試是 `tests/` 裡的獨立 Node 腳本（只需要 Playwright）。
 - 檔案：
@@ -10,6 +10,7 @@
   - `config.js`：一行，設定 `window.ELP_API`（Google Apps Script Web App 的 `/exec` 網址）。
   - `apps-script/Code.gs`：Google Apps Script 後端（資料存在 Google 試算表）。
   - `tests/`：測試腳本，`node tests/run-all.js` 全部執行（見「驗證與測試規範」）。
+  - 手機主畫面圖示：`icon-512.png`、`icon-192.png`、`apple-touch-icon.png`（180）、`favicon-32.png` 與 `manifest.webmanifest`，都由 `node tools/make-icons.js` 從 App 裡的啵啵畫出來（選定款式 `CHOSEN`＝D 字島；`--preview` 產生所有款式預覽；改圖示請改這支程式再重新產生）。manifest 的 `display` 刻意用 `browser`：iPhone 的獨立 App 模式（standalone）和 Safari 不共用 localStorage，會讓已加到主畫面的人看起來資料不見。Apps Script 版沒有這些圖檔。
 
 ## 兩個版本的對應關係
 
@@ -81,6 +82,7 @@
 - **儲存**：先寫 localStorage（`lsGet/lsSet/lsDel`，會自動加 `NS` 前綴），再同步到雲端（進度存檔有 1.5 秒防抖，頁面隱藏時立即送出）；以 `updated` 時間戳決定雲端或本機哪邊較新。上傳一律經過 `cloudSaver()`（`pushProfiles`、`pushProg`）：同一種同時只送一個、失敗依 `GAS_RETRY` 再試 2 次，每次都送當下最新的資料，3 次都失敗才 `cloudFail()` 提示（一分鐘最多一次）。**`keepalive` 只在頁面隱藏時用（`gasLeaving`），且以位元組計算要小於 60KB**：瀏覽器限制同時上傳中的 keepalive 請求合計 64KB，平常也用的話第二個存檔會被直接拒絕。修改資料結構時要寫 `migrate()` 相容舊資料，並檢查後端 `refreshSummary_()`。
 - **語音**：播放用 Web Speech `speechSynthesis`（`speakEn()`，優先挑美式英文聲音）；口說辨識用 `SpeechRecognition`。
 - **練習情境**（`MODES`）：`full` 聽說、`quiet` 安靜（不能說，改拼字/排句子）、`silent` 靜音（不發聲，附 KK 音標）。新功能需考慮三種情境下的行為。
+- **小怪獸畫風**（`ART_STYLE`，目前 `"flat"`）：平面、沒有框線、白色大眼睛＋黑眼珠、沒有腳下影子。`flatify()` 把畫好的 SVG 去掉色塊外框、把指定顏色換成 `vivid()` 的清爽色（肚子比身體淺）；`monster()`、`hiddenMon()`、`maSvg()` 都會套用。另外保留 `"soft"`（立體漸層 `softify()`）與 `"line"`（原本的框線）可切換比較。六隻原始夥伴用新造型 `BUDDY_ART`（跟隱藏版同一套 `hmFace`／`hmEyes`／`hmArms`，表情 normal／happy／cheer／think／oops／sleepy），啵啵是小蜜桃（`BOBO_LOOK="peach"`，另有 `bunny`、`buns` 兩款候選）。新增角色請照隱藏版的寫法：只畫色塊、不加 stroke 外框。
 - **介面風格**（`SKINS`）：`sticker`、`notebook`、`jelly`、`night`、`minimal`、`minimaldark`，以 `body[data-skin=...]` 切換 CSS 變數。可愛風（`kind:"cute"`）用彩色圖示，簡約風用線條圖示（`ic()` / `li()`）。新樣式請使用 CSS 變數（`--ink`、`--card`、`--accent`、`--r` 等），確保六種風格都正常，尤其深色的 `night`、`minimaldark`。
 
 ## 密碼（`index.html`「密碼（4 位數字）」區段）
@@ -169,12 +171,12 @@ node tests/run-all.js --quick
 
 | 腳本 | 內容 |
 |---|---|
-| `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查；`font-size` 不可寫死成 px |
+| `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查；`font-size` 不可寫死成 px；主畫面圖示與 manifest 的檔案存在、尺寸正確 |
 | `backend-props.js` | 用模擬試算表執行 `Code.gs`：分段存讀往返一致、存檔冪等、`doPost` 白名單、學員進度總覽計算、舊資料搬家 |
 | `front-props.js` | `highlight()` / `findWord()` 不變量、`migrate()` 冪等、課程內容完整性（R-04）、`h()` 跳脫與惡意名字 |
 | `spelling.js` | 拼字間隔規則（含 2000 步隨機不變量）、逐字對照、三種拼字遊戲的訂正與重出題、隔天首頁複習、舊資料相容 |
 | `rewards.js` | 金幣帳目（1500 步隨機買賣）、簽到、連續天數里程碑、每日任務、遊戲金幣上限、寶箱不重複、上鎖部件、商店兩段確認與穿脫、動作播放與減少動態設定、舊資料相容 |
-| `hidden.js` | 隱藏版 16 隻 × 6 表情繪製與台詞、夥伴上鎖、神秘蛋（一天一次、不用連續、不重複）、每個成就剛好達到才解鎖（每隻都要有測試）、收藏冊與設成夥伴、舊資料相容 |
+| `hidden.js` | 隱藏版 16 隻與原始 6 隻新造型 × 6 表情繪製與台詞、夥伴上鎖、神秘蛋（一天一次、不用連續、不重複）、每個成就剛好達到才解鎖（每隻都要有測試）、收藏冊與設成夥伴、舊資料相容 |
 | `sets.js` | 套裝 4 件不同欄位、集滿才送且只送一次、稱號與整套穿上；五個節慶 2026～2030 期間邊界、期間外買不到、買了永久能用、節慶禮物每年一次 |
 | `sky.js` | 星點門檻遞增與總數、0～全部逐一檢查點亮數、星座徽章不重複、一次點亮多個只提示一次、全部點亮送場景與稱號、星空圖畫面與舊資料 |
 | `mobile.js` | 46 個畫面（含遊戲、商店、星空、頭像工作室、彈出視窗）× 9 種尺寸（手機 320～414、平板 820／1024／1180、電腦 1440）：不可超出螢幕或卡片、文字被截斷或擠成直排、按鈕內容擠出、大字單字被拆行、被底部選單（或左側頁籤）蓋住、彈出視窗跑出螢幕。`--shots` 另存 320 寬截圖 |
