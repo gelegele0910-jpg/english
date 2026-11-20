@@ -10,7 +10,7 @@
   - `config.js`：一行，設定 `window.ELP_API`（Google Apps Script Web App 的 `/exec` 網址）。
   - `apps-script/Code.gs`：Google Apps Script 後端（資料存在 Google 試算表）。
   - `tests/`：測試腳本，`node tests/run-all.js` 全部執行（見「驗證與測試規範」）。
-  - 手機主畫面圖示：`icon-512.png`、`icon-192.png`、`apple-touch-icon.png`（180）、`favicon-32.png` 與 `manifest.webmanifest`，都由 `node tools/make-icons.js` 從 App 裡的啵啵畫出來（選定款式 `CHOSEN`＝D 字島；`--preview` 產生所有款式預覽；改圖示請改這支程式再重新產生）。manifest 的 `display` 刻意用 `browser`：iPhone 的獨立 App 模式（standalone）和 Safari 不共用 localStorage，會讓已加到主畫面的人看起來資料不見。Apps Script 版沒有這些圖檔。
+  - 手機主畫面圖示：`icon-512.png`、`icon-192.png`、`apple-touch-icon.png`（180）、`favicon-32.png` 與 `manifest.webmanifest`，都由 `node tools/make-icons.js` 從 App 裡的啵啵畫出來（選定款式 `CHOSEN`＝D 字島；`--preview` 產生所有款式預覽；改圖示請改這支程式再重新產生）。manifest 的 `display` 用 `minimal-ui`：Android Chrome 會把網站安裝成 App（主畫面圖示沒有 Chrome 小標誌，需要 `sw.js`）；iPhone 不支援 minimal-ui，會照舊用 Safari 開（不可改成 `standalone`：iPhone 的獨立 App 模式和 Safari 不共用 localStorage，會讓已加到主畫面的人看起來資料不見）。`sw.js` 只轉送網頁開啟、不做快取，只在 https 註冊。Apps Script 版沒有這些圖檔。
 
 ## 兩個版本的對應關係
 

@@ -26,6 +26,9 @@ else console.log('PASS 字體大小都跟著 --fz 縮放');
   let man = null; try { man = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.webmanifest'), 'utf8')); } catch (e) { bad.push('manifest 不是正確的 JSON'); }
   if (man) {
     if (!man.short_name || man.short_name.length > 12) bad.push('short_name 要有，而且 12 個字以內（主畫面才不會被截掉）');
+    if (man.display !== 'minimal-ui') bad.push('display 要用 minimal-ui（Android 可安裝成 App；iPhone 仍用 Safari、資料不分家）');
+    if (!fs.existsSync(path.join(ROOT, 'sw.js'))) bad.push('少了 sw.js（Android 安裝成 App 需要）');
+    else check('sw.js', fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8'));
     (man.icons || []).forEach(ic => { const f = path.join(ROOT, ic.src), sz = fs.existsSync(f) && pngSize(f); if (!sz || sz.join('x') !== ic.sizes) bad.push(`圖示 ${ic.src} 不存在或尺寸不是 ${ic.sizes}`); });
   }
   const t = path.join(ROOT, 'apple-touch-icon.png'); if (fs.existsSync(t) && String(pngSize(t)) !== '180,180') bad.push('apple-touch-icon.png 應該是 180×180');
