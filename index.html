@@ -12905,6 +12905,8 @@ document.addEventListener("change", e=>{
 });
 
 boot();
+// 讓 Android Chrome 可以把網站「安裝」成 App（主畫面圖示不會有 Chrome 小標誌）。只在正式網址（https）註冊；Apps Script 版不需要
+if("serviceWorker" in navigator && location.protocol === "https:" && !GAS_RUN) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>
