@@ -12518,12 +12518,12 @@ function vSettings(){
       <summary data-act="cl-steps">第一次使用：設定步驟（約 5 分鐘）</summary>
       <ol>
         <li>用電腦開一個新的 <b>Google 試算表</b>，取個名字，例如「五年甲班英文」。</li>
-        <li>點上方選單 <b>擴充功能 → Apps Script</b>。</li>
+        <li>點上方選單 <b>擴充功能 → Apps Script</b>（英文介面：Extensions → Apps Script）。</li>
         <li>按下面的〔複製程式碼〕，回到 Apps Script，把裡面原本的內容全部刪掉、貼上，再按 💾 儲存。
           <button class="btn sec small" style="margin-top:6px" data-act="cl-copycode">複製程式碼</button>${U.clCode ? `<textarea class="field cl-code" readonly>${h(U.clCode)}</textarea>` : ""}</li>
-        <li>上方函式選單選 <b>setup</b>，按 <b>▶ 執行</b>。第一次會要求授權：選你的 Google 帳號 →「進階」→「前往（不安全）」→「允許」。這是你自己的程式，可以放心。</li>
-        <li>右上角 <b>部署 → 新增部署作業</b>，按齒輪選 <b>網頁應用程式</b>：執行身分選「<b>我</b>」，誰可以存取選「<b>所有人</b>」（一定要選這個，學生才能存檔）。</li>
-        <li>按 <b>部署</b>，複製出現的 <b>網頁應用程式網址</b>（結尾是 <code>/exec</code>）。</li>
+        <li>上方函式選單選 <b>setup</b>，按 <b>▶ 執行</b>（Run）。第一次會跳出「Google 尚未驗證這個應用程式」（Google hasn't verified this app）的警告，<b>這是正常的</b>：畫面上的開發者就是你自己的 Gmail。依序點「<b>進階</b>」（Advanced）→「<b>前往 ○○（不安全）</b>」（Go to … (unsafe)）→「<b>允許</b>」（Allow）。只要做一次。</li>
+        <li>右上角 <b>部署 → 新增部署作業</b>（Deploy → New deployment），按齒輪選 <b>網頁應用程式</b>（Web app）：執行身分選「<b>我</b>」（Me），誰可以存取選「<b>所有人</b>」（Anyone）——一定要選這個，學生才能存檔。</li>
+        <li>按 <b>部署</b>（Deploy），複製出現的 <b>網頁應用程式網址</b>（Web app URL，結尾是 <code>/exec</code>）。</li>
         <li>把網址貼到下面，填上班級名稱，按「產生班級連結」，再把連結傳給學生。</li>
       </ol>
       <p class="muted" style="margin:6px 0 0">學生的練習狀況會自動整理在試算表的「學員進度」分頁。</p>
