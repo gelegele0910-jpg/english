@@ -17,6 +17,7 @@ const suites = [
   ['跟讀比對與放大看', 'speech-zoom.js', []],
   ['單字意思對照', 'words.js', []],
   ['錄音不卡住', 'rec.js', []],
+  ['英文字型', 'fonts.js', []],
   ['手機版面', 'mobile.js', []],
   ['端到端', 'e2e.js', quick ? ['--clicks=60'] : []]
 ];
