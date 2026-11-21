@@ -285,8 +285,9 @@ body[data-skin=minimal] .opt,body[data-skin=minimaldark] .opt{border-color:var(-
 .gcard:active{transform:scale(.97)}
 .gcard b{font-size:calc(16px*var(--fz))}.gcard span{font-size:calc(12.5px*var(--fz));color:var(--muted)}
 .gtag{position:absolute;top:10px;right:10px;font-size:calc(11px*var(--fz));background:var(--accent-2);color:var(--accent);border-radius:999px;padding:1px 8px;font-weight:700}
-.slots{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:4px 0 14px}
-.slot{width:25px;height:38px;border-bottom:3px solid var(--line);font-size:calc(22px*var(--fz));font-weight:700;display:flex;align-items:flex-end;justify-content:center}
+/* 答案格子永遠排成一行：字長就把每格縮窄、字母縮小（--n＝字母數），不可以換行把單字拆成兩行 */
+.slots{display:flex;gap:min(4px,1.2cqw);justify-content:center;flex-wrap:nowrap;margin:4px 0 14px;container-type:inline-size}
+.slot{flex:0 1 25px;min-width:0;height:38px;border-bottom:3px solid var(--line);font-size:min(calc(22px*var(--fz)),calc(100cqw / var(--n,8)));font-weight:700;display:flex;align-items:flex-end;justify-content:center}
 .slot.ok{color:var(--good);border-color:var(--good)}.slot.no{color:var(--bad);border-color:var(--bad)}
 /* 動作 */
 .mv{position:relative;display:inline-flex;transform-origin:50% 90%;flex:none}
@@ -12242,7 +12243,7 @@ function vGame(){
     const slots = q.split("").map((c,i)=>`<span class="slot ${st}">${h(shown[i]||"")}</span>`).join("");
     return gameHead() + `<div class="card center">${retryTag}<p class="hint">${sil?"看中文，用積木拼出這個字":"聽單字，用積木拼出來"}</p>${playBig}<p class="muted" style="margin:0 0 12px">提示：${h(WORDS[q].zh)}（${q.length} 個字母）</p>
       ${ans && !g.picked ? spFixBox(g.attempt, q) + `<p class="hint" style="margin:8px 0">${g.fixed ? "訂正好了，很棒！" : "照著正確拼法，再拼一次"}</p>` : ""}
-      <div class="slots en">${slots}</div>
+      <div class="slots en" style="--n:${q.length}">${slots}</div>
       ${ans && !fixing ? "" : `<div class="letters en">${g.letters.map((L,i)=>`<button class="lt ${g.built.includes(i)?"used":""}" data-act="tile" data-i="${i}" ${g.built.includes(i)?"disabled":""}>${h(L.ch)}</button>`).join("")}</div>
       <div class="row" style="margin-top:12px"><button class="btn sec small" data-act="tile-back">退一格</button><button class="btn ghost small" data-act="tile-clear">清除</button></div>`}
     </div>${fb}${next}`;
@@ -12407,7 +12408,7 @@ function builderHtml(b){
   if(!b) return "";
   if(b.type==="tiles"){
     const built = b.built.map(i=>b.letters[i].ch).join(""), done = b.picked != null;
-    return `<div class="slots en">${b.target.split("").map((c,i)=>`<span class="slot ${done?(b.picked?"ok":"no"):""}">${h(built[i]||"")}</span>`).join("")}</div>
+    return `<div class="slots en" style="--n:${b.target.length}">${b.target.split("").map((c,i)=>`<span class="slot ${done?(b.picked?"ok":"no"):""}">${h(built[i]||"")}</span>`).join("")}</div>
       ${done && !b.picked ? `<p class="muted">正確拼法：<b class="en" style="color:var(--good);font-size:calc(18px*var(--fz))">${h(b.target)}</b></p>` : ""}
       ${done ? "" : `<div class="letters en">${b.letters.map((L,i)=>`<button class="lt ${b.built.includes(i)?"used":""}" data-act="b-tile" data-i="${i}" ${b.built.includes(i)?"disabled":""}>${h(L.ch)}</button>`).join("")}</div>
       <div class="row" style="margin-top:12px"><button class="btn sec small" data-act="b-back">退一格</button><button class="btn ghost small" data-act="b-clear">清除</button></div>`}`;

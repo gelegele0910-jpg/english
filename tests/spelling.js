@@ -280,6 +280,35 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     result('E9 哪個拼對了：正確答案在任何一格，答對不會有紅色、答錯只標點的那格', bad);
   }
 
+  // E10 拼字積木的答案格子：不管單字多長、手機多窄，都排在同一行，字母不會擠出格子
+  {
+    const bad = [];
+    const words = await p.evaluate(() => { const ks = Object.keys(WORDS).filter(k => /^[a-z]+$/.test(k)); ks.sort((a, b) => b.length - a.length); return [ks[0], ks[5], 'elephant', 'elephants', 'cat']; });
+    for (const [w, hgt] of [[320, 640], [360, 740], [375, 740], [414, 860], [820, 1180]]) {
+      await p.setViewportSize({ width: w, height: hgt });
+      for (const word of words) {
+        await p.evaluate(word => { leaveActivity(); startGame('tiles', [word]); render(); }, word);
+        await p.waitForSelector('.slots .slot');
+        // 先把字母全部填進去（模擬拼到最後一個字母前），看字母放不放得下
+        const r = await p.evaluate(word => {
+          const g = U.g; g.built = []; const used = new Set();
+          for (const ch of word.slice(0, -1)) { const i = g.letters.findIndex((x, j) => x.ch === ch && !used.has(j)); used.add(i); g.built.push(i); }
+          render();
+          const sl = [...document.querySelectorAll('.slots .slot')], box = document.querySelector('.slots').getBoundingClientRect();
+          const tops = new Set(sl.map(x => Math.round(x.getBoundingClientRect().top)));
+          const over = sl.filter(x => x.scrollWidth > x.clientWidth + 1 || x.getBoundingClientRect().right > box.right + 1 || x.getBoundingClientRect().left < box.left - 1).length;
+          return { rows: tops.size, over, n: sl.length, page: document.documentElement.scrollWidth - innerWidth };
+        }, word);
+        if (r.rows !== 1) bad.push(`${w} 寬「${word}」（${word.length} 個字母）答案格子排成 ${r.rows} 行`);
+        if (r.over) bad.push(`${w} 寬「${word}」有 ${r.over} 格的字母擠出格子`);
+        if (r.page > 1) bad.push(`${w} 寬「${word}」畫面超出 ${r.page}px`);
+      }
+    }
+    await p.setViewportSize({ width: 390, height: 844 });
+    await p.evaluate(() => { leaveActivity(); U.view = 'home'; render(); });
+    result(`E10 拼字積木答案格子：最長的字（${words[0]}）在 320～820 寬都排成一行、字母不擠出格子`, bad);
+  }
+
   result('E8 全程沒有頁面錯誤', errs);
   await b.close(); srv.close();
   process.exit(fail ? 1 : 0);
