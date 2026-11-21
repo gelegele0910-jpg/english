@@ -285,8 +285,9 @@ body[data-skin=minimal] .opt,body[data-skin=minimaldark] .opt{border-color:var(-
 .gcard:active{transform:scale(.97)}
 .gcard b{font-size:calc(16px*var(--fz))}.gcard span{font-size:calc(12.5px*var(--fz));color:var(--muted)}
 .gtag{position:absolute;top:10px;right:10px;font-size:calc(11px*var(--fz));background:var(--accent-2);color:var(--accent);border-radius:999px;padding:1px 8px;font-weight:700}
-.slots{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:4px 0 14px}
-.slot{width:25px;height:38px;border-bottom:3px solid var(--line);font-size:calc(22px*var(--fz));font-weight:700;display:flex;align-items:flex-end;justify-content:center}
+/* 答案格子永遠排成一行：字長就把每格縮窄、字母縮小（--n＝字母數），不可以換行把單字拆成兩行 */
+.slots{display:flex;gap:min(4px,1.2cqw);justify-content:center;flex-wrap:nowrap;margin:4px 0 14px;container-type:inline-size}
+.slot{flex:0 1 25px;min-width:0;height:38px;border-bottom:3px solid var(--line);font-size:min(calc(22px*var(--fz)),calc(100cqw / var(--n,8)));font-weight:700;display:flex;align-items:flex-end;justify-content:center}
 .slot.ok{color:var(--good);border-color:var(--good)}.slot.no{color:var(--bad);border-color:var(--bad)}
 /* 動作 */
 .mv{position:relative;display:inline-flex;transform-origin:50% 90%;flex:none}
@@ -499,6 +500,11 @@ body[data-mode=silent] button.play[data-act=pl-toggle]{display:flex!important}
 .pk.on{background:var(--accent-2);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)}
 .pk .tag{position:absolute;top:-9px;right:-4px;background:var(--accent);color:var(--accent-ink);font-size:calc(11px*var(--fz));font-weight:700;border-radius:999px;padding:1px 8px}
 .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.fopt{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;min-width:0;background:var(--card);border:var(--bw) solid var(--line);border-radius:var(--rb);padding:10px 6px;cursor:pointer;font-size:calc(13px*var(--fz))}
+.fopt.on{border-color:var(--accent);background:var(--accent-2)}
+.fopt .fs{font-size:calc(24px*var(--fz));line-height:1.3;color:var(--ink)}
+.fopt .muted{font-size:calc(11px*var(--fz))}
 .skin{border-radius:16px;padding:8px 4px;cursor:pointer;text-align:center;font-size:calc(12px*var(--fz));background:var(--card);box-shadow:none}
 .skin.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-2)}
 .skin .prev{height:46px;border-radius:12px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:4px}
@@ -10583,11 +10589,42 @@ const DECO = {
     <svg style="left:10px;top:52%" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="#c3e3cb"/><circle cx="11" cy="11" r="3" fill="#a9d4b4"/></svg>
     <svg style="right:18px;top:24px" width="34" height="34" viewBox="0 0 34 34"><path d="M20 4 a14 14 0 1 0 10 24 a11 11 0 1 1 -10 -24 Z" fill="#f9e3a6"/></svg>`
 };
+/* ---------- 英文字型（每個學習者自己選，存在 cur.fontEn；沒有＝跟著介面風格） ----------
+   g＝Google Fonts 的字型名稱，選到才載入，不拖慢一開始的速度 */
+const FONTS_EN = [
+  {id:"auto",    n:"跟著風格", d:"用介面風格的字"},
+  {id:"round",   n:"圓圓體",   d:"圓滾滾、可愛", f:'"Fredoka"'},
+  {id:"school",  n:"課本體",   d:"a、g 跟課本寫法一樣", f:'"Andika"', g:"Andika:wght@400;700"},
+  {id:"hand",    n:"手寫體",   d:"像老師寫在黑板上", f:'"Patrick Hand"', g:"Patrick+Hand"},
+  {id:"clear",   n:"清楚體",   d:"字母分得很開，好認", f:'"Lexend"', g:"Lexend:wght@400;500;600;700"},
+  {id:"book",    n:"書本體",   d:"像英文書和考卷", f:'"Literata"', g:"Literata:wght@400;600;700"}
+];
+const fontEnLoaded = {};
+function loadFontEn(f){
+  if(!f || !f.g || fontEnLoaded[f.id]) return;
+  fontEnLoaded[f.id] = true;
+  const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=" + f.g + "&display=swap";
+  document.head.appendChild(l);
+}
+function fontEnOf(id){ return FONTS_EN.find(x=>x.id === id) || FONTS_EN[0]; }
+function applyFontEn(){
+  const f = fontEnOf(cur && cur.fontEn);
+  document.body.dataset.fen = f.id;
+  if(f.f){ loadFontEn(f); document.body.style.setProperty("--font-en", f.f + ',"Huninn",system-ui,sans-serif'); }
+  else document.body.style.removeProperty("--font-en");
+}
+function fontEnGrid(){
+  const sel = fontEnOf(cur.fontEn).id;
+  FONTS_EN.forEach(loadFontEn);   // 設定頁才載入全部，預覽才看得到
+  return `<div class="fgrid">${FONTS_EN.map(f=>`<button type="button" class="fopt ${f.id===sel?"on":""}" data-act="s-fonten" data-f="${f.id}">
+    <span class="fs en" style="${f.f ? `font-family:${h(f.f)},sans-serif` : ""}">Apple a g</span><b>${h(f.n)}</b><span class="muted">${h(f.d)}</span></button>`).join("")}</div>`;
+}
 function applySkin(){
   const sk = (cur && cur.skin) || (U.edit && U.edit.skin) || "sticker";
   document.body.dataset.skin = sk;
   document.body.dataset.mode = cur ? mode() : "full";
   $("#deco").innerHTML = DECO[sk] || "";
+  applyFontEn();
 }
 
 function boot(){
@@ -12206,7 +12243,7 @@ function vGame(){
     const slots = q.split("").map((c,i)=>`<span class="slot ${st}">${h(shown[i]||"")}</span>`).join("");
     return gameHead() + `<div class="card center">${retryTag}<p class="hint">${sil?"看中文，用積木拼出這個字":"聽單字，用積木拼出來"}</p>${playBig}<p class="muted" style="margin:0 0 12px">提示：${h(WORDS[q].zh)}（${q.length} 個字母）</p>
       ${ans && !g.picked ? spFixBox(g.attempt, q) + `<p class="hint" style="margin:8px 0">${g.fixed ? "訂正好了，很棒！" : "照著正確拼法，再拼一次"}</p>` : ""}
-      <div class="slots en">${slots}</div>
+      <div class="slots en" style="--n:${q.length}">${slots}</div>
       ${ans && !fixing ? "" : `<div class="letters en">${g.letters.map((L,i)=>`<button class="lt ${g.built.includes(i)?"used":""}" data-act="tile" data-i="${i}" ${g.built.includes(i)?"disabled":""}>${h(L.ch)}</button>`).join("")}</div>
       <div class="row" style="margin-top:12px"><button class="btn sec small" data-act="tile-back">退一格</button><button class="btn ghost small" data-act="tile-clear">清除</button></div>`}
     </div>${fb}${next}`;
@@ -12371,7 +12408,7 @@ function builderHtml(b){
   if(!b) return "";
   if(b.type==="tiles"){
     const built = b.built.map(i=>b.letters[i].ch).join(""), done = b.picked != null;
-    return `<div class="slots en">${b.target.split("").map((c,i)=>`<span class="slot ${done?(b.picked?"ok":"no"):""}">${h(built[i]||"")}</span>`).join("")}</div>
+    return `<div class="slots en" style="--n:${b.target.length}">${b.target.split("").map((c,i)=>`<span class="slot ${done?(b.picked?"ok":"no"):""}">${h(built[i]||"")}</span>`).join("")}</div>
       ${done && !b.picked ? `<p class="muted">正確拼法：<b class="en" style="color:var(--good);font-size:calc(18px*var(--fz))">${h(b.target)}</b></p>` : ""}
       ${done ? "" : `<div class="letters en">${b.letters.map((L,i)=>`<button class="lt ${b.built.includes(i)?"used":""}" data-act="b-tile" data-i="${i}" ${b.built.includes(i)?"disabled":""}>${h(L.ch)}</button>`).join("")}</div>
       <div class="row" style="margin-top:12px"><button class="btn sec small" data-act="b-back">退一格</button><button class="btn ghost small" data-act="b-clear">清除</button></div>`}`;
@@ -12635,6 +12672,7 @@ function vSettings(){
     ${Object.keys(MODES).map(id=>`<button class="mopt ${id===mode()?"on":""}" data-act="mode-set" data-m="${id}"><span class="mi">${li(MODES[id].ic,24)}</span><span class="mt"><b>${MODES[id].n}</b><span>${MODES[id].d}</span></span></button>`).join("")}
   </div>
   <div class="card"><div class="label">介面風格</div>${skinGrid(cur.skin, "s-skin")}</div>
+  <div class="card"><div class="label">英文字型</div>${fontEnGrid()}</div>
   <div class="card">
     <div class="label">難度</div>${lvSeg()}
     <div class="label">播放速度</div>
@@ -13032,6 +13070,7 @@ const ACT = {
 
   "s-av"(el){ cur.avatar = el.dataset.a; saveProfiles(); render(); },
   "s-skin"(el){ cur.skin = el.dataset.s; saveProfiles(); applySkin(); render(); },
+  "s-fonten"(el){ const f = fontEnOf(el.dataset.f); if(f.id === "auto") delete cur.fontEn; else cur.fontEn = f.id; saveProfiles(); applySkin(); render(); toast(`英文字型換成「${f.n}」`); },
   "s-rate"(el){ cur.rate = +el.dataset.r; saveProfiles(); render(); speakEn("This is the new speed."); },
   "s-slow"(el){ cur.slow = +el.dataset.r; saveProfiles(); render(); speakEn("This is the slow speed.", cur.slow); },
   reset(){
