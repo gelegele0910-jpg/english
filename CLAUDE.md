@@ -81,7 +81,7 @@
 - **單字意思**：`WORDS[k]` 以第一次出現的句子建立；同一個字在別句是不同意思時（leaves 出發／葉子），`addWordIdx()` 把新意思加進 `zhs`，`WORDS[k].zh` 變成「意思一／意思二」（只是換個說法的字列在 `SAME_SENSE`，不另外列）。**有句子的地方一律用那一句的意思**：`wordRows(keys, 句子的生字表)`、`highlight()` 的 `data-z`、`wzh(k, pairs)`；單字本、複習、遊戲沒有句子，才用 `WORDS[k].zh`。`tests/words.js` 檢查。
 - **輸出 HTML 時一律用 `h()` 跳脫**使用者或內容文字。
 - **儲存**：先寫 localStorage（`lsGet/lsSet/lsDel`，會自動加 `NS` 前綴），再同步到雲端（進度存檔有 1.5 秒防抖，頁面隱藏時立即送出）；以 `updated` 時間戳決定雲端或本機哪邊較新。上傳一律經過 `cloudSaver()`（`pushProfiles`、`pushProg`）：同一種同時只送一個、失敗依 `GAS_RETRY` 再試 2 次，每次都送當下最新的資料，3 次都失敗才 `cloudFail()` 提示（一分鐘最多一次）。**`keepalive` 只在頁面隱藏時用（`gasLeaving`），且以位元組計算要小於 60KB**：瀏覽器限制同時上傳中的 keepalive 請求合計 64KB，平常也用的話第二個存檔會被直接拒絕。修改資料結構時要寫 `migrate()` 相容舊資料，並檢查後端 `refreshSummary_()`。
-- **語音**：播放用 Web Speech `speechSynthesis`（`speakEn()`，優先挑美式英文聲音）；口說辨識用 `SpeechRecognition`（`maxAlternatives=5`，`heardAlts()` 組出候選句、`bestHeard()` 挑最高分）。跟讀比對 `compareText()` 對小朋友放寬：`near()` 用 `soundKey()` 比發音（th→d 或 s、v→b、母音混用）、`stemEnd()` 忽略字尾 s／ed，數字換回英文字再比；`LIGHT` 小字（a、the、to…）沒聽到不扣分；標籤「很棒」≥65、「很接近」≥35。改比對規則要讓 `tests/speech-zoom.js` 的 V1（所有課程句原文照念 100 分）與 V3（念錯仍扣分）都通過。
+- **語音**：播放用 Web Speech `speechSynthesis`（`speakEn()`，優先挑美式英文聲音）；口說辨識用 `SpeechRecognition`（`maxAlternatives=5`，`heardAlts()` 組出候選句、`bestHeard()` 挑最高分）。跟讀比對 `compareText()` 對小朋友放寬：`near()` 用 `soundKey()` 比發音（th→d 或 s、v→b、母音混用）、`stemEnd()` 忽略字尾 s／ed，數字換回英文字再比；`LIGHT` 小字（a、the、to…）沒聽到不扣分；標籤「很棒」≥65、「很接近」≥35。**辨識同時只能開一個**：`startRec()` 先 `abortRec()` 關掉舊的；`onend` 只處理自己那一次（`recog === me`），舊的晚到的結束訊息不可蓋掉新的；按「我說完了」`stopRec()` 後 `REC_STOP_WAIT`（2.5 秒）還沒結束、或錄超過 `REC_MAX`（20 秒）就 `forceEndRec()` 用已聽到的內容算分（有些 Android 手機不會通知結束）；換下一句（`resetStep()`）、離開（`leaveActivity()`）、切到背景（`visibilitychange`）一律 `abortRec()`。`tests/rec.js` 用假的辨識模擬這些情況。改比對規則要讓 `tests/speech-zoom.js` 的 V1（所有課程句原文照念 100 分）與 V3（念錯仍扣分）都通過。
 - **練習情境**（`MODES`）：`full` 聽說、`quiet` 安靜（不能說，改拼字/排句子）、`silent` 靜音（不發聲，附 KK 音標）。新功能需考慮三種情境下的行為。
 - **小怪獸畫風**（`ART_STYLE`，目前 `"flat"`）：平面、沒有框線、白色大眼睛＋黑眼珠、沒有腳下影子。`flatify()` 把畫好的 SVG 去掉色塊外框、把指定顏色換成 `vivid()` 的清爽色（肚子比身體淺）；`monster()`、`hiddenMon()`、`maSvg()` 都會套用。另外保留 `"soft"`（立體漸層 `softify()`）與 `"line"`（原本的框線）可切換比較。六隻原始夥伴用新造型 `BUDDY_ART`（跟隱藏版同一套 `hmFace`／`hmEyes`／`hmArms`，表情 normal／happy／cheer／think／oops／sleepy），啵啵是小蜜桃（`BOBO_LOOK="peach"`，另有 `bunny`、`buns` 兩款候選）。新增角色請照隱藏版的寫法：只畫色塊、不加 stroke 外框。
 - **介面風格**（`SKINS`）：`sticker`、`notebook`、`jelly`、`night`、`minimal`、`minimaldark`，以 `body[data-skin=...]` 切換 CSS 變數。可愛風（`kind:"cute"`）用彩色圖示，簡約風用線條圖示（`ic()` / `li()`）。新樣式請使用 CSS 變數（`--ink`、`--card`、`--accent`、`--r` 等），確保六種風格都正常，尤其深色的 `night`、`minimaldark`。
@@ -182,6 +182,7 @@ node tests/run-all.js --quick
 | `sets.js` | 套裝 4 件不同欄位、集滿才送且只送一次、稱號與整套穿上；五個節慶 2026～2030 期間邊界、期間外買不到、買了永久能用、節慶禮物每年一次 |
 | `speech-zoom.js` | 跟讀比對：所有課程句照念 100 分、發音相近與漏小字算對、念錯仍扣分、多個辨識猜測挑最好的（假麥克風）；點寶物放大、購買照常、黑影不能放大 |
 | `words.js` | 每個生字在句子裡顯示那一句的意思（2754 個）、點螢光字的提示、多義字在單字本列出全部意思、實際畫面 leaves 葉子／出發 |
+| `rec.js` | 錄音比對不卡住（假的辨識）：手機不通知結束時自動收工、最長時間、錄音中按下一句／離開／切到背景會關麥克風、舊的結束訊息不干擾、快速連按 |
 | `sky.js` | 星點門檻遞增與總數、0～全部逐一檢查點亮數、星座徽章不重複、一次點亮多個只提示一次、全部點亮送場景與稱號、星空圖畫面與舊資料 |
 | `mobile.js` | 46 個畫面（含遊戲、商店、星空、頭像工作室、彈出視窗）× 9 種尺寸（手機 320～414、平板 820／1024／1180、電腦 1440）：不可超出螢幕或卡片、文字被截斷或擠成直排、按鈕內容擠出、大字單字被拆行、被底部選單（或左側頁籤）蓋住、彈出視窗跑出螢幕。`--shots` 另存 320 寬截圖 |
 | `pin.js` | 孩子密碼（雜湊、錯的進不去、切換後重新輸入、重新整理與新分頁）、管理者密碼擋學習看板／刪除、新增學習者的開關（預設不用密碼）、孩子忘記密碼由家長進入並重設、忘記管理者密碼用提示問題、錯 5 次等 30 秒、鍵盤輸入、深淺風格、舊資料 |

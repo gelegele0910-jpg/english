@@ -10550,6 +10550,8 @@ function saveProg(){
   lsSet("elp-prog-"+cur.id, JSON.stringify(S));
   clearTimeout(progT); progT = setTimeout(pushProg, 1500);
 }
+// 切到別的 App 或關螢幕時把麥克風關掉，回來才不會因為麥克風還被佔用而失敗
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden" && (U.rec || recog)){ U.rec = false; abortRec(); if(U.view==="lesson" || U.view==="catchup") render(); } });
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden" && progT){ clearTimeout(progT); progT=null; gasLeaving = true; try{ pushProg(); } finally { gasLeaving = false; } } });
 
 function safeView(){ return ["home","topics","articles","words","settings","profiles"].includes(U.view); }
@@ -10693,21 +10695,35 @@ let recog = null, micDenied = false, micErr = "", heardText = "";
 const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 function startRec(){
   if(!SR) return;
+  abortRec();   // 上一次的辨識還沒結束（例如按了下一句）就先關掉，兩個同時開會卡住
   micDenied = false; micErr = "";
   try{
-    recog = new SR(); recog.lang = "en-US"; recog.interimResults = true; recog.continuous = false; recog.maxAlternatives = 5;
+    const me = recog = new SR(); me.lang = "en-US"; me.interimResults = true; me.continuous = false; me.maxAlternatives = 5;
     let fin = ""; heardText = ""; const finAlts = [];   // 每一段辨識結果的多個猜測，比對時挑分數最高的
-    recog.onresult = e=>{
+    me.onresult = e=>{
+      if(recog !== me) return;
       let interim = "";
       for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal){ fin += r[0].transcript+" "; finAlts.push(Array.from({length:r.length}, (_,k)=>r[k].transcript)); } else interim += r[0].transcript; }
       heardText = (fin+interim).trim();
       const el = $("#live"); if(el) el.textContent = heardText || "請開始說…";
     };
-    recog.onerror = e=>{ if(e.error==="not-allowed" || e.error==="service-not-allowed" || e.error==="audio-capture" || e.error==="network"){ micDenied = true; micErr = e.error; toast("麥克風沒有打開，請看下方說明"); } };
-    recog.onend = ()=>{ if(!U.rec) return; U.rec = false; U.shadow = micDenied ? null : {heard:heardText, alts:heardAlts(finAlts, heardText)}; if(U.view==="lesson" || U.view==="catchup") render(); };
+    me.onerror = e=>{ if(recog !== me) return; if(e.error==="not-allowed" || e.error==="service-not-allowed" || e.error==="audio-capture" || e.error==="network"){ micDenied = true; micErr = e.error; toast("麥克風沒有打開，請看下方說明"); } };
+    // 只處理「這一次」的結束：舊的辨識晚到的結束訊息不可以蓋掉新的
+    me.onend = ()=>{ if(recog !== me) return; recog = null; clearTimeout(recTimer); if(!U.rec) return; U.rec = false; U.shadow = micDenied ? null : {heard:heardText, alts:heardAlts(finAlts, heardText)}; if(U.view==="lesson" || U.view==="catchup") render(); };
     U.rec = true; U.shadow = null;
-    recog.start();
-  }catch(e){ U.rec = false; micDenied = true; micErr = "start"; toast("麥克風沒有打開，請看下方說明"); }
+    me.start();
+    // 保險：有些手機辨識不會自己結束，最多 20 秒就收工
+    clearTimeout(recTimer); recTimer = setTimeout(()=>forceEndRec(me), REC_MAX);
+  }catch(e){ recog = null; U.rec = false; micDenied = true; micErr = "start"; toast("麥克風沒有打開，請看下方說明"); }
+}
+let REC_MAX = 20000, REC_STOP_WAIT = 2500;   // 測試會調短
+let recTimer = null;
+/** 辨識卡住時強制結束，用目前聽到的內容算分 */
+function forceEndRec(me){ if(recog !== me) return; try{ me.abort(); }catch(e){} if(recog === me && me.onend) me.onend(); }
+/** 直接關掉辨識、不算分（離開畫面、換下一句、切到背景） */
+function abortRec(){
+  const me = recog; recog = null; clearTimeout(recTimer);
+  if(me){ me.onresult = me.onerror = me.onend = null; try{ me.abort(); }catch(e){} }
 }
 /** 把每一段的第 k 個猜測接起來，變成幾個完整的候選句子 */
 function heardAlts(finAlts, heard){
@@ -10722,7 +10738,12 @@ function bestHeard(target, cands){
   (cands && cands.length ? cands : [""]).forEach(t=>{ const c = compareText(target, t); if(!best || c.score > best.c.score) best = {t, c}; });
   return best;
 }
-function stopRec(){ try{ recog && recog.stop(); }catch(e){} }
+/** 「我說完了」：請辨識收尾；有些 Android 手機 stop() 之後不會通知結束，等一下還沒結束就強制收工 */
+function stopRec(){
+  const me = recog; if(!me) return;
+  try{ me.stop(); }catch(e){}
+  clearTimeout(recTimer); recTimer = setTimeout(()=>forceEndRec(me), REC_STOP_WAIT);
+}
 /* 手機鍵盤語音輸入：iPhone / Android 鍵盤上的麥克風，任何瀏覽器都能用 */
 function dictBox(res){
   return `<div class="dict">
@@ -12515,7 +12536,7 @@ const MODE_ACT = {
   "cu-say"(){ const k = U.cu.q[U.cu.i]; if(!k) return; const id = k.slice(2); speakEn(k.startsWith("w:") ? WORDS[id].w : SENT[id].en); },
   "cu-slow"(){ const k = U.cu.q[U.cu.i]; if(!k) return; const id = k.slice(2); speakEn(k.startsWith("w:") ? WORDS[id].w : SENT[id].en, slowRate()); },
   "cu-next"(){
-    stopRec(); U.rec = false; U.shadow = null; U.selfRated = null; U.dictVal = "";
+    abortRec(); U.rec = false; U.shadow = null; U.selfRated = null; U.dictVal = "";
     const k = U.cu.q[U.cu.i]; if(k && S.pend) delete S.pend[k]; if(k) logAdd("c");
     U.cu.i++; if(U.cu.i >= U.cu.q.length){ reward(Math.ceil(U.cu.q.length/3)); bump(); }
     saveProg(); render();
@@ -12853,14 +12874,14 @@ const REC_ACT = {
 };
 
 /* ================= 動作 ================= */
-function leaveActivity(){ stopSeq(); stopGameTimer(); if(typeof stopPodcast==="function" && U.pl && U.pl.playing) stopPodcast(); if(U.rec){ U.rec = false; stopRec(); } }
+function leaveActivity(){ stopSeq(); stopGameTimer(); if(typeof stopPodcast==="function" && U.pl && U.pl.playing) stopPodcast(); if(U.rec || recog){ U.rec = false; abortRec(); } }
 function startTopic(tid){
   const t = TOPICS.find(x=>x.id===tid); if(!t) return;
   U.ti = tid; U.list = t.sents[lvl()];
   let si = U.list.findIndex(s=>!S.done[s.id]); if(si<0) si = 0;
   U.si = si; resetStep(); U.view = "lesson"; render();
 }
-function resetStep(){ U.step=0; U.plays=0; U.opts=null; U.picked=null; U.shadow=null; U.rec=false; U.selfRated=null; U.react=null; U.dictVal=""; }
+function resetStep(){ abortRec(); U.step=0; U.plays=0; U.opts=null; U.picked=null; U.shadow=null; U.rec=false; U.selfRated=null; U.react=null; U.dictVal=""; }
 
 const ACT = {
   go(el){ leaveActivity(); U.arm=""; const v = el.dataset.v;
@@ -12941,7 +12962,7 @@ const ACT = {
     const t = U.clLink; if(!t) return;
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(()=>toast("已複製班級連結")).catch(()=>{ window.prompt("請複製這個連結：", t); });
   },
-  "dict-toggle"(){ stopRec(); U.dict = !U.dict; try{ localStorage.setItem("elp_dict", U.dict?"1":"0"); }catch(e){} U.shadow = null; U.dictVal = ""; render(); if(U.dict){ setTimeout(()=>{ const i=$("#dictIn"); if(i) i.focus(); },50); } },
+  "dict-toggle"(){ abortRec(); U.rec = false; U.dict = !U.dict; try{ localStorage.setItem("elp_dict", U.dict?"1":"0"); }catch(e){} U.shadow = null; U.dictVal = ""; render(); if(U.dict){ setTimeout(()=>{ const i=$("#dictIn"); if(i) i.focus(); },50); } },
   "dict-check"(){ const i=$("#dictIn"); const v=(i&&i.value||"").trim(); if(!v){ toast("還沒有聽到內容，先按鍵盤的麥克風說說看"); return; } U.dictVal=v; U.shadow={heard:v}; render(); },
   mic(){ if(U.rec){ stopRec(); return; } stopAudio(); startRec(); render(); },
   "next-sent"(){
