@@ -323,6 +323,13 @@ button.pill{border:0;font:inherit;color:inherit;cursor:pointer}
 .skyit{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:calc(12px*var(--fz));color:var(--muted);background:none;border:0;padding:0;font-family:inherit;cursor:pointer}
 .skyit:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:12px}
 .skysheet{display:flex;flex-direction:column;align-items:center}
+.zoomsheet{display:flex;flex-direction:column;align-items:center;text-align:center}
+.zoomsheet .sheet-h{align-self:stretch}
+.zoomart{width:min(70vw,240px);aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.zoomart .avc,.zoomart .hmon,.zoomart .mv{width:100%!important;height:100%!important;display:flex;align-items:center;justify-content:center}
+.zoomart svg{width:100%;height:100%}
+.zoomb{background:none;border:0;padding:0;margin:0;cursor:zoom-in;border-radius:50%;display:inline-flex;font:inherit;color:inherit}
+.zoomb:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .skysheet .skybig{width:min(100%,360px)}
 .skyen{font-size:calc(18px*var(--fz));font-weight:700;margin:10px 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
 .skyfact{margin:0 0 6px;max-width:34em;line-height:1.6}
@@ -10634,19 +10641,32 @@ function startRec(){
   if(!SR) return;
   micDenied = false; micErr = "";
   try{
-    recog = new SR(); recog.lang = "en-US"; recog.interimResults = true; recog.continuous = false;
-    let fin = ""; heardText = "";
+    recog = new SR(); recog.lang = "en-US"; recog.interimResults = true; recog.continuous = false; recog.maxAlternatives = 5;
+    let fin = ""; heardText = ""; const finAlts = [];   // 每一段辨識結果的多個猜測，比對時挑分數最高的
     recog.onresult = e=>{
       let interim = "";
-      for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) fin += r[0].transcript+" "; else interim += r[0].transcript; }
+      for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal){ fin += r[0].transcript+" "; finAlts.push(Array.from({length:r.length}, (_,k)=>r[k].transcript)); } else interim += r[0].transcript; }
       heardText = (fin+interim).trim();
       const el = $("#live"); if(el) el.textContent = heardText || "請開始說…";
     };
     recog.onerror = e=>{ if(e.error==="not-allowed" || e.error==="service-not-allowed" || e.error==="audio-capture" || e.error==="network"){ micDenied = true; micErr = e.error; toast("麥克風沒有打開，請看下方說明"); } };
-    recog.onend = ()=>{ if(!U.rec) return; U.rec = false; U.shadow = micDenied ? null : {heard:heardText}; if(U.view==="lesson" || U.view==="catchup") render(); };
+    recog.onend = ()=>{ if(!U.rec) return; U.rec = false; U.shadow = micDenied ? null : {heard:heardText, alts:heardAlts(finAlts, heardText)}; if(U.view==="lesson" || U.view==="catchup") render(); };
     U.rec = true; U.shadow = null;
     recog.start();
   }catch(e){ U.rec = false; micDenied = true; micErr = "start"; toast("麥克風沒有打開，請看下方說明"); }
+}
+/** 把每一段的第 k 個猜測接起來，變成幾個完整的候選句子 */
+function heardAlts(finAlts, heard){
+  const out = [heard];
+  const K = Math.max(0, ...finAlts.map(a=>a.length));
+  for(let k=1;k<K;k++) out.push(finAlts.map(a=>(a[k] || a[0])).join(" ").trim());
+  return [...new Set(out.filter(Boolean))];
+}
+/** 幾個候選句子裡，挑跟目標最接近的 */
+function bestHeard(target, cands){
+  let best = null;
+  (cands && cands.length ? cands : [""]).forEach(t=>{ const c = compareText(target, t); if(!best || c.score > best.c.score) best = {t, c}; });
+  return best;
 }
 function stopRec(){ try{ recog && recog.stop(); }catch(e){} }
 /* 手機鍵盤語音輸入：iPhone / Android 鍵盤上的麥克風，任何瀏覽器都能用 */
@@ -10692,13 +10712,26 @@ function lev(a,b){
   for(let i=1;i<=m;i++){ const cur=[i]; for(let j=1;j<=n;j++) cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1)); prev=cur; }
   return prev[n];
 }
+/** 發音相近的「聲音鑰匙」：th 念成 d/s/z、v 念成 b、ph=f、母音混在一起、重複字母合併 */
+function soundKey(w, thS){
+  return w.replace(/th/g, thS ? "s" : "d").replace(/ph/g,"f").replace(/v/g,"b").replace(/z/g,"s").replace(/ck|q/g,"k").replace(/c(?=[eiy])/g,"s").replace(/c/g,"k")
+    .replace(/[aeiouy]+/g,"a").replace(/(.)\1+/g,"$1");
+}
+/** 去掉常沒念清楚的字尾：s、es、ed、d、t、ing → in */
+function stemEnd(w){ return w.length > 4 ? w.replace(/(es|ed|s|d|t)$/,"").replace(/ing$/,"in") : w; }
+const NUM_WORD = {}; Object.keys(NUMW).forEach(k=>{ if(!NUM_WORD[NUMW[k]]) NUM_WORD[NUMW[k]] = k; });
 function near(a,b){
   if(a===b) return true;
+  a = NUM_WORD[a] || a; b = NUM_WORD[b] || b;                  // 數字換回英文字再比發音（3 → three 對 tree）
+  if(a===b) return true;
   const L = Math.max(a.length,b.length);
-  if(L<=3) return false;                       // 很短的字要一模一樣
-  if(a.replace(/s$/,"")===b.replace(/s$/,"")) return true;  // 單複數
-  return lev(a,b) <= (L>=7 ? 2 : 1);           // 拼字差一點點
+  if(soundKey(a) === soundKey(b) || soundKey(a, true) === soundKey(b, true)) return true;   // 發音相近（dis／this、sank／thank、bery／very）
+  if(L<=3) return lev(a,b) <= 1 && a[0] === b[0];            // 短字：開頭一樣、只差一個字母
+  if(stemEnd(a) === stemEnd(b) || soundKey(stemEnd(a)) === soundKey(stemEnd(b))) return true;  // 字尾 s／ed 沒念出來
+  return lev(a,b) <= (L>=7 ? 2 : 1);                         // 拼字差一點點
 }
+/* 小字：沒被聽到不扣分（念得很快、辨識常漏掉）；聽到了一樣算對 */
+const LIGHT = new Set(["a","an","the","to","of","is","are","am","and","in","on","at","it","i","you","he","she","we","they","be","do","does","did","was","were","for","my","your","his","her","our","their","this","that","so","or","but","with","as","by","if","not"]);
 function compareText(target, heard){
   const pool = [];
   (heard||"").split(/[\s\-]+/).forEach(w=>canonParts(w).forEach(c=>pool.push({c, used:false})));
@@ -10711,15 +10744,21 @@ function compareText(target, heard){
     return false;
   };
   const toks = target.split(/\s+/).filter(Boolean);
+  // 先比對主要的字，再比對小字（小字才不會把主要的字搶走）；hundred-meter 跟聽到的一樣拆成兩個字
+  const info = toks.map(t=>{ const parts = t.split(/-+/).flatMap(canonParts); return {t, parts, light: parts.length > 0 && parts.every(c=>LIGHT.has(c)), good:false}; });
+  const allLight = info.every(x=>!x.parts.length || x.light);
+  [false, true].forEach(lightPass=>info.forEach(x=>{
+    if(!x.parts.length || x.light !== lightPass) return;
+    const hit = x.parts.map(take);
+    x.good = hit.every(Boolean) || (x.parts.length>1 && hit.some(Boolean));
+  }));
   let ok = 0, n = 0;
-  const html = toks.map(t=>{
-    const parts = canonParts(t);
-    if(!parts.length) return h(t);
+  const html = info.map(x=>{
+    if(!x.parts.length) return h(x.t);
+    if(x.light && !x.good && !allLight) return h(x.t);          // 漏掉小字：不扣分、也不標紅
     n++;
-    const hit = parts.map(take);
-    const good = hit.every(Boolean) || (parts.length>1 && hit.some(Boolean));
-    if(good){ ok++; return `<span class="g">${h(t)}</span>`; }
-    return `<span class="m">${h(t)}</span>`;
+    if(x.good){ ok++; return `<span class="g">${h(x.t)}</span>`; }
+    return `<span class="m">${h(x.t)}</span>`;
   }).join(" ");
   return {html, score: n ? Math.round(ok/n*100) : 0};
 }
@@ -11712,12 +11751,12 @@ function rwCard(it, tab){
   const r = RW(), has = !!r.own[it.id], rare = RW_RARE[it.rare], price = itemPrice(it);
   if(it.c === "h"){
     const [v, g] = achProgress(it.k);
-    const art = has ? `<span class="hmon">${monster(it.k, "cheer", 88)}</span>` : `<span class="hmon sil">${silhouette(it.k, 88)}</span>`;
+    const art = has ? `<button type="button" class="zoomb" data-act="rw-zoom" data-id="${it.id}" aria-label="放大看${h(rwName(it))}"><span class="hmon">${monster(it.k, "cheer", 88)}</span></button>` : `<span class="hmon sil">${silhouette(it.k, 88)}</span>`;
     const act = has ? (wearing(it) ? `<span class="muted" style="font-size:calc(12px*var(--fz))">現在的夥伴</span>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">設成夥伴</button>`)
       : `<span class="muted" style="font-size:calc(12px*var(--fz))">${h(RW_SRC[it.get])}<br>${v} / ${g}</span>`;
     return `<div class="shopit ${has ? "own" : ""}">${art}${has ? "" : `<span class="lockb">${li("lock",14)}</span>`}<b>${has ? h(rwName(it)) : "？？？"}</b><span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
   }
-  const art = it.c === "x" ? moveHtml(avCircle(withPart(it), 88), it.k, true) : `<span class="avc shopav" style="width:88px;height:88px">${maSvg(withPart(it), 88)}</span>`;
+  const art = `<button type="button" class="zoomb" data-act="rw-zoom" data-id="${it.id}" aria-label="放大看${h(rwName(it))}">${it.c === "x" ? moveHtml(avCircle(withPart(it), 88), it.k, true) : `<span class="avc shopav" style="width:88px;height:88px">${maSvg(withPart(it), 88)}</span>`}</button>`;
   const on = it.c === "x" ? ["使用中・換回跳跳", "使用這個動作"] : ["穿著中・脫下", "穿上"];
   let act;
   if(has) act = wearing(it) ? `<button class="btn ghost small" data-act="rw-wear" data-id="${it.id}">${on[0]}</button>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">${on[1]}</button>`;
@@ -11728,6 +11767,24 @@ function rwCard(it, tab){
   const locked = !has && tab === "book";   // 灰色＋鎖頭只在收藏冊；商店用彩色預覽
   const tag = it.fest ? `<span class="rtag fest">${h(FEST[it.fest].n)}</span>` : `<span class="rtag ${rare[1]}">${rare[0]}</span>`;
   return `<div class="shopit ${has ? "own" : locked ? "lockd" : ""}">${art}${locked ? `<span class="lockb">${li("lock",14)}</span>` : ""}<b>${h(rwName(it))}</b>${tag}${act}</div>`;
+}
+/** 點寶物圖片放大看（U.sheet="zoom"，U.zoomId） */
+function vZoomSheet(){
+  const it = RW_BY[U.zoomId]; if(!it) return "";
+  const r = RW(), has = !!r.own[it.id], rare = RW_RARE[it.rare];
+  if(it.c === "h" && !has) return "";
+  const S0 = 240;
+  const art = it.c === "h" ? `<span class="hmon">${monster(it.k, "cheer", S0)}</span>`
+    : it.c === "x" ? moveHtml(avCircle(withPart(it), S0), it.k, true)
+    : `<span class="avc shopav" style="width:${S0}px;height:${S0}px">${maSvg(withPart(it), S0)}</span>`;
+  const tag = it.fest ? `<span class="rtag fest">${h(FEST[it.fest].n)}</span>` : `<span class="rtag ${rare[1]}">${rare[0]}</span>`;
+  const st = SETS.find(x=>x.items.includes(it.id));
+  return `<div class="sheet-bg" data-act="zoom-shut"></div><div class="sheet center zoomsheet">
+    <div class="sheet-h"><b>${h(rwName(it))}</b><button class="x" data-act="zoom-shut" aria-label="關閉">✕</button></div>
+    <div class="zoomart">${art}</div>
+    <p style="margin:6px 0">${tag}${st ? ` <span class="muted">「${h(st.n)}」套裝</span>` : ""}</p>
+    <p class="muted" style="margin:0 0 10px">${has ? "已經收集到了" : h(rwHow(it))}</p>
+  </div>`;
 }
 function vSets(tab){
   const r = RW();
@@ -11838,6 +11895,8 @@ const RW_ACT = {
     U.skyC = c.id; U.sheet = "sky"; render();
   },
   "sky-shut"(){ U.sheet = null; render(); },
+  "rw-zoom"(el){ const it = RW_BY[el.dataset.id]; if(!it) return; U.zoomId = it.id; U.sheet = "zoom"; render(); },
+  "zoom-shut"(){ U.sheet = null; U.zoomId = null; render(); },
   "sky-say"(){ const c = SKY.find(x=>x.id === U.skyC); if(c) speakEn(c.en.split("·")[0].trim()); },
   "sky-close"(){ U.view = U.skyFrom && U.skyFrom !== "sky" ? U.skyFrom : "home"; render(); },
   "rw-close"(){ if(U.rwq) U.rwq.shift(); if(!U.rwq || !U.rwq.length) U.sheet = null; render(); },
@@ -12306,14 +12365,14 @@ function speakBox(target){
   let res = "";
   if(U.rec) res = `<div class="live" id="live">請開始說…</div>`;
   else if(U.shadow){
-    const c = compareText(s.en, U.shadow.heard);
+    const bh = bestHeard(s.en, U.shadow.alts || [U.shadow.heard]), c = bh.c;   // 多個猜測挑最好的
     if(!U.shadow.logged){ U.shadow.logged = true; logSpeak(c.score); }
-    const col = c.score>=75 ? "var(--good-2);color:var(--good)" : c.score>=45 ? "var(--warm-2);color:var(--warm)" : "var(--bad-2);color:var(--bad)";
-    const word = c.score>=100 ? "完美！" : c.score>=75 ? "很棒！" : c.score>=45 ? "很接近了" : "再試一次";
+    const col = c.score>=65 ? "var(--good-2);color:var(--good)" : c.score>=35 ? "var(--warm-2);color:var(--warm)" : "var(--bad-2);color:var(--bad)";
+    const word = c.score>=100 ? "完美！" : c.score>=65 ? "很棒！" : c.score>=35 ? "很接近了" : "再試一次";
     const tip = c.score>=100 ? "每個字都聽得出來，太厲害了！" :
       (U.dict ? "紅色波浪線的字是鍵盤沒打出來的，不一定是你念錯；手機鍵盤常會猜錯字，大部分對就很棒了。" : "紅色波浪線的字沒被聽出來，可以再聽一次、多念幾遍。");
     res = `<div class="result en">${c.html}</div><span class="score" style="background:${col}">${word} ${c.score}%</span>
-      <p class="muted" style="margin:8px 0 0">聽到的是：「${h(U.shadow.heard||"（沒有聽到聲音）")}」<br>${tip}</p>`;
+      <p class="muted" style="margin:8px 0 0">聽到的是：「${h(bh.t||"（沒有聽到聲音）")}」<br>${tip}</p>`;
   }
   const selfMsg = U.selfRated==="ok" ? buddyBox("cheer", bline("right")) : U.selfRated==="again" ? buddyBox("happy", "多念幾次就會越來越順喔！") : "";
   return `
@@ -12565,7 +12624,7 @@ function render(){
       <button class="who" data-act="go" data-v="profiles"><span class="av">${av(cur.avatar,48)}</span><span><b>${h(cur.name)}</b><small>${LEVELS[lvl()-1].name} · ${S && S.rw && S.rw.title ? h(S.rw.title) : "點這裡換人"}</small></span></button>
       <div class="pills"><button class="pill mpill" data-act="mode-open" aria-label="切換練習情境：${MODES[mode()].n}">${li(MODES[mode()].ic,20)}<span>${MODES[mode()].s}</span></button><button class="pill" data-act="sky-open" aria-label="星星 ${S.stars} 顆，打開星空圖">${ic("star",22)}${S.stars}</button><span class="pill">${ic("fire",22)}${streakNow()}</span></div>
     </div>` : "";
-  $("#sheet").innerHTML = (U.sheet==="pin" && U.pin) ? vPinSheet() : (U.sheet==="pq" && U.pq) ? vPqSheet() : (U.sheet==="mode" && cur) ? vModeSheet() : (U.sheet==="reward" && cur && U.rwq && U.rwq.length) ? vRewardSheet() : (U.sheet==="sky" && cur) ? vSkySheet() : "";
+  $("#sheet").innerHTML = (U.sheet==="pin" && U.pin) ? vPinSheet() : (U.sheet==="pq" && U.pq) ? vPqSheet() : (U.sheet==="mode" && cur) ? vModeSheet() : (U.sheet==="reward" && cur && U.rwq && U.rwq.length) ? vRewardSheet() : (U.sheet==="sky" && cur) ? vSkySheet() : (U.sheet==="zoom" && cur) ? vZoomSheet() : "";
   if(lastView !== v){ window.scrollTo(0,0); lastView = v; }
   const spIn = v==="game" ? $("#spIn") : null;
   if(spIn && !IS_MOBILE){ spIn.focus(); spIn.setSelectionRange(spIn.value.length, spIn.value.length); }
