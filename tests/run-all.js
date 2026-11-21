@@ -15,6 +15,7 @@ const suites = [
   ['套裝與節慶', 'sets.js', []],
   ['星空圖', 'sky.js', []],
   ['跟讀比對與放大看', 'speech-zoom.js', []],
+  ['單字意思對照', 'words.js', []],
   ['手機版面', 'mobile.js', []],
   ['端到端', 'e2e.js', quick ? ['--clicks=60'] : []]
 ];

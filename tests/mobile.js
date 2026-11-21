@@ -35,6 +35,7 @@ const SCENES = {
   '主題完成': `cur.mode='full'; U.ti=TOPICS[0].id; U.list=TOPICS[0].sents[1]; U.view='tdone'`,
   '文章': `ACT['open-art']({dataset:{a:ARTICLES[0].id}})`,
   '遊戲 聽音選意思': `U.gsrc='new'; startGame('meaning')`,
+  '遊戲 選意思（多義字）': `startGame('meaning', ['light','leaves','lost','present','light','leaves','lost','present','light','leaves'])`,
   '遊戲 哪個拼對了（選錯）': `U.gsrc='new'; startGame('spell'); ACT.gpick({dataset:{i:String(U.g.opts.findIndex(o=>o!==U.g.qs[0]))}})`,
   '遊戲 拼字積木': `U.gsrc='new'; startGame('tiles', [Object.keys(WORDS).filter(k=>/^[a-z]{11}$/.test(k))[0]])`,
   '遊戲 打字（拼錯長字）': `startGame('type', [Object.keys(WORDS).filter(k=>/^[a-z]{11}$/.test(k))[0]]); U.g.typed='qwertyuiopasdfgh'; ACT['sp-submit']()`,
