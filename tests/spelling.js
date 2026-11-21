@@ -262,6 +262,24 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     result('E7 舊版進度（沒有拼字紀錄）載入與遊玩正常', bad);
   }
 
+  // E9「哪個拼對了？」：不管正確答案在第幾格，答對時沒有任何一格變紅；答錯時只有點的那一格變紅
+  {
+    const bad = [];
+    for (let pos = 0; pos < 4; pos++) for (const right of [true, false]) {
+      await p.evaluate(() => { leaveActivity(); startGame('spell', ['hot', 'hot', 'hot']); render(); });
+      await p.waitForSelector('.gopts [data-act=gpick]');
+      const info = await p.evaluate(pos => { const g = U.g, q = g.qs[g.i], k = g.opts.indexOf(q); [g.opts[k], g.opts[pos]] = [g.opts[pos], g.opts[k]]; render(); return g.opts; }, pos);
+      const tap = right ? pos : (pos + 1) % 4;
+      await p.click(`.gopts [data-act=gpick][data-i="${tap}"]`);
+      await p.waitForSelector('.gopts .opt.ok');
+      const st = await p.evaluate(() => [...document.querySelectorAll('.gopts .opt')].map(b => b.classList.contains('no') ? 'no' : b.classList.contains('ok') ? 'ok' : ''));
+      const want = info.map((o, i) => i === pos ? 'ok' : (!right && i === tap) ? 'no' : '');
+      if (st.join() !== want.join()) bad.push(`正確答案在第 ${pos + 1} 格、${right ? '答對' : '點第 ' + (tap + 1) + ' 格答錯'}：畫面 ${st.join('|')}，應該 ${want.join('|')}`);
+    }
+    await p.evaluate(() => { leaveActivity(); U.view = 'home'; render(); });
+    result('E9 哪個拼對了：正確答案在任何一格，答對不會有紅色、答錯只標點的那格', bad);
+  }
+
   result('E8 全程沒有頁面錯誤', errs);
   await b.close(); srv.close();
   process.exit(fail ? 1 : 0);

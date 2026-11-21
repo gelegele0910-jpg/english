@@ -12009,7 +12009,7 @@ function startGame(id, preset){
   render(); playQ();
 }
 function setupQ(){
-  const g = U.g, q = g.qs[g.i]; g.picked = null; U.react = null;
+  const g = U.g, q = g.qs[g.i]; g.picked = null; g.pickI = null; U.react = null;
   if(!q) return;
   if(g.id==="meaning" || g.id==="speed") g.opts = meaningOpts(q);
   if(g.id==="spell") g.opts = shuffle([q, ...misspell(q)]);
@@ -12131,7 +12131,7 @@ function vGame(){
   if(g.id==="spell"){
     return gameHead() + `<div class="card center">${retryTag}<p class="hint">${sil?"看中文，哪一個是正確的拼法？":"聽聽看，哪一個是正確的拼法？"}</p>${playBig}<p class="muted" style="margin:0">提示：${h(WORDS[q].zh)}</p>
       ${ans && !g.picked ? spFixBox(g.attempt, q) : ""}</div>
-    <div class="gopts">${g.opts.map((o,i)=>`<button class="opt en ${ans&&o===q?"ok":""} ${ans&&g.picked===i&&o!==q?"no":""}" style="font-size:calc(20px*var(--fz))" data-act="gpick" data-i="${i}" ${ans?"disabled":""}>${h(o)}</button>`).join("")}</div>${fb}${next}`;
+    <div class="gopts">${g.opts.map((o,i)=>`<button class="opt en ${ans&&o===q?"ok":""} ${ans&&g.pickI===i&&o!==q?"no":""}" style="font-size:calc(20px*var(--fz))" data-act="gpick" data-i="${i}" ${ans?"disabled":""}>${h(o)}</button>`).join("")}</div>${fb}${next}`;
   }
   if(g.id==="tiles"){
     const built = g.built.map(i=>g.letters[i].ch).join("");
@@ -12211,7 +12211,7 @@ const GAME_ACT = {
     if(g.picked != null) return;
     g.picked = i;
     if(g.id==="meaning"){ const ok = g.opts[i]===q; answer(ok, [q]); if(!ok) speakEn(WORDS[q].w); }
-    if(g.id==="spell"){ const ok = g.opts[i]===q; spellAnswer(ok, g.opts[i]); }
+    if(g.id==="spell"){ const ok = g.opts[i]===q; g.pickI = i; spellAnswer(ok, g.opts[i]); }   // spellAnswer 會把 g.picked 改成對錯（1/0），選了哪一格另外記在 g.pickI
     if(g.id==="cloze"){ const ok = g.opts[i]===g.key; answer(ok, [g.key]); speakEn(q.en); }
     render();
   },
