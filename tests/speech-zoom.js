@@ -164,6 +164,46 @@ const FAKE_SR = () => {
     result('Z3 沒收集的隱藏版不能放大；收集到的可以；深色風格正常', bad);
   }
 
+  // Z4 頭像工作室：還沒收集的部件點了放大（穿在正在設計的小怪獸上、彩色），可以兩段確認買下、再按「穿上這個」
+  {
+    const bad = [];
+    await p.evaluate(() => { document.body.dataset.skin = 'sticker'; leaveActivity(); U.sheet = null; U.view = 'settings'; render(); ACT['ab-open']({ dataset: { from: 'settings' } }); U.abTab = 'e'; render(); });
+    await p.waitForSelector('.abopt.locked');
+    const id = await p.evaluate(() => [...document.querySelectorAll('.abopt.locked')].map(b => b.dataset.id).find(id => itemPrice(RW_BY[id]) != null));
+    // 金幣不夠：可以放大看，買的按鈕不能按、寫還差多少
+    await p.evaluate(() => { RW().coins = 0; });
+    await p.click(`.abopt.locked[data-id="${id}"]`);
+    await p.waitForSelector('.zoomsheet');
+    const z = await p.evaluate(id => { const ab = U.ab, it = RW_BY[id]; return { body: U.zoomAv && U.zoomAv.b === ab.b && U.zoomAv.c === ab.c, part: U.zoomAv && U.zoomAv[it.c] === it.k, gray: !!document.querySelector('.zoomsheet .locked'), w: document.querySelector('.zoomart svg').getBoundingClientRect().width, btn: document.querySelector('.zoomsheet [data-act=rw-buy]'), txt: document.querySelector('.zoomsheet').textContent }; }, id);
+    if (!z.body || !z.part) bad.push('放大的不是「正在設計的小怪獸＋這個部件」');
+    if (z.gray) bad.push('放大的圖是灰色的');
+    if (z.w < 180) bad.push('放大的圖太小：' + Math.round(z.w));
+    if (!z.txt.includes('還差')) bad.push('金幣不夠時沒寫還差多少');
+    if (!(await p.$eval('.zoomsheet [data-act=rw-buy]', b => b.disabled))) bad.push('金幣不夠還能按買');
+    await p.click('.zoomsheet [data-act=zoom-shut]');
+    await p.waitForFunction(() => !document.querySelector('.zoomsheet') && U.view === 'avatar');
+    // 有金幣：點兩次買下 → 穿上這個 → 頭像換上、部件不再上鎖
+    await p.evaluate(() => { RW().coins = 9999; });
+    await p.click(`.abopt.locked[data-id="${id}"]`);
+    await p.click('.zoomsheet [data-act=rw-buy]');
+    if (await p.evaluate(id => !!RW().own[id], id)) bad.push('點一次就買了（應該要確認）');
+    await p.click('.zoomsheet [data-act=rw-buy]');
+    if (!(await p.evaluate(id => !!RW().own[id], id))) bad.push('點兩次沒有買到');
+    await p.click('.zoomsheet [data-act=zoom-wear]');
+    const after = await p.evaluate(id => { const it = RW_BY[id]; return { worn: U.ab[it.c] === it.k, sheet: U.sheet, view: U.view, locked: !!document.querySelector(`.abopt.locked[data-id="${id}"]`) }; }, id);
+    if (!after.worn) bad.push('按「穿上這個」沒有換上');
+    if (after.sheet || after.view !== 'avatar') bad.push('穿上後沒有回到頭像工作室');
+    if (after.locked) bad.push('買了之後還是上鎖');
+    // 深色風格也正常
+    await p.evaluate(() => { document.body.dataset.skin = 'night'; render(); });
+    const id2 = await p.evaluate(() => (document.querySelector('.abopt.locked') || {}).dataset?.id);
+    if (id2) { await p.click(`.abopt.locked[data-id="${id2}"]`); await p.waitForSelector('.zoomsheet'); await p.click('.zoomsheet [data-act=zoom-shut]'); }
+    // 新增學習者時（還沒有金幣）：只提示怎麼拿，不開購買視窗
+    await p.evaluate(() => { document.body.dataset.skin = 'sticker'; U.sheet = null; U.edit = { name: 'x', avatar: maFix({}) }; ACT['ab-open']({ dataset: { from: 'edit' } }); U.abTab = 'e'; render(); });
+    await p.click('.abopt.locked');
+    if (await p.$('.zoomsheet')) bad.push('新增學習者時也開了購買視窗');
+    result('Z4 頭像工作室：沒收集的部件點了放大（彩色、穿在自己設計的小怪獸上）、金幣不夠寫還差多少、兩段確認買下、穿上；新增學習者時只提示', bad);
+  }
   result('沒有網頁錯誤', errs);
   await b.close(); srv.close();
   process.exit(fail ? 1 : 0);
