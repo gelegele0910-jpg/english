@@ -62,6 +62,7 @@ const SCENES = {
   '彈出：集滿套裝': `U.view='home'; U.rwq=['set:detect']; U.sheet='reward'`,
   '彈出：星座欣賞': `U.view='sky'; U.skyC='dipper'; U.sheet='sky'`,
   '彈出：放大看寶物': `U.shopTab='shop'; U.shopCat='set'; U.view='shop'; U.zoomId='k:magnifier'; U.sheet='zoom'`,
+  '彈出：頭像工作室放大看': `U.view='settings'; render(); ACT['ab-open']({dataset:{from:'settings'}}); U.abTab='e'; ACT['ab-locked']({dataset:{id:REWARDS.find(x=>x.c==='e').id}})`,
   '彈出：放大看動作': `U.shopTab='book'; U.shopCat='x'; U.view='shop'; U.zoomId=REWARDS.find(x=>x.c==='x').id; U.sheet='zoom'`
 };
 

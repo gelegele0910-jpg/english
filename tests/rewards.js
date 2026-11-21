@@ -258,6 +258,12 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     if (await p.$('.abopt.locked[data-id="t:wizard"]')) bad.push('已經買的魔法師帽還是上鎖');
     await p.click('.abopt.locked[data-id="t:pirate"]');
     if ((await p.evaluate(() => U.ab.t)) === 'pirate') bad.push('點上鎖部件還是換上了');
+    // 點上鎖部件會放大看；海盜帽只能從寶箱拿，放大視窗不能買、也不能硬穿上
+    await p.waitForSelector('.zoomsheet');
+    if (await p.$('.zoomsheet [data-act=rw-buy]')) bad.push('寶箱才有的海盜帽在放大視窗可以買');
+    await p.evaluate(() => ACT['zoom-wear']());
+    if ((await p.evaluate(() => U.ab.t)) === 'pirate') bad.push('沒收集的部件從放大視窗穿上了');
+    if (await p.$('.zoomsheet')) await p.click('.zoomsheet [data-act=zoom-shut]');
     await p.evaluate(() => ACT['ab-set']({ dataset: { k: 't', v: 'pirate' } }));
     if ((await p.evaluate(() => U.ab.t)) === 'pirate') bad.push('繞過按鈕直接設定上鎖部件也成功了');
     for (let i = 0; i < 40; i++) await p.evaluate(() => ACT['ab-rand']());

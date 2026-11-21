@@ -11889,10 +11889,16 @@ function vZoomSheet(){
   const it = RW_BY[U.zoomId]; if(!it) return "";
   const r = RW(), has = !!r.own[it.id], rare = RW_RARE[it.rare];
   if(it.c === "h" && !has) return "";
-  const S0 = 240;
+  const S0 = 240, look = U.zoomAv ? maFix(Object.assign({}, U.zoomAv)) : withPart(it);   // 從頭像工作室來的：穿在正在設計的小怪獸身上
   const art = it.c === "h" ? `<span class="hmon">${monster(it.k, "cheer", S0)}</span>`
-    : it.c === "x" ? moveHtml(avCircle(withPart(it), S0), it.k, true)
-    : `<span class="avc shopav" style="width:${S0}px;height:${S0}px">${maSvg(withPart(it), S0)}</span>`;
+    : it.c === "x" ? moveHtml(avCircle(look, S0), it.k, true)
+    : `<span class="avc shopav" style="width:${S0}px;height:${S0}px">${maSvg(look, S0)}</span>`;
+  const price = itemPrice(it);
+  const act = has ? (U.zoomAv ? `<button class="btn" data-act="zoom-wear">穿上這個</button>` : "")
+    : price != null ? (U.arm === "buy:" + it.id
+        ? `<button class="btn warm" data-act="rw-buy" data-id="${it.id}">確定花 ${price} 金幣？</button>`
+        : `<button class="btn" data-act="rw-buy" data-id="${it.id}" ${r.coins < price ? "disabled" : ""}>${coinSvg(18)} ${price} 買下來${r.coins < price ? `（還差 ${price - r.coins}）` : ""}</button>`)
+    : "";
   const tag = it.fest ? `<span class="rtag fest">${h(FEST[it.fest].n)}</span>` : `<span class="rtag ${rare[1]}">${rare[0]}</span>`;
   const st = SETS.find(x=>x.items.includes(it.id));
   return `<div class="sheet-bg" data-act="zoom-shut"></div><div class="sheet center zoomsheet">
@@ -11900,6 +11906,7 @@ function vZoomSheet(){
     <div class="zoomart">${art}</div>
     <p style="margin:6px 0">${tag}${st ? ` <span class="muted">「${h(st.n)}」套裝</span>` : ""}</p>${it.c === "h" ? byLine(it.k) : ""}
     <p class="muted" style="margin:0 0 10px">${has ? "已經收集到了" : h(rwHow(it))}</p>
+    ${act ? `<div class="stack" style="width:100%">${act}</div>` : ""}
   </div>`;
 }
 function vSets(tab){
@@ -12011,12 +12018,18 @@ const RW_ACT = {
     U.skyC = c.id; U.sheet = "sky"; render();
   },
   "sky-shut"(){ U.sheet = null; render(); },
-  "rw-zoom"(el){ const it = RW_BY[el.dataset.id]; if(!it) return; U.zoomId = it.id; U.sheet = "zoom"; render(); },
-  "zoom-shut"(){ U.sheet = null; U.zoomId = null; render(); },
+  "rw-zoom"(el){ const it = RW_BY[el.dataset.id]; if(!it) return; U.zoomId = it.id; U.zoomAv = null; U.arm = ""; U.sheet = "zoom"; render(); },
+  "zoom-shut"(){ U.sheet = null; U.zoomId = null; U.zoomAv = null; U.arm = ""; render(); },
   "sky-say"(){ const c = SKY.find(x=>x.id === U.skyC); if(c) speakEn(c.en.split("·")[0].trim()); },
   "sky-close"(){ U.view = U.skyFrom && U.skyFrom !== "sky" ? U.skyFrom : "home"; render(); },
   "rw-close"(){ if(U.rwq) U.rwq.shift(); if(!U.rwq || !U.rwq.length) U.sheet = null; render(); },
-  "ab-locked"(el){ const it = RW_BY[el.dataset.id]; if(it) toast(`「${rwName(it)}」還沒收集到：${rwHow(it)}`); }
+  // 頭像工作室裡還沒收集的部件：點了放大看（穿在正在設計的小怪獸身上、彩色），可以直接買；新增學習者時還沒有金幣，只提示怎麼拿
+  "ab-locked"(el){
+    const it = RW_BY[el.dataset.id]; if(!it) return;
+    if(!cur || !S || U.abFrom === "edit"){ toast(`「${rwName(it)}」還沒收集到：${rwHow(it)}`); return; }
+    U.zoomId = it.id; U.zoomAv = Object.assign({}, U.ab, {[it.c]: it.k}); U.arm = ""; U.sheet = "zoom"; render();
+  },
+  "zoom-wear"(){ const it = RW_BY[U.zoomId]; if(it && U.zoomAv && RW().own[it.id] && U.ab){ U.ab[it.c] = it.k; } U.sheet = null; U.zoomId = null; U.zoomAv = null; render(); },
 };
 
 /* ================= 遊戲中心 ================= */
