@@ -58,6 +58,7 @@ const SCENES = {
   '彈出：練習情境': `U.view='home'; U.sheet='mode'`,
   '彈出：得到寶物': `U.view='home'; U.rwq=['t:wizard']; U.sheet='reward'`,
   '彈出：隱藏版': `U.view='home'; U.rwq=['h:ember']; U.sheet='reward'`,
+  '彈出：小朋友設計的隱藏版': `U.view='home'; U.rwq=['h:jiao']; U.sheet='reward'`,
   '彈出：集滿套裝': `U.view='home'; U.rwq=['set:detect']; U.sheet='reward'`,
   '彈出：星座欣賞': `U.view='sky'; U.skyC='dipper'; U.sheet='sky'`,
   '彈出：放大看寶物': `U.shopTab='shop'; U.shopCat='set'; U.view='shop'; U.zoomId='k:magnifier'; U.sheet='zoom'`,

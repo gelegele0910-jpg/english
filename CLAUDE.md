@@ -68,7 +68,7 @@
 - 文章：`{id, lv, ic, t, zh, s:[[英,中],...], w:[[單字,中文],...], q:[[題目,[選項...],正確索引],...]}`。題數依等級固定：入門 2、基礎 3、進階 4、高中 5、學測 6；選項高中與學測 4 個、其他 3 個（`front-props.js` 檢查）。高中以上題型要混合細節、主旨、字義、推論。顯示時選項會打亂（`U.qperm`），加選項一律接在尾端，正確索引不變。
 - 單字庫：`VOCAB[級別] = [[單字, 詞性, 中文, 例句, 例句中文, 適合小朋友(0/1)], ...]`
 - 拼字紀錄：`S.sp[單字] = {l, d, last, m, ok, ng, pc, pw}`（見「拼字複習」）。
-- 獎勵紀錄：`S.rw = {coins, own, ci, day, taskDays, perfect, topics, egg, night, morning, hi90, speedBest, sets, title, fgift, sky}`（見「獎勵」）。
+- 獎勵紀錄：`S.rw = {coins, own, ci, day, taskDays, perfect, topics, egg, night, morning, hi90, speedBest, sets, title, fgift, sky, qperf}`（見「獎勵」）。
 - 小怪獸頭像：`{b 身體, c 顏色, e 眼睛, m 嘴巴, t 頭頂, a 臉上, n 脖子, o 衣服, w 手上, f 身旁, k 身後, p 花紋, g 背景色, s 場景, x 動作}`，一律經過 `maFix()`（補預設值、舊版放在 `a` 的領結／圍巾／鈴鐺／項鍊會搬到 `n`）。
 - 密碼：孩子的在 `P.list[i].pin`、管理者（家長或老師）的在 `P.parent = {pin, q, a}`（提示問題與答案），都只存 `pinHash()`（SHA-256，鹽是學習者 id／`parent`／`parent-a`），不可存原本的數字。
 - 句子 ID：主題 `"<topicId>-<lv>-<i>"`、文章 `"a-<articleId>-<i>"`。**這些 ID 是學習進度的 key，不要改動既有項目的順序或 id，新增請加在陣列尾端**，否則使用者進度會錯位。
@@ -128,8 +128,8 @@
 - `grant(id)` 送寶物並排進 `U.rwq`，以 `U.sheet="reward"` 彈出視窗；商店購買要點兩次確認（`U.arm`）。
 - **動作**（`MA_MOVES`，頭像的 `x`，預設 `bounce` 跳跳免費）：`moveHtml(內容, 動作, loop)` 包上 `.mv .mv-代號` 播 CSS 動畫（`loop` 一直動，用在商店與頭像工作室預覽；否則播兩次）。`meDance(size, play)` 是自己的小怪獸，`play` 為假時加 `.mv-still` 不動。會動的時機：首頁「今天的任務」點小怪獸（`me-dance`）、領取簽到或任務、答對（`pop()`）、完成主題與遊戲畫面（`.duo`）。動畫在 `prefers-reduced-motion: reduce` 時全部停止。
 - `RW()` 會**原地**補齊舊資料缺的欄位，不可換成新物件（否則持有舊參照的函式會遺失修改）。
-- **隱藏版小怪獸**（`HIDDEN`，Art 區塊）：16 隻獨立造型，`hiddenMon(id, size, bare, 表情)` 繪製（表情 normal／cheer／oops／think，`HM_EXPR` 把夥伴的 6 種表情對應過去）。啟動時加進 `MON`、`PROFILE`、`BUDDY_LINES`（標 `hidden:true`），所以 `monster()`、`buddy()`、`bline()` 都直接支援。**收集到（`S.rw.own["h:代號"]`）才能當夥伴**：`partnerOk()`／`partnerId()` 會退回 `bobo`；選擇夥伴畫面（`partnerGrid(sel, act, true)`）才顯示上鎖的黑影，新增學習者畫面不顯示。
-- **成就**（`ACH`）：達成就解鎖對應隱藏版，`rwAch()` 在每次 `saveProg()` 時檢查（有 `achBusy` 防止遞迴）。條件：連續練習 30 天、拼字熟練 30 字、聽完 20 篇文章、完成一個難度全部主題、每日任務 5 天、快問快答 20 題、跟讀 90 分以上 10 次（`logSpeak`）、晚上 8 點後練習 7 天（`rwPractice`）；第二批：早上 8 點前練習 5 天（`S.rw.morning`）、累計練習 50 天（`logTotal()` > 0 的日子）、複習生字認得 100 字（`S.vk`）、累計玩 50 次遊戲（`log.g`）、累積 500 顆星星、點亮 5 個星座（`S.rw.sky` 不算 `all`）、集滿 3 組套裝、收集 40 件寶物（不算 `h:`）。新增隱藏版要同時加 `HIDDEN`、`HM_INFO`、`BUDDY_LINES`、`ACH`、`RW_SRC`，並在 `tests/hidden.js` 的 H4 補一組「差一點／剛好達到」。
+- **隱藏版小怪獸**（`HIDDEN`，Art 區塊）：18 隻獨立造型（其中偵偵 `zhen`、角角 `jiao` 是小朋友「小布丁」設計的，`by` 欄位寫設計師，`byLine()` 顯示在收藏冊、放大與彈出視窗），`hiddenMon(id, size, bare, 表情)` 繪製（表情 normal／cheer／oops／think，`HM_EXPR` 把夥伴的 6 種表情對應過去）。啟動時加進 `MON`、`PROFILE`、`BUDDY_LINES`（標 `hidden:true`），所以 `monster()`、`buddy()`、`bline()` 都直接支援。**收集到（`S.rw.own["h:代號"]`）才能當夥伴**：`partnerOk()`／`partnerId()` 會退回 `bobo`；選擇夥伴畫面（`partnerGrid(sel, act, true)`）才顯示上鎖的黑影，新增學習者畫面不顯示。
+- **成就**（`ACH`）：達成就解鎖對應隱藏版，`rwAch()` 在每次 `saveProg()` 時檢查（有 `achBusy` 防止遞迴）。條件：連續練習 30 天、拼字熟練 30 字、聽完 20 篇文章、完成一個難度全部主題、每日任務 5 天、快問快答 20 題、跟讀 90 分以上 10 次（`logSpeak`）、晚上 8 點後練習 7 天（`rwPractice`）；第二批：早上 8 點前練習 5 天（`S.rw.morning`）、累計練習 50 天（`logTotal()` > 0 的日子）、複習生字認得 100 字（`S.vk`）、累計玩 50 次遊戲（`log.g`）、累積 500 顆星星、點亮 5 個星座（`S.rw.sky` 不算 `all`）、集滿 3 組套裝、收集 40 件寶物（不算 `h:`）；第三批：10 篇文章閱讀測驗全對（`S.rw.qperf[文章id]`，`a-done` 時記錄，偵偵）、連續練習 10 天（角角；一定比獨角獸的 30 天先收到）。新增隱藏版要同時加 `HIDDEN`、`HM_INFO`、`BUDDY_LINES`、`ACH`、`RW_SRC`，並在 `tests/hidden.js` 的 H4 補一組「差一點／剛好達到」。
 - **神秘蛋**（`S.rw.egg = {d, last, n}`）：`bump()` 呼叫 `rwPractice()`，每天第一次練習長大一天（不用連續），滿 `EGG_DAYS`（5）天可在首頁孵化，`hatchEgg()` 孵出沒有的隱藏版，全部收集完給 100 金幣；孵化當天的練習不算進下一顆蛋。
 - 隱藏版在收藏冊的「隱藏版」分類（商店分頁不顯示），未收集顯示 `silhouette()` 黑影、條件與進度（`achProgress()`）。
 - **衣服／手上／身旁**：`MA_OUTFIT`（`f(s,L,c)`，`maSvg` 用以身體形狀 `s.d` 做的 `clipPath` 裁切，再補畫一次身體外框；`MA_UID` 讓每張頭像的 clipPath id 不重複）、`MA_HAND`（右下方，`maPaw()` 畫小圓手握著）、`MA_FLOAT`（左上方的小東西）。身後的東西若跟手上衝突，放左邊。
@@ -178,7 +178,7 @@ node tests/run-all.js --quick
 | `front-props.js` | `highlight()` / `findWord()` 不變量、`migrate()` 冪等、課程內容完整性（R-04）、`h()` 跳脫與惡意名字 |
 | `spelling.js` | 拼字間隔規則（含 2000 步隨機不變量）、逐字對照、三種拼字遊戲的訂正與重出題、隔天首頁複習、舊資料相容 |
 | `rewards.js` | 金幣帳目（1500 步隨機買賣）、簽到、連續天數里程碑、每日任務、遊戲金幣上限、寶箱不重複、上鎖部件、商店兩段確認與穿脫、動作播放與減少動態設定、舊資料相容 |
-| `hidden.js` | 隱藏版 16 隻與原始 6 隻新造型 × 6 表情繪製與台詞、夥伴上鎖、神秘蛋（一天一次、不用連續、不重複）、每個成就剛好達到才解鎖（每隻都要有測試）、收藏冊與設成夥伴、舊資料相容 |
+| `hidden.js` | 隱藏版 18 隻與原始 6 隻新造型 × 6 表情繪製與台詞、夥伴上鎖、神秘蛋（一天一次、不用連續、不重複）、每個成就剛好達到才解鎖（每隻都要有測試）、收藏冊與設成夥伴、舊資料相容 |
 | `sets.js` | 套裝 4 件不同欄位、集滿才送且只送一次、稱號與整套穿上；五個節慶 2026～2030 期間邊界、期間外買不到、買了永久能用、節慶禮物每年一次 |
 | `speech-zoom.js` | 跟讀比對：所有課程句照念 100 分、發音相近與漏小字算對、念錯仍扣分、多個辨識猜測挑最好的（假麥克風）；點寶物放大、購買照常、黑影不能放大 |
 | `words.js` | 每個生字在句子裡顯示那一句的意思（2754 個）、點螢光字的提示、多義字在單字本列出全部意思、實際畫面 leaves 葉子／出發 |

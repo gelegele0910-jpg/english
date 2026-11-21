@@ -8746,7 +8746,44 @@ const HIDDEN = {
       ${[[40,104],[52,107],[66,107],[80,104],[46,99],[74,99]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="6" ry="3.2" fill="#ffd66b" stroke="#a8741c" stroke-width="1.4"/>`).join("")}
       <g transform="translate(60 92)"><path d="M-8 -4 L-4 -9 H4 L8 -4 L0 6 Z" fill="#8fd1ff" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/><path d="M-8 -4 H8 M-4 -9 L0 -4 L4 -9 M0 -4 V6" stroke="#5aa2ef" stroke-width=".9" fill="none"/><path d="M-3 -7 l1.6 -.6" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></g>
       ${[[44,90],[76,90]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="5.6" ry="4.4" fill="${F}" stroke="${L}" stroke-width="1.8"/>`).join("")}
-      <path transform="translate(104 34) scale(.4)" d="${STAR5}" fill="#ffd66b"/><path transform="translate(14 60) scale(.3)" d="${STAR5}" fill="#ffd66b"/>`; }}
+      <path transform="translate(104 34) scale(.4)" d="${STAR5}" fill="#ffd66b"/><path transform="translate(14 60) scale(.3)" d="${STAR5}" fill="#ffd66b"/>`; }},
+  /* 小朋友自己設計的小怪獸（by＝設計師，顯示在收藏冊與彈出視窗） */
+  zhen: {n:"偵偵", en:"Zhenzhen", get:"qperf10", rare:2, by:"小布丁", f:() => { const L = "#8a6a2e", F = "#ffd95a", C = "#b98352", C2 = "#7f5430";
+    const cap = "M27 50 Q26 14 61 12 Q95 14 93 48 Q78 40 60 40 Q42 40 27 50 Z";
+  const plaid = [34,45,56,67,78,89].map(x=>`M${x} 8 L${x-5} 52`).join(" ") + " " + [22,30,38].map(y=>`M18 ${y} Q60 ${y-10} 104 ${y}`).join(" ");
+  const face = hmFace(61, 70, 13, L, {big:true});
+  return `${HM_SHADOW}
+    <circle cx="26" cy="60" r="6.5" fill="${F}"/><circle cx="94" cy="60" r="6.5" fill="${F}"/>
+    <ellipse cx="48" cy="107" rx="7.5" ry="5" fill="${F}"/><ellipse cx="72" cy="107" rx="7.5" ry="5" fill="${F}"/>
+    <path d="M60 22 Q93 22 93 68 Q93 108 60 108 Q27 108 27 68 Q27 22 60 22 Z" fill="${F}"/>
+    <ellipse cx="60" cy="94" rx="19" ry="11" fill="#ffe999"/>
+    ${hmArms(30, 90, 86, F)}
+    <defs><clipPath id="zhencap"><path d="${cap}"/></clipPath></defs>
+    <path d="${cap}" fill="${C}"/>
+    <g clip-path="url(#zhencap)"><path d="${plaid}" stroke="${C2}" stroke-width="2.2" fill="none" opacity=".7"/></g>
+    <path d="M27 50 Q16 54 14 62 Q32 62 44 46 Z" fill="${C2}"/>
+    <circle cx="61" cy="12" r="4" fill="${C2}"/>
+    ${face}
+    <path d="M65 78.5 l2.4 4.6 l2.4 -4.6 Z" fill="#fff"/>`; }},
+  jiao: {n:"角角", en:"Jiaojiao", get:"streak10", rare:2, by:"小布丁", f:() => { const L = "#a0525a", F = "#fff", H = "#e8475a", H2 = "#c7303f", Y = "#ffd24a";
+  // 預設（normal）：左眼張開、右眼眨眼、吐舌頭；其他表情用共用的臉
+  const tongue = HM_E === "normal";
+  const face = tongue
+    ? `<ellipse cx="38" cy="80" rx="5.5" ry="3" fill="${BLUSH}" opacity=".75"/><ellipse cx="84" cy="80" rx="5.5" ry="3" fill="${BLUSH}" opacity=".75"/>`
+      + `<circle cx="47" cy="70" r="7.4" fill="#fff"/><circle cx="47.5" cy="70.6" r="4.3" fill="${DK}"/><circle cx="49.1" cy="68.9" r="1.6" fill="#fff"/>`
+      + `<path d="M69 71 Q75 64 81 71" fill="none" stroke="${DK}" stroke-width="2.6" stroke-linecap="round"/>`
+      + `<path d="M54 80 Q61 85 68 80" fill="none" stroke="${L}" stroke-width="2" stroke-linecap="round"/><path d="M60 82 Q60 91 64.5 91 Q69 91 68 81.5 Z" fill="#ff8fa3"/><path d="M64 84 v4" stroke="#e86a82" stroke-width="1.2" stroke-linecap="round"/>`
+    : hmFace(61, 70, 13, L, {big:true});
+  return `${HM_SHADOW}
+    <path d="M24 60 Q22 28 60 26 Q98 28 96 60 L102 108 Q88 112 82 100 L38 100 Q32 112 18 108 Z" fill="${H2}"/>
+    <path d="M36 33 L34 13 L48 28 Z M84 33 L86 13 L72 28 Z" fill="${Y}"/>
+    <ellipse cx="47" cy="107" rx="7.5" ry="5" fill="${F}"/><ellipse cx="73" cy="107" rx="7.5" ry="5" fill="${F}"/>
+    <circle cx="60" cy="72" r="34" fill="${F}"/>
+    <path d="M26 62 Q24 30 60 28 Q96 30 94 62 Q90 50 84 52 L80 44 L74 52 L68 42 L62 52 L56 42 L50 52 L44 44 L38 52 Q32 50 26 62 Z" fill="${H}"/>
+    <path d="M26 56 Q20 84 22 106 Q28 100 32 104 Q34 80 34 56 Z M94 56 Q100 84 98 106 Q92 100 88 104 Q86 80 86 56 Z" fill="${H}"/>
+    ${hmArms(33, 87, 88, F)}
+    <path d="M40 34 Q52 30 58 34" fill="none" stroke="#ff8592" stroke-width="2.4" stroke-linecap="round"/>
+    ${face}`; }}
 };
 /* ---------- 六隻原始夥伴（新造型）：跟隱藏版同一種畫法，平面無框線、白色大眼睛 ----------
    表情用 HM_E：normal／happy／cheer／think／oops／sleepy。手會跟著表情動（hmArms）。 */
@@ -10116,6 +10153,8 @@ const HM_INFO = {
   jelly: {line:"#8a5aa8", color:"星光紫", trait:"收集星星的水母", say:"每顆星星都是你努力的證明！", role:"隱藏版夥伴", detail:"在海裡飄來飄去，頭上頂著一顆最亮的星星。"},
   nova:  {line:"#3f4f8a", color:"夜空藍", trait:"在星空游泳的小鯨魚", say:"我們一起去點亮更多星座吧！", role:"隱藏版夥伴", detail:"噴出來的不是水而是星星，身上還有自己的小星座。"},
   peaco: {line:"#2f6a7a", color:"孔雀藍", trait:"超愛打扮的孔雀", say:"今天也要美美的學英文！", role:"隱藏版夥伴", detail:"尾巴一打開就像扇子，最喜歡收集漂亮的衣服。"},
+  zhen:  {line:"#8a6a2e", color:"偵探黃", trait:"戴格紋帽的小偵探", say:"線索就藏在句子裡，一起找出來！", role:"隱藏版夥伴", detail:"戴著咖啡色格紋帽，笑起來會露出一顆小虎牙，最會從文章裡找線索。"},
+  jiao:  {line:"#a0525a", color:"雪白紅髮", trait:"愛眨眼吐舌頭的小怪獸", say:"嘿嘿～今天也來練英文吧！", role:"隱藏版夥伴", detail:"紅色長頭髮配兩支黃色的角，開心的時候會眨眼吐舌頭。"},
   hammy: {line:"#9a6a3e", color:"奶茶棕", trait:"愛收藏寶物的倉鼠", say:"寶物越多越開心！", role:"隱藏版夥伴", detail:"臉頰鼓鼓的是因為塞滿了寶石，把收藏品都藏在小窩裡。"}
 };
 Object.keys(HIDDEN).forEach(id=>{
@@ -10139,7 +10178,9 @@ Object.assign(BUDDY_LINES, {
   jelly: {greet:["{name}，今天要收集幾顆星星？","飄呀飄～一起來學英文吧！","我頭上的星星在發光喔！"], right:["答對了！又一顆星星！","哇～閃閃發亮！"], wrong:["沒關係，慢慢飄回來～","再聽一次，星星在等你！"], done:["今天的星星好多好多！","{name}，你就是最亮的那顆星！"]},
   nova:  {greet:["{name}，今晚要點亮哪個星座？","噗～噴出一顆星星迎接你！","我們一起去星空游泳吧！"], right:["答對了！星座又亮了一點！","好棒，噴出一顆星星給你！"], wrong:["沒關係，星星會等我們的～","再游一圈，再試一次！"], done:["今天的夜空好漂亮！","{name}，你把星空點亮了！"]},
   peaco: {greet:["{name}，今天也美美的學英文吧！","尾巴打開，準備開始！","今天穿什麼都好看，學英文更好看！"], right:["答對了！美呆了！","太棒了，尾巴都打開了！"], wrong:["沒關係，整理一下羽毛再試一次！","再來一次，你一定可以！"], done:["今天的你閃閃動人！","{name}，學英文的樣子最美！"]},
-  hammy: {greet:["{name}，今天要找到什麼寶物？","我的臉頰已經準備好裝新單字了！","吱吱～一起來收集吧！"], right:["答對了！收進寶物袋！","吱吱！好厲害！"], wrong:["沒關係，寶物還在，再找一次！","吱～我們再聽一次～"], done:["今天收集到好多寶物！","{name}，你是收藏大師！"]}
+  hammy: {greet:["{name}，今天要找到什麼寶物？","我的臉頰已經準備好裝新單字了！","吱吱～一起來收集吧！"], right:["答對了！收進寶物袋！","吱吱！好厲害！"], wrong:["沒關係，寶物還在，再找一次！","吱～我們再聽一次～"], done:["今天收集到好多寶物！","{name}，你是收藏大師！"]},
+  zhen: {greet:["{name}，今天要破什麼案子？","偵探出動！一起找線索吧！","我的帽子已經戴好了！"], right:["答對了！案子破了！","找到線索了，好厲害！"], wrong:["沒關係，再仔細聽一次線索～","偵探也會猜錯，再試一次！"], done:["今天破了好多案子！","{name}，你是名偵探！"]},
+  jiao: {greet:["嘿嘿～{name}來了！","今天也一起練英文吧！","我的角今天特別亮喔！"], right:["答對了！耶～","好棒！給你一個眨眼～"], wrong:["沒關係，吐吐舌頭再來一次！","再聽一次就會了～"], done:["今天好開心！","{name}，明天也要來喔！"]},
 });
 
 </script>
@@ -11356,7 +11397,7 @@ function spBanner(){
    - 完成主題（每個主題＋難度只算第一次）+15；當天拼字複習全部完成 +20。
    - 寶箱只當獎勵送（連續練習每 7 天），開出沒有的寶箱寶物，全部都有就給 50 金幣。 */
 const RW_CAT = {t:["頭飾",MA_TOPS], a:["臉上",MA_ACC], n:["脖子",MA_NECK], o:["衣服",MA_OUTFIT], w:["手上",MA_HAND], f:["身旁",MA_FLOAT], k:["身後",MA_BACK], e:["眼睛",MA_EYES], m:["嘴巴",MA_MOUTHS], s:["場景",MA_SCENE], x:["動作",MA_MOVES], h:["隱藏版",HIDDEN]};
-const RW_SRC = {streak30:"連續練習 30 天", spm30:"拼字熟練 30 個字", art20:"聽完 20 篇文章", lvall:"完成一個難度的全部主題", task5:"完成 5 天的每日任務", speed20:"60 秒快問快答答對 20 題", shadow90:"跟讀 90 分以上 10 次", night7:"晚上 8 點後練習 7 天", egg:"神秘蛋", morning5:"早上 8 點前練習 5 天", days50:"累計練習 50 天（不用連續）", vk100:"複習生字時認得 100 個字", games50:"累計玩 50 次遊戲", stars500:"累積 500 顆星星", sky5:"在星空圖點亮 5 個星座", sets3:"集滿 3 組主題套裝", own40:"收集 40 件寶物",
+const RW_SRC = {streak30:"連續練習 30 天", spm30:"拼字熟練 30 個字", art20:"聽完 20 篇文章", lvall:"完成一個難度的全部主題", task5:"完成 5 天的每日任務", speed20:"60 秒快問快答答對 20 題", shadow90:"跟讀 90 分以上 10 次", night7:"晚上 8 點後練習 7 天", egg:"神秘蛋", morning5:"早上 8 點前練習 5 天", days50:"累計練習 50 天（不用連續）", vk100:"複習生字時認得 100 個字", games50:"累計玩 50 次遊戲", stars500:"累積 500 顆星星", sky5:"在星空圖點亮 5 個星座", sets3:"集滿 3 組主題套裝", own40:"收集 40 件寶物", qperf10:"10 篇文章的閱讀測驗全部答對", streak10:"連續練習 10 天",
   ci3:"簽到滿 3 天", streak3:"連續練習 3 天", streak7:"連續練習 7 天", streak14:"連續練習 14 天", perfect5:"拼字複習全對 5 次", task:"完成每日任務", task10:"完成 10 次每日任務", chest:"寶箱"};
 const REWARDS = [
   ["t","wizard",150,3],["t","wizRose",40,1],["t","wizMint",40,1],["t","wizNight",60,1],["t","strawhat","ci3",1],["t","pirate","chest",2],
@@ -11472,13 +11513,15 @@ const TASKS = [
   {id:"g", n:"玩 1 次遊戲", goal:1, v:d=>d.g||0},
   {id:"r", n:"複習 5 個字", goal:5, v:d=>d.r||0}
 ];
-function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}, egg:{d:0, last:"", n:0}, night:{n:0, last:""}, morning:{n:0, last:""}, hi90:0, speedBest:0, sets:{}, title:"", fgift:{}, sky:{}}; }
+function newRw(){ return {coins:0, own:{}, ci:{last:"", days:0}, day:{date:""}, taskDays:0, perfect:0, topics:{}, egg:{d:0, last:"", n:0}, night:{n:0, last:""}, morning:{n:0, last:""}, hi90:0, speedBest:0, sets:{}, title:"", fgift:{}, sky:{}, qperf:{}}; }
 function RW(){
   if(!S.rw || typeof S.rw !== "object") S.rw = newRw();
   const d = newRw(); for(const k in d) if(S.rw[k] == null) S.rw[k] = d[k];   // 補齊舊資料缺的欄位（原地修改，不換物件）
   return S.rw;
 }
 function rwDay(){ const r = RW(), t = today(); if(r.day.date !== t) r.day = {date:t, claim:{}, gc:0, sp:0, games:{}, got:0, frac:0}; if(!r.day.claim) r.day.claim = {}; if(!r.day.games) r.day.games = {}; return r.day; }
+/** 小朋友設計的隱藏版：「設計師：小布丁」 */
+function byLine(k){ const b = HIDDEN[k] && HIDDEN[k].by; return b ? `<span class="muted" style="font-size:calc(12px*var(--fz))">設計師：${h(b)}</span>` : ""; }
 function rwName(it){ return RW_CAT[it.c][1][it.k].n; }
 function rwHow(it){ return it.price != null ? `商店 ${it.price} 金幣` : it.fest ? `${FEST[it.fest].n}期間商店 ${it.fp} 金幣（${festWhen(it.fest)}）` : it.c === "h" ? `${RW_SRC[it.get]}，或用神秘蛋孵出來` : RW_SRC[it.get]; }
 function rwOwned(){ return (S && cur) ? RW().own : {}; }
@@ -11599,7 +11642,9 @@ const ACH = {
   jelly: {goal:500, v:()=>S.stars || 0},
   nova:  {goal:5,   v:()=>Object.keys(RW().sky).filter(k=>k !== "all").length},
   peaco: {goal:3,   v:()=>Object.keys(RW().sets).length},
-  hammy: {goal:40,  v:()=>Object.keys(RW().own).filter(k=>!k.startsWith("h:")).length}
+  hammy: {goal:40,  v:()=>Object.keys(RW().own).filter(k=>!k.startsWith("h:")).length},
+  zhen:  {goal:10,  v:()=>Object.keys(RW().qperf).length},
+  jiao:  {goal:10,  v:()=>streakNow()}
 };
 /** 某一天的練習次數合計（句子、文章、單字、遊戲…） */
 function logTotal(d){ return d ? ["s","a","w","v","r","g","c","sp"].reduce((n, k)=>n + (d[k] || 0), 0) : 0; }
@@ -11767,7 +11812,7 @@ function rwCard(it, tab){
     const art = has ? `<button type="button" class="zoomb" data-act="rw-zoom" data-id="${it.id}" aria-label="放大看${h(rwName(it))}"><span class="hmon">${monster(it.k, "cheer", 88)}</span></button>` : `<span class="hmon sil">${silhouette(it.k, 88)}</span>`;
     const act = has ? (wearing(it) ? `<span class="muted" style="font-size:calc(12px*var(--fz))">現在的夥伴</span>` : `<button class="btn sec small" data-act="rw-wear" data-id="${it.id}">設成夥伴</button>`)
       : `<span class="muted" style="font-size:calc(12px*var(--fz))">${h(RW_SRC[it.get])}<br>${v} / ${g}</span>`;
-    return `<div class="shopit ${has ? "own" : ""}">${art}${has ? "" : `<span class="lockb">${li("lock",14)}</span>`}<b>${has ? h(rwName(it)) : "？？？"}</b><span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
+    return `<div class="shopit ${has ? "own" : ""}">${art}${has ? "" : `<span class="lockb">${li("lock",14)}</span>`}<b>${has ? h(rwName(it)) : "？？？"}</b>${byLine(it.k)}<span class="rtag ${rare[1]}">${rare[0]}</span>${act}</div>`;
   }
   const art = `<button type="button" class="zoomb" data-act="rw-zoom" data-id="${it.id}" aria-label="放大看${h(rwName(it))}">${it.c === "x" ? moveHtml(avCircle(withPart(it), 88), it.k, true) : `<span class="avc shopav" style="width:88px;height:88px">${maSvg(withPart(it), 88)}</span>`}</button>`;
   const on = it.c === "x" ? ["使用中・換回跳跳", "使用這個動作"] : ["穿著中・脫下", "穿上"];
@@ -11795,7 +11840,7 @@ function vZoomSheet(){
   return `<div class="sheet-bg" data-act="zoom-shut"></div><div class="sheet center zoomsheet">
     <div class="sheet-h"><b>${h(rwName(it))}</b><button class="x" data-act="zoom-shut" aria-label="關閉">✕</button></div>
     <div class="zoomart">${art}</div>
-    <p style="margin:6px 0">${tag}${st ? ` <span class="muted">「${h(st.n)}」套裝</span>` : ""}</p>
+    <p style="margin:6px 0">${tag}${st ? ` <span class="muted">「${h(st.n)}」套裝</span>` : ""}</p>${it.c === "h" ? byLine(it.k) : ""}
     <p class="muted" style="margin:0 0 10px">${has ? "已經收集到了" : h(rwHow(it))}</p>
   </div>`;
 }
@@ -11850,7 +11895,7 @@ function vRewardSheet(){
   if(it.c === "h") return `<div class="sheet-bg" data-act="rw-close"></div><div class="sheet center rwpop">
     <div class="sheet-h"><b>隱藏版小怪獸出現了！</b><button class="x" data-act="rw-close" aria-label="關閉">✕</button></div>
     <span class="hmon">${monster(it.k, "cheer", 150)}</span>
-    <h3 style="margin:10px 0 2px">${h(rwName(it))} <span class="muted en" style="font-size:calc(14px*var(--fz))">${h(HIDDEN[it.k].en)}</span></h3>
+    <h3 style="margin:10px 0 2px">${h(rwName(it))} <span class="muted en" style="font-size:calc(14px*var(--fz))">${h(HIDDEN[it.k].en)}</span></h3>${byLine(it.k)}
     <p class="muted" style="margin:0 0 4px">${h(PROFILE[it.k].detail)}</p>
     <p class="muted" style="margin:0 0 12px">${h(RW_RARE[it.rare][0])}・${h(rwHow(it))}</p>
     <div class="stack"><button class="btn" data-act="rw-wear" data-id="${id}" data-close="1">設成學習夥伴</button><button class="btn sec" data-act="rw-close">收進收藏冊</button></div></div>`;
@@ -12937,7 +12982,9 @@ const ACT = {
     stopSeq();
     const k = "art:"+U.art.id;
     const firstTime = !S.done[k];
-    if(firstTime){ const right = U.ans.filter((x,i)=>x===U.art.q[i][2]).length; S.done[k] = 1; reward(3 + right); }
+    const right = U.ans.filter((x,i)=>x===U.art.q[i][2]).length;
+    if(U.art.q.length && right === U.art.q.length) RW().qperf[U.art.id] = 1;   // 閱讀測驗全對的文章（偵偵的成就）
+    if(firstTime){ S.done[k] = 1; reward(3 + right); }
     logAdd("a"); bump(); earn(firstTime ? 5 : 2, firstTime ? "聽完文章" : "再聽一次文章"); saveProg(); U.view = "articles"; render();
   },
 

@@ -58,7 +58,8 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     day = 21; bump(); if (S.rw.egg.d !== 5) bad.push('長滿後還在長');
     const got = [];
     for (let n = 0; n < IDS.length; n++) {
-      if (n) { for (let k = 0; k < 5; k++) { day++; bump(); } }
+      // 只測神秘蛋：每顆蛋之間把連續天數歸零，避免連續練習的成就（角角 10 天、獨角獸 30 天）在途中先解鎖
+      if (n) { S.streak = { last: '', count: 0 }; for (let k = 0; k < 5; k++) { day++; bump(); } }
       const k = hatchEgg(); got.push(k);
       if (S.rw.egg.d !== 0) bad.push('孵化後蛋沒有重新開始');
       bump(); if (S.rw.egg.d !== 0) bad.push('孵化當天的練習又算進下一顆蛋');
@@ -72,7 +73,10 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     // H4 8 個成就：差一點不會解鎖，達到就解鎖
     bad = [];
     const cases = {
-      luna:  [() => { S.streak = { last: today(), count: 29 }; }, () => { S.streak.count = 30; }],
+      // 角角（連續 10 天）一定比星光獨角獸（30 天）先收到，所以這裡先放著角角，只檢查 30 天的門檻
+      luna:  [() => { S.rw.own['h:jiao'] = 1; S.streak = { last: today(), count: 29 }; }, () => { S.streak.count = 30; }],
+      jiao:  [() => { S.streak = { last: today(), count: 9 }; }, () => { S.streak.count = 10; }],
+      zhen:  [() => { for (let i = 0; i < 9; i++) S.rw.qperf['a' + i] = 1; }, () => { S.rw.qperf.a9 = 1; }],
       rex:   [() => { for (let i = 0; i < 29; i++) S.sp['w' + i] = { m: 1, l: 5, d: 0 }; }, () => { S.sp.w29 = { m: 1, l: 5, d: 0 }; }],
       octo:  [() => { for (let i = 0; i < 19; i++) S.done['art:x' + i] = 1; }, () => { S.done['art:x19'] = 1; }],
       shroom:[() => { TOPICS.slice(1).forEach(t => t.sents[1].forEach(x => { S.done[x.id] = 1; })); }, () => { TOPICS[0].sents[1].forEach(x => { S.done[x.id] = 1; }); }],
@@ -95,7 +99,7 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
       if (S.rw.own['h:' + id]) bad.push(id + ' 還沒達到就解鎖');
       reach(); saveProg();
       if (!S.rw.own['h:' + id]) bad.push(id + ' 達到條件卻沒解鎖：' + achProgress(id));
-      const others = IDS.filter(k => k !== id && S.rw.own['h:' + k]);
+      const others = IDS.filter(k => k !== id && S.rw.own['h:' + k] && !(id === 'luna' && k === 'jiao'));
       if (others.length) bad.push(id + ' 的條件順便解鎖了 ' + others);
     }
     out.push([`H4 ${Object.keys(cases).length} 個成就各自在剛好達到時解鎖，不會提早、不會連帶解鎖別隻`, bad]);
@@ -197,6 +201,29 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     result('E4 舊版進度（沒有蛋與成就欄位）正常；夥伴是沒收集的隱藏版時退回預設', bad);
   }
 
+  // E6 偵偵的條件：文章閱讀測驗全部答對才記一篇；錯一題不記；同一篇再全對不重複算
+  {
+    const bad = [];
+    const runArt = async (id, allRight) => {
+      await p.evaluate(id => { leaveActivity(); U.view = 'articles'; render(); ACT['open-art']({ dataset: { a: id } }); U.astep = 1; render(); }, id);
+      const qs = await p.evaluate(() => U.art.q.map(q => q[2]));
+      for (let i = 0; i < qs.length; i++) {
+        const o = (allRight || i > 0) ? qs[i] : (qs[i] + 1) % (await p.evaluate(i => U.art.q[i][1].length, i));
+        await p.click(`[data-act=a-ans][data-q="${i}"][data-o="${o}"]`);
+      }
+      await p.evaluate(() => ACT['a-done']());
+    };
+    const [a1, a2] = await p.evaluate(() => { S.rw.qperf = {}; return [ARTICLES[0].id, ARTICLES[1].id]; });
+    await runArt(a1, false);
+    if (await p.evaluate(id => !!S.rw.qperf[id], a1)) bad.push('錯一題也算全對');
+    await runArt(a1, true); await runArt(a1, true); await runArt(a2, true);
+    const n = await p.evaluate(() => Object.keys(S.rw.qperf).length);
+    if (n !== 2) bad.push('全對篇數應該是 2，實際 ' + n);
+    if (await p.evaluate(() => achProgress('zhen')[0]) !== 2) bad.push('偵偵進度沒有跟著算');
+    const card = await p.evaluate(() => { S.rw.own['h:zhen'] = 1; U.view = 'shop'; U.shopTab = 'book'; U.shopCat = 'h'; render(); return [...document.querySelectorAll('.shopit')].map(x => x.textContent).find(t => t.includes('偵偵')) || ''; });
+    if (!card.includes('設計師：小布丁')) bad.push('收藏冊沒有寫設計師');
+    result('E6 偵偵：閱讀測驗全對才算一篇（錯一題不算、同一篇不重複），收藏冊寫「設計師：小布丁」', bad);
+  }
   result('E5 全程沒有頁面錯誤', errs);
   await b.close(); srv.close();
   process.exit(fail ? 1 : 0);
