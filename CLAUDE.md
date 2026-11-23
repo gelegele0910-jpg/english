@@ -80,6 +80,7 @@
 - **繪製**：`render()` 依 `U.view` 從 `map` 取出 `vXxx()` 函式，回傳 HTML 字串整個塞進 `#main`。新增畫面要：寫 `vXxx()`、加進 `render()` 的 `map`，若是全螢幕練習畫面也加進 `focus` 陣列。
 - **事件**：用事件委派。元素加 `data-act="名稱"`（其他參數放 `data-*`），處理函式放在 `ACT` / `GAME_ACT` / `VOCAB_ACT` / `MODE_ACT` / `REC_ACT` 物件裡（最後 `Object.assign` 合併）。
 - **單字意思**：`WORDS[k]` 以第一次出現的句子建立；同一個字在別句是不同意思時（leaves 出發／葉子），`addWordIdx()` 把新意思加進 `zhs`，`WORDS[k].zh` 變成「意思一／意思二」（只是換個說法的字列在 `SAME_SENSE`，不另外列）。**有句子的地方一律用那一句的意思**：`wordRows(keys, 句子的生字表)`、`highlight()` 的 `data-z`、`wzh(k, pairs)`；單字本、複習、遊戲沒有句子，才用 `WORDS[k].zh`。`tests/words.js` 檢查。
+- **Enter 往下一步**（電腦）：`enterNext()` 依 `ENTER_NEXT`（gnext、next-sent、to-step、cu-next、a-step、a-done）找畫面上第一個可按、不是淡色 `.ghost` 的按鈕點下去；在輸入框／按鈕上、有彈出視窗、按住連發時不動。新增「往下一步」按鈕要把 data-act 加進 `ENTER_NEXT`。`spelling.js` E11 檢查。
 - **輸出 HTML 時一律用 `h()` 跳脫**使用者或內容文字。
 - **儲存**：先寫 localStorage（`lsGet/lsSet/lsDel`，會自動加 `NS` 前綴），再同步到雲端（進度存檔有 1.5 秒防抖，頁面隱藏時立即送出）；以 `updated` 時間戳決定雲端或本機哪邊較新。上傳一律經過 `cloudSaver()`（`pushProfiles`、`pushProg`）：同一種同時只送一個、失敗依 `GAS_RETRY` 再試 2 次，每次都送當下最新的資料，3 次都失敗才 `cloudFail()` 提示（一分鐘最多一次）。**`keepalive` 只在頁面隱藏時用（`gasLeaving`），且以位元組計算要小於 60KB**：瀏覽器限制同時上傳中的 keepalive 請求合計 64KB，平常也用的話第二個存檔會被直接拒絕。修改資料結構時要寫 `migrate()` 相容舊資料，並檢查後端 `refreshSummary_()`。
 - **語音**：播放用 Web Speech `speechSynthesis`（`speakEn()`，優先挑美式英文聲音）；口說辨識用 `SpeechRecognition`（`maxAlternatives=5`，`heardAlts()` 組出候選句、`bestHeard()` 挑最高分）。跟讀比對 `compareText()` 對小朋友放寬：`near()` 用 `soundKey()` 比發音（th→d 或 s、v→b、母音混用）、`stemEnd()` 忽略字尾 s／ed，數字換回英文字再比；`LIGHT` 小字（a、the、to…）沒聽到不扣分；標籤「很棒」≥65、「很接近」≥35。**辨識同時只能開一個**：`startRec()` 先 `abortRec()` 關掉舊的；`onend` 只處理自己那一次（`recog === me`），舊的晚到的結束訊息不可蓋掉新的；按「我說完了」`stopRec()` 後 `REC_STOP_WAIT`（2.5 秒）還沒結束、或錄超過 `REC_MAX`（20 秒）就 `forceEndRec()` 用已聽到的內容算分（有些 Android 手機不會通知結束）；換下一句（`resetStep()`）、離開（`leaveActivity()`）、切到背景（`visibilitychange`）一律 `abortRec()`。一次錄音是一個 `recSess`，裡面可能接連開好幾個辨識（`recOpen()`）：還沒聽到或只聽到不到 `REC_ENOUGH`（6 成）的字、而且還沒按「我說完了」，就自動接著聽並把前後接起來（目標句從按鈕的 `data-t` 來）；`audio-capture`／`network`／`start()` 失敗先重試 `REC_RETRY`（2）次才當成麥克風問題，`not-allowed` 不重試；辨識結束時還沒確定（interim）的字也算進去。`tests/rec.js` 用假的辨識模擬這些情況。改比對規則要讓 `tests/speech-zoom.js` 的 V1（所有課程句原文照念 100 分）與 V3（念錯仍扣分）都通過。
@@ -178,7 +179,7 @@ node tests/run-all.js --quick
 | `check-syntax.js` | `index.html` 所有 `<script>`、`Code.gs`、`config.js` 的語法檢查；`font-size` 不可寫死成 px；主畫面圖示與 manifest 的檔案存在、尺寸正確 |
 | `backend-props.js` | 用模擬試算表執行 `Code.gs`：分段存讀往返一致、存檔冪等、`doPost` 白名單、學員進度總覽計算、舊資料搬家 |
 | `front-props.js` | `highlight()` / `findWord()` 不變量、`migrate()` 冪等、課程內容完整性（R-04）、`h()` 跳脫與惡意名字 |
-| `spelling.js` | 拼字間隔規則（含 2000 步隨機不變量）、逐字對照、三種拼字遊戲的訂正與重出題、隔天首頁複習、舊資料相容、答案格子不換行（最長的字 × 320～820 寬） |
+| `spelling.js` | 拼字間隔規則（含 2000 步隨機不變量）、逐字對照、三種拼字遊戲的訂正與重出題、隔天首頁複習、舊資料相容、答案格子不換行（最長的字 × 320～820 寬）、Enter 往下一步 |
 | `rewards.js` | 金幣帳目（1500 步隨機買賣）、簽到、連續天數里程碑、每日任務、遊戲金幣上限、寶箱不重複、上鎖部件、商店兩段確認與穿脫、動作播放與減少動態設定、舊資料相容 |
 | `hidden.js` | 隱藏版 18 隻與原始 6 隻新造型 × 6 表情繪製與台詞、夥伴上鎖、神秘蛋（一天一次、不用連續、不重複）、每個成就剛好達到才解鎖（每隻都要有測試）、收藏冊與設成夥伴、舊資料相容 |
 | `sets.js` | 套裝 4 件不同欄位、集滿才送且只送一次、稱號與整套穿上；五個節慶 2026～2030 期間邊界、期間外買不到、買了永久能用、節慶禮物每年一次 |

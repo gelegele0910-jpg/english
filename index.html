@@ -13177,8 +13177,21 @@ document.addEventListener("input", e=>{
   if(e.target.id==="spIn" && U.g){ U.g.typed = e.target.value; }
   if(e.target.id==="wsearch"){ U.q = e.target.value; const wl = $("#wl"); if(wl) wl.innerHTML = wordListHtml(); }
 });
+/* 電腦上按 Enter＝按畫面上「往下一步」的按鈕（下一題、下一句、看字幕…）。
+   在輸入框裡、按鈕上（瀏覽器自己會按）、有彈出視窗、按住不放時都不動；「跳過」那種淡色按鈕不算 */
+const ENTER_NEXT = ["gnext", "next-sent", "to-step", "cu-next", "a-step", "a-done"];
+function enterNext(e){
+  if(e.key !== "Enter" || e.isComposing || e.repeat || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return false;
+  if(/^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(e.target.tagName) || U.sheet) return false;
+  for(const act of ENTER_NEXT){
+    const b = [...document.querySelectorAll(`#main [data-act="${act}"]`)].find(x=>!x.disabled && !x.classList.contains("ghost") && x.offsetParent);
+    if(b){ e.preventDefault(); b.click(); return true; }
+  }
+  return false;
+}
 document.addEventListener("keydown", e=>{
-  if(e.target.id==="spIn" && e.key==="Enter" && !e.isComposing){ e.preventDefault(); ACT["sp-submit"](); }
+  if(e.target.id==="spIn" && e.key==="Enter" && !e.isComposing){ e.preventDefault(); ACT["sp-submit"](); return; }
+  if(enterNext(e)) return;
   if(U.sheet==="pin" && U.pin && !/INPUT|TEXTAREA/.test(e.target.tagName)){   // 電腦可以直接用鍵盤輸入密碼
     if(/^[0-9]$/.test(e.key)){ e.preventDefault(); ACT["pin-key"]({dataset:{k:e.key}}); }
     else if(e.key==="Backspace"){ e.preventDefault(); ACT["pin-key"]({dataset:{k:"del"}}); }

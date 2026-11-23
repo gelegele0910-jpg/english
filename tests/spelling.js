@@ -309,6 +309,45 @@ const result = (name, bad) => { bad = bad || []; if (bad.length) fail++; console
     result(`E10 拼字積木答案格子：最長的字（${words[0]}）在 320～820 寬都排成一行、字母不擠出格子`, bad);
   }
 
+  // E11 電腦用 Enter：打字拼拼看打完按 Enter 送出、再按 Enter 到下一題；課文各步驟也能用 Enter 往下
+  {
+    const bad = [];
+    await p.setViewportSize({ width: 1280, height: 800 });
+    await p.evaluate(() => { leaveActivity(); U.sheet = null; U.rwq = []; startGame('type', ['wind', 'rain', 'sun']); render(); });
+    await p.waitForSelector('#spIn');
+    await p.fill('#spIn', 'wind'); await p.press('#spIn', 'Enter');
+    await p.waitForSelector('[data-act=gnext]');
+    await p.keyboard.press('Enter');
+    await p.waitForFunction(() => U.g.i === 1, null, { timeout: 2000 }).catch(() => bad.push('答對後按 Enter 沒有到下一題'));
+    // 打錯：要先照正確拼法重打，Enter 不可以跳過訂正
+    await p.waitForSelector('#spIn'); await p.fill('#spIn', 'rian'); await p.press('#spIn', 'Enter');
+    await p.keyboard.press('Enter');
+    if ((await p.evaluate(() => U.g.i)) !== 1) bad.push('拼錯還沒訂正，按 Enter 就跳到下一題');
+    // 按住不放（連發）不會一次跳好幾題
+    await p.evaluate(() => { leaveActivity(); startGame('type', ['wind', 'rain', 'sun']); render(); });
+    await p.waitForSelector('#spIn'); await p.fill('#spIn', 'wind'); await p.press('#spIn', 'Enter');
+    await p.waitForSelector('[data-act=gnext]');
+    await p.evaluate(() => { for (let i = 0; i < 5; i++) document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', repeat: i > 0, bubbles: true })); });
+    if ((await p.evaluate(() => U.g.i)) !== 1) bad.push('按住 Enter 一次跳了好幾題：' + (await p.evaluate(() => U.g.i)));
+    // 課文：看字幕 → 換我說 → 下一句，都能用 Enter；「跳過」淡色按鈕不會被 Enter 按到
+    await p.evaluate(() => { leaveActivity(); cur.mode = 'full'; S.mode = 'full'; applySkin(); startTopic(TOPICS[0].id); U.si = 0; resetStep(); U.step = 2; render(); });
+    await p.keyboard.press('Enter');
+    if ((await p.evaluate(() => U.step)) !== 3) bad.push('看字幕這步按 Enter 沒有往下');
+    await p.keyboard.press('Enter');
+    if ((await p.evaluate(() => U.si)) !== 1) bad.push('跟著說這步按 Enter 沒有到下一句');
+    await p.evaluate(() => { cur.mode = 'quiet'; S.mode = 'quiet'; applySkin(); U.step = 3; U.bld = null; render(); });
+    const si = await p.evaluate(() => U.si);
+    await p.keyboard.press('Enter');
+    if ((await p.evaluate(() => U.si)) !== si) bad.push('排句子還沒排就按 Enter 跳過了（淡色的跳過按鈕不該被 Enter 按）');
+    // 有彈出視窗時不動
+    await p.evaluate(() => { cur.mode = 'full'; S.mode = 'full'; applySkin(); U.step = 2; U.sheet = 'mode'; render(); });
+    await p.keyboard.press('Enter');
+    if ((await p.evaluate(() => U.step)) !== 2) bad.push('有彈出視窗時按 Enter 還是往下了');
+    await p.evaluate(() => { U.sheet = null; leaveActivity(); U.view = 'home'; render(); });
+    await p.setViewportSize({ width: 390, height: 844 });
+    result('E11 Enter 往下一步：打字送出後到下一題、拼錯要先訂正、按住不連跳、課文各步驟、不按淡色的跳過、彈出視窗時不動', bad);
+  }
+
   result('E8 全程沒有頁面錯誤', errs);
   await b.close(); srv.close();
   process.exit(fail ? 1 : 0);
