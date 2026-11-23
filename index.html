@@ -10730,36 +10730,88 @@ function stopSeq(){ seqTok++; U.playing = false; stopAudio(); }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recog = null, micDenied = false, micErr = "", heardText = "";
 const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
-function startRec(){
+/* 一次「錄音」＝一個 session；手機的辨識常常一停頓就結束，所以同一個 session 可能接連開好幾個辨識：
+   - 還沒聽到聲音就結束（小朋友還沒開口、no-speech）→ 自動再聽，直到 REC_MAX
+   - 只聽到一部分（句子念到一半停頓）且還沒按「我說完了」→ 自動接著聽，把前後接起來
+   - 麥克風暫時被佔住（剛播完聲音）或網路不穩 → 先自動重試 REC_RETRY 次，還是不行才說麥克風有問題 */
+let recSess = null;
+const REC_RETRY = 2, REC_ENOUGH = .6;
+function recEnough(sess, heard){
+  const n = (heard.match(/[A-Za-z0-9']+/g) || []).length;
+  if(!sess.target) return n > 0;
+  const want = (sess.target.match(/[A-Za-z0-9']+/g) || []).length;
+  return n >= Math.max(1, Math.ceil(want * REC_ENOUGH));
+}
+function startRec(target){
   if(!SR) return;
   abortRec();   // 上一次的辨識還沒結束（例如按了下一句）就先關掉，兩個同時開會卡住
-  micDenied = false; micErr = "";
-  try{
-    const me = recog = new SR(); me.lang = "en-US"; me.interimResults = true; me.continuous = false; me.maxAlternatives = 5;
-    let fin = ""; heardText = ""; const finAlts = [];   // 每一段辨識結果的多個猜測，比對時挑分數最高的
-    me.onresult = e=>{
-      if(recog !== me) return;
-      let interim = "";
-      for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal){ fin += r[0].transcript+" "; finAlts.push(Array.from({length:r.length}, (_,k)=>r[k].transcript)); } else interim += r[0].transcript; }
-      heardText = (fin+interim).trim();
-      const el = $("#live"); if(el) el.textContent = heardText || "請開始說…";
-    };
-    me.onerror = e=>{ if(recog !== me) return; if(e.error==="not-allowed" || e.error==="service-not-allowed" || e.error==="audio-capture" || e.error==="network"){ micDenied = true; micErr = e.error; toast("麥克風沒有打開，請看下方說明"); } };
-    // 只處理「這一次」的結束：舊的辨識晚到的結束訊息不可以蓋掉新的
-    me.onend = ()=>{ if(recog !== me) return; recog = null; clearTimeout(recTimer); if(!U.rec) return; U.rec = false; U.shadow = micDenied ? null : {heard:heardText, alts:heardAlts(finAlts, heardText)}; if(U.view==="lesson" || U.view==="catchup") render(); };
-    U.rec = true; U.shadow = null;
-    me.start();
-    // 保險：有些手機辨識不會自己結束，最多 20 秒就收工
-    clearTimeout(recTimer); recTimer = setTimeout(()=>forceEndRec(me), REC_MAX);
-  }catch(e){ recog = null; U.rec = false; micDenied = true; micErr = "start"; toast("麥克風沒有打開，請看下方說明"); }
+  micDenied = false; micErr = ""; heardText = "";
+  const sess = recSess = {target: target || "", fin:"", alts:[], t0:Date.now(), userStop:false, retry:0, err:""};
+  U.rec = true; U.shadow = null;
+  clearTimeout(recTimer); recTimer = setTimeout(()=>{ if(recSess === sess) forceEndRec(recog); }, REC_MAX);   // 保險：最多 REC_MAX 就收工
+  recOpen(sess);
+}
+function recFinish(sess){
+  if(recSess !== sess) return;
+  recSess = null; recog = null; clearTimeout(recTimer);
+  if(!U.rec) return;
+  U.rec = false;
+  if(sess.err){ micDenied = true; micErr = sess.err; toast(sess.err === "network" ? "網路不穩，語音辨識連不上，請再試一次" : "麥克風沒有打開，請看下方說明"); }
+  U.shadow = micDenied ? null : {heard:heardText, alts:heardAlts(sess.alts, heardText)};
+  if(U.view==="lesson" || U.view==="catchup") render();
+}
+function recOpen(sess){
+  if(recSess !== sess || !U.rec) return;
+  let me;
+  try{ me = recog = new SR(); }catch(e){ sess.err = "start"; recFinish(sess); return; }
+  me.lang = "en-US"; me.interimResults = true; me.continuous = false; me.maxAlternatives = 5;
+  let interim = "", fatal = "", soft = "";
+  me.onresult = e=>{
+    if(recog !== me) return;
+    interim = "";
+    for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal){ sess.fin += r[0].transcript+" "; sess.alts.push(Array.from({length:r.length}, (_,k)=>r[k].transcript)); } else interim += r[0].transcript; }
+    heardText = (sess.fin+interim).trim();
+    const el = $("#live"); if(el) el.textContent = heardText || "請開始說…";
+  };
+  me.onerror = e=>{
+    if(recog !== me) return;
+    if(e.error==="not-allowed" || e.error==="service-not-allowed") fatal = e.error;          // 沒有權限：重試也沒用
+    else if(e.error==="audio-capture" || e.error==="network") soft = e.error;              // 可能只是暫時的：先重試
+  };
+  // 只處理「這一次」的結束：舊的辨識晚到的結束訊息不可以蓋掉新的
+  me.onend = ()=>{
+    if(recog !== me || recSess !== sess) return;
+    recog = null;
+    if(interim){ sess.fin += interim + " "; sess.alts.push([interim]); interim = ""; }   // 沒變成正式結果的也算聽到
+    heardText = sess.fin.trim();
+    if(fatal){ sess.err = fatal; recFinish(sess); return; }
+    if(soft){
+      if(sess.retry < REC_RETRY){ sess.retry++; setTimeout(()=>recOpen(sess), 400); return; }
+      sess.err = soft; recFinish(sess); return;
+    }
+    const left = REC_MAX - (Date.now() - sess.t0);
+    if(!sess.userStop && left > 1500 && !recEnough(sess, heardText)){ setTimeout(()=>recOpen(sess), 120); return; }   // 還沒聽到／只聽到一部分：接著聽
+    recFinish(sess);
+  };
+  try{ me.start(); }
+  catch(e){
+    recog = null;
+    if(sess.retry < REC_RETRY){ sess.retry++; setTimeout(()=>recOpen(sess), 400); return; }
+    sess.err = "start"; recFinish(sess);
+  }
 }
 let REC_MAX = 20000, REC_STOP_WAIT = 2500;   // 測試會調短
 let recTimer = null;
-/** 辨識卡住時強制結束，用目前聽到的內容算分 */
-function forceEndRec(me){ if(recog !== me) return; try{ me.abort(); }catch(e){} if(recog === me && me.onend) me.onend(); }
+/** 辨識卡住或時間到時強制結束，用目前聽到的內容算分 */
+function forceEndRec(me){
+  const sess = recSess; if(!sess) return;
+  sess.userStop = true;
+  if(me && recog === me){ const end = me.onend; me.onresult = me.onerror = me.onend = null; try{ me.abort(); }catch(e){} recog = me; if(end) end(); }   // 把已聽到的接起來
+  if(recSess === sess) recFinish(sess);
+}
 /** 直接關掉辨識、不算分（離開畫面、換下一句、切到背景） */
 function abortRec(){
-  const me = recog; recog = null; clearTimeout(recTimer);
+  const me = recog; recog = null; recSess = null; clearTimeout(recTimer);
   if(me){ me.onresult = me.onerror = me.onend = null; try{ me.abort(); }catch(e){} }
 }
 /** 把每一段的第 k 個猜測接起來，變成幾個完整的候選句子 */
@@ -10777,9 +10829,12 @@ function bestHeard(target, cands){
 }
 /** 「我說完了」：請辨識收尾；有些 Android 手機 stop() 之後不會通知結束，等一下還沒結束就強制收工 */
 function stopRec(){
-  const me = recog; if(!me) return;
+  const sess = recSess; if(!sess) return;
+  sess.userStop = true;   // 按了「我說完了」：不再自動接著聽
+  const me = recog;
+  if(!me){ recFinish(sess); return; }   // 正好在兩次辨識中間
   try{ me.stop(); }catch(e){}
-  clearTimeout(recTimer); recTimer = setTimeout(()=>forceEndRec(me), REC_STOP_WAIT);
+  clearTimeout(recTimer); recTimer = setTimeout(()=>{ if(recSess === sess) forceEndRec(recog); }, REC_STOP_WAIT);
 }
 /* 手機鍵盤語音輸入：iPhone / Android 鍵盤上的麥克風，任何瀏覽器都能用 */
 function dictBox(res){
@@ -12505,7 +12560,7 @@ function speakBox(target){
   }
   const selfMsg = U.selfRated==="ok" ? buddyBox("cheer", bline("right")) : U.selfRated==="again" ? buddyBox("happy", "多念幾次就會越來越順喔！") : "";
   return `
-      ${canMic && !U.dict ? `<button class="btn ${U.rec?"warm":""}" data-act="mic">${li("mic",20)} ${U.rec?"我說完了":micDenied?"再試一次錄音比對":"換我說（錄音比對）"}</button>${micHelp}${res}` : ""}
+      ${canMic && !U.dict ? `<button class="btn ${U.rec?"warm":""}" data-act="mic" data-t="${h(target)}">${li("mic",20)} ${U.rec?"我說完了":micDenied?"再試一次錄音比對":"換我說（錄音比對）"}</button>${micHelp}${res}` : ""}
       ${U.dict ? dictBox(U.dict && U.shadow ? res : "") : ""}
       ${(!canMic || micDenied) && !U.dict ? `<p class="muted" style="margin:0 0 10px">念完之後，覺得自己說得怎麼樣？</p>
         <div class="row"><button class="opt ${U.selfRated==="ok"?"ok":""}" style="margin:0;text-align:center" data-act="self" data-r="ok">說得順</button>
@@ -13015,7 +13070,7 @@ const ACT = {
   },
   "dict-toggle"(){ abortRec(); U.rec = false; U.dict = !U.dict; try{ localStorage.setItem("elp_dict", U.dict?"1":"0"); }catch(e){} U.shadow = null; U.dictVal = ""; render(); if(U.dict){ setTimeout(()=>{ const i=$("#dictIn"); if(i) i.focus(); },50); } },
   "dict-check"(){ const i=$("#dictIn"); const v=(i&&i.value||"").trim(); if(!v){ toast("還沒有聽到內容，先按鍵盤的麥克風說說看"); return; } U.dictVal=v; U.shadow={heard:v}; render(); },
-  mic(){ if(U.rec){ stopRec(); return; } stopAudio(); startRec(); render(); },
+  mic(el){ if(U.rec){ stopRec(); return; } stopAudio(); startRec(el && el.dataset.t); render(); },
   "next-sent"(){
     leaveActivity();
     const s = curSent(); learn(s.w.map(x=>x[0]));
